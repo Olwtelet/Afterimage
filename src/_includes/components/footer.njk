@@ -1,0 +1,70 @@
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h3 class="footer-title">
+          <span class="footer-title-wrap"><span class="bracket">[</span> {{ site.title }} <span class="bracket">]</span></span>
+        </h3>
+        <p class="footer-description">{{ site.description }}</p>
+      </div>
+      
+      <div class="footer-section">
+        <h4 class="footer-subtitle">NAVEGAR</h4>
+        <ul class="footer-links">
+          {% for item in navigation %}
+          <li><a href="{{ item.url }}">{{ item.name }}</a></li>
+          {% endfor %}
+          <li><a href="/feed.xml">Feed RSS</a></li>
+        </ul>
+      </div>
+      
+      <div class="footer-section">
+        <h4 class="footer-subtitle">CONECTAR</h4>
+        <ul class="footer-links">
+          <li><a href="{{ site.social.discord }}" target="_blank" rel="noopener">Discord</a></li>
+          <li><a href="{{ site.social.youtube }}" target="_blank" rel="noopener">YouTube</a></li>
+          <li><a href="{{ site.social.steam }}" target="_blank" rel="noopener">Steam</a></li>
+        </ul>
+      </div>
+    </div>
+    
+    <div class="footer-bottom">
+      <div class="ascii-art">
+        <pre>
+  ╔═══════════════════════════╗
+  ║  F H D O G   S I T E  v1.0 ║
+  ╚═══════════════════════════╝
+        </pre>
+      </div>
+      <p class="copyright">
+        &copy; 2024 {{ site.author }}. Todos os direitos reservados.
+      </p>
+      <div class="footer-credits">
+        <p class="credits-text">
+          Criado por <a href="https://github.com/Olwtelet" target="_blank" rel="noopener">Olwtelet</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<style>
+.footer-title {
+  display: flex;
+  justify-content: center;
+}
+
+.footer-title-wrap {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .footer-title-wrap {
+    white-space: normal;
+    text-align: center;
+  }
+}
+</style>

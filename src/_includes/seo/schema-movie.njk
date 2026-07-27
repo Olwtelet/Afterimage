@@ -1,0 +1,44 @@
+<script type="application/ld+json">
+{
+ "@context":"https://schema.org",
+
+ "@type":"Movie",
+
+ "name":"{{ title }}",
+
+ "image":"{{ seo.siteUrl }}{{ poster }}",
+
+ "description":"{{ description }}",
+
+ "datePublished":"{{ year }}",
+
+ "genre":{{ genres | dump }},
+
+ "director":{
+
+ "@type":"Person",
+
+ "name":"{{ director }}"
+
+ },
+
+ "actor":[
+
+ {% for actor in actors %}
+
+ {
+
+ "@type":"Person",
+
+ "name":"{{ actor }}"
+
+ }
+
+ {% if not loop.last %},{% endif %}
+
+ {% endfor %}
+
+ ]
+
+}
+</script>

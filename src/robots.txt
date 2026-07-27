@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://filmeshdonlinegratis.netlify.app/sitemap.xml

@@ -1,0 +1,23 @@
+<title>
+{% if title %}
+{{ title }} | {{ seo.siteName }}
+{% else %}
+{{ seo.title }}
+{% endif %}
+</title>
+
+{% include "seo/meta.njk" %}
+
+{% include "seo/canonical.njk" %}
+
+{% include "seo/opengraph.njk" %}
+
+{% include "seo/twitter.njk" %}
+
+{% include "seo/schema-website.njk" %}
+
+{% include "seo/schema-search.njk" %}
+
+{% if template == "movie" %}
+{% include "seo/schema-movie.njk" %}
+{% endif %}
