@@ -12,6 +12,7 @@ import SignalStrip from '~/components/signal/SignalStrip.astro';
 import Header from '~/components/ui/Header.astro';
 import Footer from '~/components/ui/Footer.astro';
 import SearchPalette from '~/components/islands/SearchPalette.astro';
+import Calibration from '~/components/islands/Calibration.astro';
 import { SITE } from '~/lib/site';
 import { BARS, type Bar } from '~/lib/smpte';
 
@@ -59,6 +60,7 @@ const { accent = BARS.cyan, bodyClass, ...seo } = Astro.props;
 
     <Footer />
     <SearchPalette />
+    <Calibration />
 
     <script>
       // Ident de emissora no console. Não aparece na página, não custa layout.

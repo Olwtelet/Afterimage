@@ -1,0 +1,122 @@
+---
+/**
+ * Audiência — o contador de visitas.
+ *
+ * A versão anterior chamava um contador público de terceiro
+ * (countapi.mileshilliard.com): dependência externa fora do controle do projeto,
+ * inflável por qualquer pessoa com um GET, e no caminho de renderização do
+ * widget.
+ *
+ * Aqui o contador vive no mesmo Supabase do mural, atrás de uma função que só
+ * incrementa e devolve o total — a tabela não é escrita diretamente pelo
+ * cliente. O SQL está em supabase/migrations/0001_audience.sql; enquanto não for
+ * aplicado, o mostrador simplesmente exibe traços em vez de quebrar.
+ *
+ * O visor tem seis dígitos e é puramente informativo, então nasce marcado como
+ * aria-hidden e o número real é anunciado em texto ao lado.
+ */
+import { SUPABASE } from '~/lib/site';
+
+const DIGITS = 6;
+---
+
+<div
+  class="audience"
+  data-audience
+  data-endpoint={`${SUPABASE.url}/rest/v1/rpc/bump_audience`}
+  data-key={SUPABASE.publishableKey}
+>
+  <p class="u-label audience__label">Audiência</p>
+
+  <div class="audience__display" aria-hidden="true">
+    {Array.from({ length: DIGITS }, () => <span class="audience__digit">–</span>)}
+  </div>
+
+  <p class="audience__caption u-label" data-audience-caption>
+    Contagem indisponível
+  </p>
+</div>
+
+<script>
+  const SESSION_KEY = 'audience:counted';
+
+  function mount(root: HTMLElement): void {
+    const digits = [...root.querySelectorAll<HTMLElement>('.audience__digit')];
+    const caption = root.querySelector<HTMLElement>('[data-audience-caption]');
+    const endpoint = root.dataset.endpoint;
+    const key = root.dataset.key;
+    if (digits.length === 0 || !caption || !endpoint || !key) return;
+
+    // Arrow consts, não `function`: declarações são içadas acima do guard acima,
+    // e o TypeScript então as analisa sem o estreitamento que ele acabou de
+    // provar. Com const, o narrowing vale dentro do fecho.
+    const paint = (total: number): void => {
+      const text = String(total).padStart(digits.length, '0').slice(-digits.length);
+      for (const [index, digit] of digits.entries()) {
+        digit.textContent = text[index] ?? '0';
+      }
+      caption.textContent = `${total.toLocaleString('pt-BR')} visitas registradas`;
+    };
+
+    const report = async (): Promise<void> => {
+      // Uma visita por aba: recarregar a página não infla a contagem.
+      const alreadyCounted = sessionStorage.getItem(SESSION_KEY) === '1';
+
+      try {
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            apikey: key,
+            Authorization: `Bearer ${key}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ should_increment: !alreadyCounted }),
+        });
+        if (!response.ok) throw new Error(String(response.status));
+
+        const total = Number(await response.json());
+        if (!Number.isFinite(total)) throw new Error('resposta inesperada');
+
+        sessionStorage.setItem(SESSION_KEY, '1');
+        paint(total);
+      } catch {
+        caption.textContent = 'Contagem indisponível no momento';
+      }
+    };
+
+    void report();
+  }
+
+  const root = document.querySelector<HTMLElement>('[data-audience]');
+  if (root) mount(root);
+</script>
+
+<style>
+  .audience__label {
+    color: var(--accent-ink);
+  }
+
+  .audience__display {
+    display: flex;
+    gap: 2px;
+    margin-block: 0.4rem;
+  }
+
+  .audience__digit {
+    display: grid;
+    place-items: center;
+    inline-size: 1.5rem;
+    block-size: 2rem;
+    background: var(--black);
+    border: 1px solid var(--line);
+    font-family: var(--font-mono);
+    font-size: var(--text-lg);
+    font-weight: 600;
+    color: var(--accent-ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .audience__caption {
+    margin: 0;
+  }
+</style>

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" role="img" aria-label="Filmes HD Online Grátis">
+  <rect width="28" height="28" fill="#050506"/>
+  <g>
+    <rect x="3" y="5" width="3.14" height="14" fill="#C0C0C0"/>
+    <rect x="6.14" y="5" width="3.14" height="14" fill="#C0C000"/>
+    <rect x="9.28" y="5" width="3.14" height="14" fill="#00C0C0"/>
+    <rect x="12.42" y="5" width="3.14" height="14" fill="#00C000"/>
+    <rect x="15.56" y="5" width="3.14" height="14" fill="#C000C0"/>
+    <rect x="18.70" y="5" width="3.14" height="14" fill="#C00000"/>
+    <rect x="21.84" y="5" width="3.16" height="14" fill="#0000C0"/>
+  </g>
+  <rect x="3" y="19" width="22" height="2.4" fill="#0A0B0C"/>
+</svg>

@@ -1,0 +1,113 @@
+---
+import Base from '~/layouts/Base.astro';
+import Mural from '~/components/islands/Mural.astro';
+import Radio from '~/components/islands/Radio.astro';
+import Audience from '~/components/islands/Audience.astro';
+import { BARS } from '~/lib/smpte';
+import { SITE } from '~/lib/site';
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: 'Mural',
+  description: `Recados de quem passa pelo ${SITE.name}.`,
+  url: new URL('/mural/', SITE.url).href,
+  isPartOf: { '@type': 'WebSite', name: SITE.name, url: SITE.url },
+};
+---
+
+<Base
+  title="Mural"
+  description={`Deixe um recado no mural do ${SITE.name}. Um espaço para quem passa por aqui marcar presença.`}
+  accent={BARS.magenta}
+  schema={schema}
+>
+  <header class="head u-page">
+    <p class="u-label head__eyebrow">Canal 03 · Recados</p>
+    <h1 class="head__title u-slate u-bleed">Mural</h1>
+    <p class="head__lede u-prose">
+      A parede da sala. Quem passa por aqui deixa um recado — sobre a sessão da
+      semana, sobre um filme que ficou, ou só para marcar presença. Não precisa
+      estar no Discord para assinar.
+    </p>
+  </header>
+
+  <div class="u-page">
+    <Mural />
+  </div>
+
+  <section class="extras u-page" aria-label="Transmissão e audiência">
+    <Radio />
+    <div class="extras__side">
+      <Audience />
+      <div class="extras__community">
+        <h2 class="u-label extras__title">Comunidade</h2>
+        <p class="extras__text">
+          A conversa depois do filme costuma ser tão boa quanto o filme. Ela
+          acontece no Discord, todo sábado.
+        </p>
+        <a
+          class="btn btn--ghost"
+          href={SITE.social.discord}
+          rel="noopener noreferrer"
+          target="_blank"
+        >
+          Entrar no servidor
+        </a>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .head {
+    padding-block: var(--space-2xl) var(--space-lg);
+  }
+
+  .head__eyebrow {
+    color: var(--accent-ink);
+  }
+
+  .head__title {
+    margin-block: var(--space-2xs) var(--space-md);
+    font-size: var(--text-4xl);
+  }
+
+  .extras {
+    display: grid;
+    gap: var(--space-xl);
+    padding-block: var(--space-2xl);
+    margin-block-start: var(--space-xl);
+    border-block-start: 1px solid var(--line);
+  }
+
+  @media (min-width: 64rem) {
+    .extras {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+      gap: var(--space-2xl);
+      align-items: start;
+    }
+  }
+
+  .extras__side {
+    display: grid;
+    gap: var(--space-lg);
+    align-content: start;
+  }
+
+  .extras__title {
+    display: block;
+    margin-block-end: var(--space-2xs);
+    padding-block-end: var(--space-2xs);
+    border-block-end: 1px solid var(--line);
+    color: var(--accent-ink);
+  }
+
+  .extras__text {
+    margin-block-end: var(--space-sm);
+    max-inline-size: 42ch;
+    font-size: var(--text-sm);
+    line-height: var(--leading-normal);
+    color: var(--ink-dim);
+  }
+</style>

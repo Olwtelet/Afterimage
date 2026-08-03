@@ -1,0 +1,150 @@
+---
+/**
+ * Transmissão — a playlist da comunidade.
+ *
+ * O iframe do Spotify só entra no documento quando alguém pede. Antes ele era
+ * montado em toda página, em toda navegação, custando conexão de terceiro e
+ * peso de embed para a maioria que nunca clicava.
+ */
+import { RADIO_PLAYLIST_ID } from '~/lib/site';
+
+const embedUrl = `https://open.spotify.com/embed/playlist/${RADIO_PLAYLIST_ID}?utm_source=generator&theme=0`;
+---
+
+<section class="radio" data-radio data-embed={embedUrl} aria-labelledby="radio-title">
+  <div class="radio__head">
+    <h2 class="u-label radio__title" id="radio-title">
+      Transmissão
+      <span class="radio__freq u-mono">87.6 MHz</span>
+    </h2>
+  </div>
+
+  <div class="radio__frame">
+    <div class="radio__standby" data-radio-standby>
+      <div class="radio__bars" aria-hidden="true">
+        {Array.from({ length: 7 }, (_, index) => <i style={`--i:${index}`} />)}
+      </div>
+      <button type="button" class="btn btn--ghost" data-radio-start>
+        Iniciar transmissão
+      </button>
+      <p class="u-label radio__hint">Playlist das sessões · abre no Spotify</p>
+    </div>
+    <div class="radio__slot" data-radio-slot></div>
+  </div>
+</section>
+
+<script>
+  function mount(root: HTMLElement, start: HTMLButtonElement): void {
+    const standby = root.querySelector<HTMLElement>('[data-radio-standby]');
+    const slot = root.querySelector<HTMLElement>('[data-radio-slot]');
+    const embed = root.dataset.embed;
+    if (!standby || !slot || !embed) return;
+
+    start.addEventListener(
+      'click',
+      () => {
+        const frame = document.createElement('iframe');
+        frame.src = `${embed}&autoplay=1`;
+        frame.title = 'Playlist das sessões no Spotify';
+        frame.loading = 'lazy';
+        frame.allow =
+          'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture';
+        frame.width = '100%';
+        frame.height = '352';
+        frame.style.border = '0';
+
+        slot.append(frame);
+        standby.hidden = true;
+        frame.focus();
+      },
+      { once: true },
+    );
+  }
+
+  const root = document.querySelector<HTMLElement>('[data-radio]');
+  const start = document.querySelector<HTMLButtonElement>('[data-radio-start]');
+  if (root && start) mount(root, start);
+</script>
+
+<style>
+  .radio__head {
+    padding-block-end: var(--space-2xs);
+    border-block-end: 1px solid var(--line);
+  }
+
+  .radio__title {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-2xs);
+    color: var(--accent-ink);
+  }
+
+  .radio__freq {
+    font-size: 0.625rem;
+    color: var(--ink-mute);
+  }
+
+  .radio__frame {
+    position: relative;
+    min-block-size: 22rem;
+    background: var(--black);
+    border: 1px solid var(--line);
+    border-block-start: none;
+  }
+
+  .radio__standby {
+    display: grid;
+    place-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-lg) var(--space-sm);
+    min-block-size: 22rem;
+    align-content: center;
+  }
+
+  .radio__standby[hidden] {
+    display: none;
+  }
+
+  /* Barras de nível em repouso: o equipamento ligado, aguardando sinal. */
+  .radio__bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    block-size: 2.5rem;
+  }
+
+  .radio__bars i {
+    inline-size: 4px;
+    block-size: 100%;
+    background: var(--accent-bar);
+    opacity: 0.35;
+    transform-origin: bottom;
+    animation: level 1.6s var(--ease-signal) infinite alternate;
+    animation-delay: calc(var(--i) * -180ms);
+  }
+
+  @keyframes level {
+    from {
+      transform: scaleY(0.18);
+    }
+    to {
+      transform: scaleY(1);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .radio__bars i {
+      animation: none;
+      transform: scaleY(0.5);
+    }
+  }
+
+  .radio__hint {
+    text-align: center;
+  }
+
+  .radio__slot :global(iframe) {
+    display: block;
+  }
+</style>

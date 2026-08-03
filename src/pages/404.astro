@@ -1,0 +1,135 @@
+---
+/**
+ * Sem sinal.
+ *
+ * A carta de ajuste é literalmente o que a televisão mostrava quando não havia
+ * nada no ar. Para uma página que não existe, ela não é referência decorativa —
+ * é a resposta exata.
+ */
+import Base from '~/layouts/Base.astro';
+import TestCard from '~/components/signal/TestCard.astro';
+import { NAVIGATION } from '~/lib/site';
+import { BARS } from '~/lib/smpte';
+---
+
+<Base
+  title="Sem sinal"
+  description="A página que você procurou não está no ar."
+  accent={BARS.red}
+  noindex
+>
+  <section class="lost">
+    <TestCard class="lost__card" ident="SEM SINAL · ERR 404" />
+
+    <div class="lost__content u-page">
+      <p class="lost__code u-mono">404</p>
+      <h1 class="lost__title u-slate u-bleed">Sem sinal</h1>
+      <p class="lost__text">
+        Esta página não está no ar. Pode ter mudado de endereço, pode nunca ter
+        existido, ou a transmissão terminou antes de você chegar.
+      </p>
+
+      <nav class="lost__nav" aria-label="Sintonize outro canal">
+        <p class="u-label lost__nav-title">Sintonize</p>
+        <ul role="list">
+          {
+            NAVIGATION.map((item) => (
+              <li>
+                <a href={item.href}>
+                  <span class="u-label">{item.channel}</span>
+                  {item.label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .lost {
+    position: relative;
+    display: grid;
+    align-content: center;
+    min-block-size: clamp(32rem, 86svh, 54rem);
+    padding-block: var(--space-2xl);
+    overflow: clip;
+    isolation: isolate;
+  }
+
+  .lost__card {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+  }
+
+  .lost::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+      linear-gradient(to right, var(--void) 10%, rgb(5 5 6 / 0.7) 60%, rgb(5 5 6 / 0.3)),
+      linear-gradient(to bottom, rgb(5 5 6 / 0.55), transparent 35% 65%, var(--void));
+  }
+
+  .lost__code {
+    font-size: var(--text-sm);
+    letter-spacing: var(--track-wide);
+    color: var(--accent-ink);
+  }
+
+  .lost__title {
+    margin-block: var(--space-2xs) var(--space-md);
+    font-size: var(--text-4xl);
+    color: var(--ink);
+  }
+
+  .lost__text {
+    max-inline-size: 42ch;
+    font-size: var(--text-lg);
+    line-height: var(--leading-relaxed);
+    color: var(--ink-dim);
+  }
+
+  .lost__nav {
+    margin-block-start: var(--space-xl);
+    padding-block-start: var(--space-sm);
+    border-block-start: 1px solid var(--line);
+    max-inline-size: 32rem;
+  }
+
+  .lost__nav-title {
+    color: var(--accent-ink);
+    margin-block-end: var(--space-2xs);
+  }
+
+  .lost__nav ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin: 0;
+    padding: 0;
+  }
+
+  .lost__nav a {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    padding: 0.45rem 0.7rem;
+    border: 1px solid var(--line);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--ink-dim);
+    transition:
+      border-color var(--dur-cut) var(--ease-signal),
+      color var(--dur-cut) var(--ease-signal);
+  }
+
+  .lost__nav a:hover {
+    border-color: var(--accent-bar);
+    color: var(--ink);
+  }
+</style>

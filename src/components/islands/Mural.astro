@@ -1,0 +1,516 @@
+---
+/**
+ * Mural — recados de visitantes, com moderação.
+ *
+ * O banco continua sendo o Supabase e a chave continua sendo `publishable`, que
+ * é feita para viver no cliente. Quem impõe as regras é o RLS: um recado nasce
+ * com `approved = false` e só a leitura de aprovados é pública. Nada aqui no
+ * navegador é barreira de segurança — o que existe aqui é atrito contra envio
+ * automatizado, que a versão anterior não tinha nenhum.
+ */
+import { SUPABASE } from '~/lib/site';
+
+const MAX_MESSAGE = 500;
+const MAX_NAME = 40;
+
+const VIBES = [
+  { value: '📺', label: 'Sintonizado' },
+  { value: '🔥', label: 'Fogo' },
+  { value: '💀', label: 'Morto' },
+  { value: '🎬', label: 'Cinéfilo' },
+  { value: '🌀', label: 'Perturbado' },
+  { value: '🍿', label: 'Pipoca' },
+] as const;
+---
+
+<section
+  class="mural"
+  data-mural
+  data-endpoint={`${SUPABASE.url}/rest/v1/${SUPABASE.muralTable}`}
+  data-key={SUPABASE.publishableKey}
+>
+  <!-- ===== Formulário ==================================================== -->
+  <form class="form" data-mural-form novalidate>
+    <h2 class="u-label form__title">Deixar um recado</h2>
+
+    <div class="form__row">
+      <label class="field">
+        <span class="u-label">Nome</span>
+        <input
+          type="text"
+          name="name"
+          required
+          maxlength={MAX_NAME}
+          autocomplete="nickname"
+          placeholder="Como te chamam"
+        />
+      </label>
+
+      <label class="field">
+        <span class="u-label">Site <small>opcional</small></span>
+        <input type="url" name="website" placeholder="https://" autocomplete="url" />
+      </label>
+    </div>
+
+    <label class="field">
+      <span class="u-label">Vibe</span>
+      <select name="vibe">
+        {VIBES.map((vibe) => <option value={vibe.value}>{vibe.value} {vibe.label}</option>)}
+      </select>
+    </label>
+
+    <label class="field">
+      <span class="u-label">
+        Recado
+        <span class="field__count u-mono" data-mural-count>0/{MAX_MESSAGE}</span>
+      </span>
+      <textarea
+        name="message"
+        required
+        rows="4"
+        maxlength={MAX_MESSAGE}
+        placeholder="O que ficou da última sessão?"></textarea>
+    </label>
+
+    <!--
+      Armadilha: um campo que pessoa nenhuma vê nem alcança por teclado, mas que
+      preenchedor automático de formulário completa. Vindo preenchido, o envio é
+      descartado em silêncio.
+    -->
+    <div class="trap" aria-hidden="true">
+      <label>
+        Não preencha este campo
+        <input type="text" name="signal" tabindex="-1" autocomplete="off" />
+      </label>
+    </div>
+
+    <div class="form__foot">
+      <button type="submit" class="btn btn--solid" data-mural-submit>Assinar o mural</button>
+      <p class="form__note u-label">Todo recado passa por moderação antes de aparecer.</p>
+    </div>
+
+    <p class="form__status" data-mural-status role="status" aria-live="polite"></p>
+  </form>
+
+  <!-- ===== Recados ======================================================= -->
+  <div class="entries">
+    <h2 class="u-label entries__title">No mural</h2>
+    <ol class="entries__list" data-mural-list role="list">
+      <li class="entries__empty u-label">Carregando recados…</li>
+    </ol>
+  </div>
+</section>
+
+<script>
+  interface MuralEntry {
+    readonly name: string;
+    readonly website: string | null;
+    readonly message: string;
+    readonly vibe: string | null;
+    readonly created_at: string;
+  }
+
+  const MIN_FILL_MS = 3000;
+  const COOLDOWN_MS = 60_000;
+  const COOLDOWN_KEY = 'mural:last-post';
+
+  function mount(root: HTMLElement, form: HTMLFormElement): void {
+    const endpoint = root.dataset.endpoint ?? '';
+    const key = root.dataset.key ?? '';
+
+    const list = root.querySelector<HTMLOListElement>('[data-mural-list]');
+    const status = root.querySelector<HTMLParagraphElement>('[data-mural-status]');
+    const submit = root.querySelector<HTMLButtonElement>('[data-mural-submit]');
+    const counter = root.querySelector<HTMLElement>('[data-mural-count]');
+    const message = form.elements.namedItem('message') as HTMLTextAreaElement | null;
+
+    if (!list || !status || !submit || !counter || !message) return;
+
+    const openedAt = Date.now();
+    const headers = { apikey: key, Authorization: `Bearer ${key}` };
+
+    const dateFormat = new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'America/Sao_Paulo',
+    });
+
+    // Arrow consts, não `function`: declarações são içadas acima do guard acima,
+    // e o TypeScript então as analisa sem o estreitamento que ele acabou de
+    // provar. Com const, o narrowing vale dentro do fecho.
+    const say = (text: string, tone: 'ok' | 'erro' | '' = ''): void => {
+      status.textContent = text;
+      status.dataset.tone = tone;
+    };
+
+    /* --- leitura ---------------------------------------------------------- */
+    const load = async (): Promise<void> => {
+      try {
+        const response = await fetch(
+          `${endpoint}?select=name,website,message,vibe,created_at&approved=eq.true&order=created_at.desc&limit=50`,
+          { headers },
+        );
+        if (!response.ok) throw new Error(String(response.status));
+
+        const entries = (await response.json()) as MuralEntry[];
+        list.replaceChildren();
+
+        if (entries.length === 0) {
+          const empty = document.createElement('li');
+          empty.className = 'entries__empty u-label';
+          empty.textContent = 'Nenhum recado ainda. O primeiro pode ser o seu.';
+          list.append(empty);
+          return;
+        }
+
+        for (const entry of entries) list.append(renderEntry(entry));
+      } catch {
+        list.replaceChildren();
+        const failed = document.createElement('li');
+        failed.className = 'entries__empty u-label';
+        failed.textContent = 'Não foi possível carregar o mural agora.';
+        list.append(failed);
+      }
+    };
+
+    /**
+     * Monta o recado com createElement e textContent. Nada de innerHTML: o
+     * conteúdo vem de terceiros e nunca é interpretado como marcação.
+     */
+    const renderEntry = (entry: MuralEntry): HTMLLIElement => {
+      const item = document.createElement('li');
+      item.className = 'entry';
+
+      const head = document.createElement('p');
+      head.className = 'entry__head';
+
+      const who = document.createElement('span');
+      who.className = 'entry__name';
+
+      // Só http(s) vira link: `javascript:` e afins ficam como texto puro.
+      let safeHref: string | null = null;
+      if (entry.website) {
+        try {
+          const url = new URL(entry.website);
+          if (url.protocol === 'http:' || url.protocol === 'https:') safeHref = url.href;
+        } catch {
+          safeHref = null;
+        }
+      }
+
+      if (safeHref) {
+        const link = document.createElement('a');
+        link.href = safeHref;
+        link.rel = 'noopener noreferrer nofollow ugc';
+        link.target = '_blank';
+        link.textContent = entry.name;
+        who.append(link);
+      } else {
+        who.textContent = entry.name;
+      }
+
+      const when = document.createElement('time');
+      when.className = 'entry__when u-label';
+      when.dateTime = entry.created_at;
+      when.textContent = dateFormat.format(new Date(entry.created_at));
+
+      head.append(who, when);
+
+      const body = document.createElement('p');
+      body.className = 'entry__message';
+      body.textContent = entry.message;
+
+      if (entry.vibe) {
+        const vibe = document.createElement('span');
+        vibe.className = 'entry__vibe';
+        vibe.textContent = entry.vibe;
+        vibe.setAttribute('aria-hidden', 'true');
+        item.append(vibe);
+      }
+
+      item.append(head, body);
+      return item;
+    };
+
+    /* --- escrita ---------------------------------------------------------- */
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const data = new FormData(form);
+
+      // Armadilha preenchida: descarta sem avisar, para não ensinar o robô.
+      if (String(data.get('signal') ?? '')) return;
+
+      // Formulário respondido rápido demais para ter sido lido.
+      if (Date.now() - openedAt < MIN_FILL_MS) {
+        say('Calma. Leia, escreva, e tente de novo em alguns segundos.', 'erro');
+        return;
+      }
+
+      const last = Number(localStorage.getItem(COOLDOWN_KEY) ?? 0);
+      if (Date.now() - last < COOLDOWN_MS) {
+        const wait = Math.ceil((COOLDOWN_MS - (Date.now() - last)) / 1000);
+        say(`Você acabou de assinar. Tente de novo em ${wait}s.`, 'erro');
+        return;
+      }
+
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
+
+      submit.disabled = true;
+      say('Enviando…');
+
+      try {
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            ...headers,
+            'Content-Type': 'application/json',
+            Prefer: 'return=minimal',
+          },
+          // `approved` não é enviado: quem define é o padrão da tabela.
+          body: JSON.stringify({
+            name: String(data.get('name') ?? '').trim(),
+            website: String(data.get('website') ?? '').trim() || null,
+            message: String(data.get('message') ?? '').trim(),
+            vibe: String(data.get('vibe') ?? '') || null,
+          }),
+        });
+
+        if (!response.ok) throw new Error(String(response.status));
+
+        localStorage.setItem(COOLDOWN_KEY, String(Date.now()));
+        form.reset();
+        counter.textContent = `0/${message.maxLength}`;
+        say('Recebido. Aparece assim que passar pela moderação.', 'ok');
+      } catch {
+        say('Algo deu errado no envio. Tente de novo daqui a pouco.', 'erro');
+      } finally {
+        submit.disabled = false;
+      }
+    });
+
+    message.addEventListener('input', () => {
+      counter.textContent = `${message.value.length}/${message.maxLength}`;
+    });
+
+    void load();
+  }
+
+  const root = document.querySelector<HTMLElement>('[data-mural]');
+  const form = document.querySelector<HTMLFormElement>('[data-mural-form]');
+  if (root && form) mount(root, form);
+</script>
+
+<style>
+  .mural {
+    display: grid;
+    gap: var(--space-xl);
+    align-items: start;
+  }
+
+  @media (min-width: 64rem) {
+    .mural {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+      gap: var(--space-2xl);
+    }
+  }
+
+  /* ===== Formulário ======================================================= */
+  .form {
+    display: grid;
+    gap: var(--space-sm);
+    padding: var(--space-md);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-inline-start: 3px solid var(--accent-bar);
+  }
+
+  @media (min-width: 64rem) {
+    .form {
+      position: sticky;
+      inset-block-start: 6rem;
+    }
+  }
+
+  .form__title {
+    color: var(--accent-ink);
+  }
+
+  .form__row {
+    display: grid;
+    gap: var(--space-sm);
+  }
+
+  @media (min-width: 30rem) {
+    .form__row {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .field {
+    display: grid;
+    gap: 0.3rem;
+  }
+
+  .field small {
+    font-size: inherit;
+    color: var(--ink-mute);
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  .field__count {
+    float: inline-end;
+    font-size: 0.625rem;
+    color: var(--ink-mute);
+  }
+
+  .field input,
+  .field textarea,
+  .field select {
+    padding: 0.6rem 0.7rem;
+    background: var(--black);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    font-size: var(--text-sm);
+    transition: border-color var(--dur-cut) var(--ease-signal);
+  }
+
+  .field textarea {
+    resize: vertical;
+    min-block-size: 6rem;
+    font-family: inherit;
+  }
+
+  .field input:hover,
+  .field textarea:hover,
+  .field select:hover {
+    border-color: var(--line-strong);
+  }
+
+  .field input:focus,
+  .field textarea:focus,
+  .field select:focus {
+    border-color: var(--accent-bar);
+  }
+
+  .field ::placeholder {
+    color: var(--ink-mute);
+  }
+
+  /* Fora da tela e fora do alcance — mas ainda preenchível por automação. */
+  .trap {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .form__foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-block-start: var(--space-2xs);
+  }
+
+  .form__note {
+    flex: 1;
+    min-inline-size: 12ch;
+  }
+
+  .form__status:empty {
+    display: none;
+  }
+
+  .form__status {
+    margin: 0;
+    padding: 0.5rem 0.7rem;
+    font-size: var(--text-sm);
+    border-inline-start: 3px solid var(--line-strong);
+    background: var(--black);
+    color: var(--ink-dim);
+  }
+
+  .form__status[data-tone='ok'] {
+    border-inline-start-color: var(--bar-green);
+    color: var(--ink-green);
+  }
+
+  .form__status[data-tone='erro'] {
+    border-inline-start-color: var(--bar-red);
+    color: var(--ink-red);
+  }
+
+  /* ===== Recados ========================================================== */
+  .entries__title {
+    display: block;
+    padding-block-end: var(--space-2xs);
+    border-block-end: 1px solid var(--line);
+    color: var(--accent-ink);
+  }
+
+  .entries__list {
+    display: grid;
+    gap: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .entries__empty {
+    padding-block: var(--space-lg);
+    text-align: center;
+  }
+
+  .entry {
+    position: relative;
+    padding: var(--space-sm) var(--space-sm) var(--space-sm) 0;
+    border-block-end: 1px solid var(--line);
+  }
+
+  .entry__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-2xs);
+    margin: 0 0 0.3rem;
+  }
+
+  .entry__name {
+    font-weight: 650;
+    font-size: var(--text-sm);
+    color: var(--ink);
+  }
+
+  .entry__name a {
+    color: var(--accent-ink);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+
+  .entry__message {
+    margin: 0;
+    font-size: var(--text-sm);
+    line-height: var(--leading-normal);
+    color: var(--ink-dim);
+    overflow-wrap: anywhere;
+  }
+
+  .entry__vibe {
+    position: absolute;
+    inset-block-start: var(--space-sm);
+    inset-inline-end: 0;
+    font-size: var(--text-lg);
+    opacity: 0.7;
+  }
+</style>

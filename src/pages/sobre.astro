@@ -1,0 +1,313 @@
+---
+import Base from '~/layouts/Base.astro';
+import TestCard from '~/components/signal/TestCard.astro';
+import { getSessions } from '~/lib/catalog';
+import { BAR_ORDER, BARS } from '~/lib/smpte';
+import { SITE } from '~/lib/site';
+
+const sessions = await getSessions();
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'AboutPage',
+  name: 'Sobre',
+  url: new URL('/sobre/', SITE.url).href,
+  isPartOf: { '@type': 'WebSite', name: SITE.name, url: SITE.url },
+  about: {
+    '@type': 'Organization',
+    name: SITE.name,
+    foundingDate: '2024-11-29',
+    url: SITE.url,
+    sameAs: [SITE.social.discord, SITE.social.youtube, SITE.social.steam],
+  },
+};
+
+const contacts = [
+  { label: 'Discord', value: 'Servidor da comunidade', href: SITE.social.discord },
+  { label: 'YouTube', value: 'Canal', href: SITE.social.youtube },
+  { label: 'Steam', value: 'Grupo', href: SITE.social.steam },
+  { label: 'Email', value: SITE.email, href: `mailto:${SITE.email}` },
+] as const;
+---
+
+<Base
+  title="Sobre"
+  description="Como este catálogo é escolhido, de onde ele veio, e por que a carta de ajuste."
+  accent={BARS.yellow}
+  schema={schema}
+>
+  <header class="head u-page">
+    <p class="u-label head__eyebrow">Canal 04 · Identificação</p>
+    <h1 class="head__title u-slate u-bleed">Sobre</h1>
+    <p class="head__lede u-prose">
+      Um servidor pequeno de Discord, criado em 29 de novembro de 2024, sem
+      grandes planos. Uma sessão por sábado. O resto veio depois.
+    </p>
+  </header>
+
+  <div class="body u-page">
+    <div class="body__prose prose">
+      <h2>Não é streaming</h2>
+      <p>
+        Este site não hospeda nem distribui filme nenhum. Ele registra escolhas.
+        Cada sessão que passou fica catalogada aqui com o motivo de ter sido
+        escolhida — e a exibição em si acontece junto, ao vivo, na sala do
+        Discord, com todo mundo assistindo ao mesmo tempo.
+      </p>
+      <p>
+        A diferença importa. Um catálogo de streaming quer que você assista a
+        mais. Uma curadoria quer que você assista <em>àquilo</em>, e que a
+        escolha tenha um porquê que alguém esteja disposto a defender.
+      </p>
+
+      <h2>Como um filme entra</h2>
+      <p>
+        Não existe fórmula, e é de propósito. Um filme entra porque incomodou
+        alguém, porque gerou discussão, porque ficou na cabeça depois dos
+        créditos. Nunca porque bateu recorde de bilheteria ou porque um algoritmo
+        calculou que “pessoas como você” iam gostar.
+      </p>
+      <p>
+        Tem clássico consagrado ao lado de obscuridade que quase ninguém
+        assistiu. Tem filme desconfortável de propósito ao lado de outro
+        puramente divertido. A única regra não escrita: se vale a pena assistir
+        com atenção, cabe aqui.
+      </p>
+
+      <h2>A carta de ajuste</h2>
+      <p>
+        A identidade visual daqui vem das barras de teste SMPTE — o padrão que a
+        televisão exibia quando não havia programa no ar. Ele existia para
+        calibrar o equipamento: as sete barras são cores de referência, e a faixa
+        escura embaixo delas, o PLUGE, marca os pretos contra os quais tudo o
+        mais é medido.
+      </p>
+      <p>
+        Não é nostalgia de enfeite. As sete barras são a grade deste site. Os
+        cinzas de todas as superfícies saem do PLUGE. E cada filme recebe uma
+        barra, escolhida pela cor que a sessão carrega — de modo que o catálogo
+        inteiro, lido de uma vez, remonta a carta.
+      </p>
+      <p>
+        A ideia por trás disso: um sinal instável, que pisca e às vezes perde o
+        foco, ainda está tentando dizer alguma coisa. Vale mais prestar atenção
+        nisso do que numa transmissão perfeita e sem alma.
+      </p>
+
+      <h2>As sete barras</h2>
+      <p>
+        Estas são as cores oficiais, nos valores reais do padrão a 75% de
+        amplitude:
+      </p>
+    </div>
+
+    <aside class="body__aside">
+      <TestCard variant="bars" class="body__card" ident="SMPTE 75% · FHDOG" />
+
+      <dl class="facts">
+        <div>
+          <dt class="u-label">No ar desde</dt>
+          <dd>29 nov 2024</dd>
+        </div>
+        <div>
+          <dt class="u-label">Sessões catalogadas</dt>
+          <dd>{sessions.length}</dd>
+        </div>
+        <div>
+          <dt class="u-label">Frequência</dt>
+          <dd>Sábados, 20:30</dd>
+        </div>
+        <div>
+          <dt class="u-label">Custo</dt>
+          <dd>Nenhum</dd>
+        </div>
+      </dl>
+    </aside>
+  </div>
+
+  <!-- ===== As sete barras ================================================ -->
+  <section class="bars u-page" aria-label="As sete barras SMPTE">
+    <ul class="bars__list" role="list">
+      {
+        BAR_ORDER.map((bar) => (
+          <li class="bars__item">
+            <span class="bars__swatch" style={`background:${bar.bar}`} aria-hidden="true" />
+            <span class="bars__name">{bar.label}</span>
+            <span class="bars__hex u-mono">{bar.bar}</span>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
+  <!-- ===== Contato ======================================================= -->
+  <section class="contact u-page" aria-labelledby="contact-title">
+    <div class="section__head">
+      <h2 class="section__title" data-channel="//" id="contact-title">Contato</h2>
+    </div>
+    <dl class="contact__list">
+      {
+        contacts.map((item) => (
+          <div class="contact__row">
+            <dt class="u-label">{item.label}</dt>
+            <dd>
+              <a href={item.href} rel="noopener noreferrer">{item.value}</a>
+            </dd>
+          </div>
+        ))
+      }
+    </dl>
+    <p class="contact__sign u-label">
+      Toda transmissão sai do ar. O que a gente escolhe mostrar antes disso é que fica.
+    </p>
+  </section>
+</Base>
+
+<style>
+  .head {
+    padding-block: var(--space-2xl) var(--space-lg);
+  }
+
+  .head__eyebrow {
+    color: var(--accent-ink);
+  }
+
+  .head__title {
+    margin-block: var(--space-2xs) var(--space-md);
+    font-size: var(--text-4xl);
+  }
+
+  .body {
+    display: grid;
+    gap: var(--space-xl);
+    padding-block: var(--space-lg);
+  }
+
+  @media (min-width: 64rem) {
+    .body {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 18rem);
+      gap: var(--space-2xl);
+      align-items: start;
+    }
+
+    .body__aside {
+      position: sticky;
+      inset-block-start: 6rem;
+    }
+  }
+
+  .body__aside {
+    display: grid;
+    gap: var(--space-md);
+    align-content: start;
+  }
+
+  .body__card {
+    block-size: 7rem;
+    border: 1px solid var(--line);
+  }
+
+  .facts {
+    display: grid;
+    gap: var(--space-sm);
+    margin: 0;
+  }
+
+  .facts > div {
+    padding-block-end: var(--space-2xs);
+    border-block-end: 1px solid var(--line);
+  }
+
+  .facts dd {
+    margin: 0;
+    font-size: var(--text-lg);
+    font-weight: 650;
+    letter-spacing: var(--track-tight);
+    color: var(--ink);
+  }
+
+  /* ===== Barras =========================================================== */
+  .bars {
+    padding-block: var(--space-lg) var(--space-2xl);
+  }
+
+  .bars__list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(9rem, 100%), 1fr));
+    gap: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border: 1px solid var(--line);
+  }
+
+  .bars__item {
+    display: grid;
+    gap: 0.15rem;
+    padding: var(--space-sm);
+    border-inline-end: 1px solid var(--line);
+  }
+
+  .bars__item:last-child {
+    border-inline-end: none;
+  }
+
+  .bars__swatch {
+    display: block;
+    block-size: 3rem;
+    margin-block-end: var(--space-2xs);
+  }
+
+  .bars__name {
+    font-size: var(--text-sm);
+    font-weight: 650;
+    color: var(--ink);
+  }
+
+  .bars__hex {
+    font-size: 0.625rem;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+  }
+
+  /* ===== Contato ========================================================== */
+  .contact {
+    padding-block-end: var(--space-2xl);
+  }
+
+  .contact__list {
+    display: grid;
+    gap: 0;
+    margin: 0;
+  }
+
+  .contact__row {
+    display: grid;
+    grid-template-columns: 7rem 1fr;
+    gap: var(--space-sm);
+    align-items: baseline;
+    padding-block: var(--space-xs);
+    border-block-end: 1px solid var(--line);
+  }
+
+  .contact__row dd {
+    margin: 0;
+  }
+
+  .contact__row a {
+    color: var(--accent-ink);
+    transition: color var(--dur-cut) var(--ease-signal);
+  }
+
+  .contact__row a:hover {
+    color: var(--ink);
+  }
+
+  .contact__sign {
+    margin-block-start: var(--space-lg);
+    max-inline-size: 52ch;
+    line-height: var(--leading-normal);
+    letter-spacing: 0.08em;
+    text-transform: none;
+  }
+</style>

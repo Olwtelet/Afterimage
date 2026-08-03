@@ -1,0 +1,180 @@
+---
+/**
+ * Modo calibração — o easter egg.
+ *
+ * O anterior era um "ultra glitch mode" que sacudia a página inteira e girava o
+ * matiz sem parar, com um overlay em `steps(1)` rodando para sempre. Divertido
+ * por três segundos, insuportável no quarto, e caro o tempo todo.
+ *
+ * Este revela o contrário: em vez de esconder a página atrás de ruído, ele
+ * mostra como ela é feita — a grade das sete barras sobreposta ao layout, com o
+ * leitor técnico da carta de ajuste. É o mesmo gesto de curiosidade, virado para
+ * dentro do projeto.
+ *
+ * ↑ ↑ ↓ ↓ ← → ← → B A
+ */
+import { BAR_ORDER } from '~/lib/smpte';
+---
+
+<div class="calibration" data-calibration hidden>
+  <div class="calibration__grid" aria-hidden="true">
+    {BAR_ORDER.map((bar) => <span style={`background:${bar.bar}`} />)}
+  </div>
+
+  <div class="calibration__readout u-mono" role="status">
+    <p class="calibration__line">
+      <strong>Modo calibração</strong>
+    </p>
+    <p class="calibration__line">Grade de 7 barras · SMPTE 75%</p>
+    <p class="calibration__line" data-calibration-size></p>
+    <button type="button" class="calibration__close" data-calibration-close>
+      Encerrar (Esc)
+    </button>
+  </div>
+</div>
+
+<script>
+  const SEQUENCE = [
+    'ArrowUp',
+    'ArrowUp',
+    'ArrowDown',
+    'ArrowDown',
+    'ArrowLeft',
+    'ArrowRight',
+    'ArrowLeft',
+    'ArrowRight',
+    'b',
+    'a',
+  ] as const;
+
+  function mount(overlay: HTMLElement, close: HTMLButtonElement): void {
+    const size = overlay.querySelector<HTMLElement>('[data-calibration-size]');
+    let progress = 0;
+
+    function report(): void {
+      if (size) size.textContent = `${window.innerWidth} × ${window.innerHeight}`;
+    }
+
+    function toggle(active: boolean): void {
+      overlay.hidden = !active;
+      document.documentElement.classList.toggle('is-calibrating', active);
+      if (active) {
+        report();
+        close.focus();
+      }
+    }
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !overlay.hidden) {
+        toggle(false);
+        return;
+      }
+
+      // Ignora enquanto alguém digita: a sequência não pode sequestrar campos.
+      const target = event.target;
+      if (
+        target instanceof HTMLElement &&
+        (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))
+      ) {
+        return;
+      }
+
+      const expected = SEQUENCE[progress];
+      progress = event.key.toLowerCase() === expected?.toLowerCase() ? progress + 1 : 0;
+
+      if (progress === SEQUENCE.length) {
+        progress = 0;
+        toggle(overlay.hidden);
+      }
+    });
+
+    close.addEventListener('click', () => toggle(false));
+    window.addEventListener('resize', report, { passive: true });
+  }
+
+  const overlay = document.querySelector<HTMLElement>('[data-calibration]');
+  const close = document.querySelector<HTMLButtonElement>('[data-calibration-close]');
+  if (overlay && close) mount(overlay, close);
+</script>
+
+<style is:global>
+  @layer components {
+    .calibration {
+      position: fixed;
+      inset: 0;
+      z-index: var(--z-tune);
+      pointer-events: none;
+    }
+
+    .calibration[hidden] {
+      display: none;
+    }
+
+    .calibration__grid {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      opacity: 0.09;
+      animation: calibrate var(--dur-pan) var(--ease-out);
+    }
+
+    .calibration__grid > * {
+      border-inline-end: 1px solid rgb(255 255 255 / 0.25);
+    }
+
+    @keyframes calibrate {
+      from {
+        opacity: 0;
+        transform: scaleY(0.9);
+      }
+    }
+
+    .calibration__readout {
+      position: absolute;
+      inset-block-end: var(--space-md);
+      inset-inline-start: var(--gutter);
+      pointer-events: auto;
+      padding: var(--space-sm);
+      background: var(--black);
+      border: 1px solid var(--line-strong);
+      border-inline-start: 3px solid var(--bar-yellow);
+      font-size: var(--text-2xs);
+      color: var(--ink-dim);
+      letter-spacing: 0.06em;
+    }
+
+    .calibration__line {
+      margin: 0;
+    }
+
+    .calibration__line strong {
+      color: var(--ink-yellow);
+      letter-spacing: var(--track-label);
+      text-transform: uppercase;
+    }
+
+    .calibration__close {
+      margin-block-start: var(--space-2xs);
+      font: inherit;
+      color: var(--ink-mute);
+      text-decoration: underline;
+      text-underline-offset: 0.2em;
+    }
+
+    .calibration__close:hover {
+      color: var(--ink);
+    }
+
+    /* Enquanto calibra, tudo perde a cor menos as barras: a página vira sinal
+       de referência. */
+    .is-calibrating body > *:not(.calibration) {
+      filter: saturate(0.15);
+      transition: filter var(--dur-pan) var(--ease-signal);
+    }
+
+    .is-calibrating :is(.u-rule, .strip) {
+      filter: none;
+    }
+  }
+</style>
