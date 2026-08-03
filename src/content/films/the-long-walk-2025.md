@@ -1,22 +1,31 @@
 ---
-title: "Continue caminhando. Parar nunca foi uma opção."
-date: 2026-04-18
+headline: "Continue caminhando. Parar nunca foi uma opção."
+summary: "Cem jovens. Uma única regra. Continue andando. Quem parar, morre."
+poster: "../../assets/films/the-long-walk-2025.jpg"
+posterAlt: "Cena de The Long Walk"
+tone: "#C93C3C"
+session:
+  date: 2026-04-18
+  time: "20:30"
+  room: "Sala 24"
+  roomUrl: "https://discord.gg/B5DKdJuuWc"
+features:
+  - title: "The Long Walk"
+    year: 2025
+    director: "Francis Lawrence"
+    runtime: 108
+    rating: "16"
+    genres:
+      - "Thriller"
+      - "Distopia"
+      - "Suspense"
 tags:
-  - thriller
-  - suspense
-  - distopia
-  - sobrevivência
-  - indicação-da-semana
-category: "indicação"
-featured_image: "/assets/images/the-long-walk-2025.jpg"
-excerpt: "Cem jovens. Uma única regra. Continue andando. Quem parar, morre."
-glitch_intensity: "high"
-color_scheme: "#C93C3C"
-layout: "layouts/post.njk"
+  - "thriller"
+  - "suspense"
+  - "distopia"
+  - "sobrevivência"
+  - "indicação-da-semana"
 ---
-
-# Continue caminhando. Parar nunca foi uma opção.
-
 Algumas histórias impressionam pelo tamanho das explosões.
 
 Outras conseguem prender sua atenção apenas com uma pergunta.
@@ -77,37 +86,7 @@ Cada participante chega com suas próprias motivações, medos e expectativas.
 
 Conforme a caminhada avança, suas relações se tornam uma parte essencial da experiência, tornando cada escolha ainda mais difícil.
 
-## Informações da Sessão
-
-📅 **Data**
-
-**Sábado — 18/04/2026**
-
-🕣 **Horário**
-
-**20:30 (Horário de Brasília)**
-
-📍 **Local**
-
-**[Sala 24](https://discord.gg/B5DKdJuuWc)**
-
 ---
-
-### Direção
-
-**Francis Lawrence**
-
-### Gêneros
-
-Thriller • Distopia • Suspense
-
-### Duração
-
-**1h48min**
-
-### Classificação
-
-**16 anos**
 
 ## Sem Spoilers
 
@@ -119,13 +98,6 @@ Entre na marcha sabendo apenas uma coisa:
 
 **Parar nunca foi uma opção.**
 
-## Regras da Sessão
-
-- Entre alguns minutos antes do início.
-- Mantenha o microfone mutado durante toda a exibição.
-- Evite qualquer tipo de spoiler no chat.
-- Aproveite a experiência.
-
 ## Conclusão
 
 Muito além de uma competição de sobrevivência, *The Long Walk* é uma reflexão sobre resistência, sacrifício e os limites que alguém é capaz de ultrapassar quando não existe alternativa.
@@ -133,9 +105,3 @@ Muito além de uma competição de sobrevivência, *The Long Walk* é uma reflex
 É um suspense que não depende de sustos para prender o espectador, mas da tensão crescente construída a cada passo.
 
 Uma excelente escolha para quem gosta de distopias, histórias psicológicas e adaptações de Stephen King que permanecem na mente muito depois dos créditos finais.
-
----
-
-🍿 **Filmes excepcionalmente bons. Todos os sábados.**
-
-**— Filmes HD Online Grátis**

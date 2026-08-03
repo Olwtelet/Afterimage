@@ -1,22 +1,41 @@
 ---
-title: "Duas histórias. Um único dia de sobrevivência."
-date: 2026-07-25
+headline: "Duas histórias. Um único dia de sobrevivência."
+kicker: "Sessão Dupla Especial. Uma noite inteira dedicada ao horror."
+summary: "Uma noiva, dois jogos mortais e uma tradição capaz de transformar um casamento em uma luta desesperada pela sobrevivência."
+poster: "../../assets/films/ready-or-not-double-feature-2026.jpg"
+posterAlt: "Cena de Casamento Sangrento e Casamento Sangrento: A Viúva"
+tone: "#8B0000"
+session:
+  date: 2026-07-25
+  time: "19:30"
+  room: "Sala 24"
+  roomUrl: "https://discord.gg/B5DKdJuuWc"
+features:
+  - title: "Casamento Sangrento"
+    year: 2019
+    director: "Matt Bettinelli-Olpin & Tyler Gillett"
+    runtime: 95
+    time: "19:30"
+    genres:
+      - "Terror"
+      - "Suspense"
+      - "Comédia Sombria"
+  - title: "Casamento Sangrento: A Viúva"
+    year: 2026
+    director: "Matt Bettinelli-Olpin & Tyler Gillett"
+    runtime: 108
+    time: "21:30"
+    genres:
+      - "Terror"
+      - "Suspense"
+      - "Comédia Sombria"
 tags:
-  - sessão-dupla
-  - terror
-  - suspense
-  - comédia
-  - sobrevivência
-category: "sessão-dupla"
-featured_image: "/assets/images/ready-or-not-double-feature-2026.jpg"
-excerpt: "Uma noiva, dois jogos mortais e uma tradição capaz de transformar um casamento em uma luta desesperada pela sobrevivência."
-glitch_intensity: "high"
-color_scheme: "#8B0000"
-layout: "layouts/post.njk"
+  - "sessão-dupla"
+  - "terror"
+  - "suspense"
+  - "comédia"
+  - "sobrevivência"
 ---
-
-# Duas histórias. Um único dia de sobrevivência.
-
 Algumas famílias têm tradições.
 
 A família Le Domas tem um ritual.
@@ -27,11 +46,11 @@ Prepare-se para uma maratona repleta de tensão, violência estilizada e revirav
 
 ---
 
-# 🍷 1ª EXIBIÇÃO — Casamento Sangrento (2019)
+## 1ª EXIBIÇÃO — Casamento Sangrento (2019)
 
 **Horário:** **19:30 (Horário de Brasília)**
 
-## A Premissa
+### A Premissa
 
 Grace acredita estar vivendo o dia mais feliz de sua vida ao se casar com o herdeiro de uma família extremamente rica e tradicional.
 
@@ -41,32 +60,20 @@ O que começa como uma inocente brincadeira transforma-se rapidamente em um jogo
 
 Para sobreviver até o amanhecer, Grace precisará enfrentar uma família disposta a fazer qualquer coisa para preservar sua tradição.
 
-### O que esperar
+#### O que esperar
 
 - Terror com muito humor ácido.
 - Suspense crescente do início ao fim.
 - Personagens memoráveis.
 - Uma protagonista impossível de esquecer.
 
-### Direção
-
-**Matt Bettinelli-Olpin & Tyler Gillett**
-
-### Gêneros
-
-Terror • Suspense • Comédia Sombria
-
-### Duração
-
-**1h35min**
-
 ---
 
-# 🩸 2ª EXIBIÇÃO — Casamento Sangrento: A Viúva (2026)
+## 2ª EXIBIÇÃO — Casamento Sangrento: A Viúva (2026)
 
 **Horário:** **21:30 (Horário de Brasília)**
 
-## A Premissa
+### A Premissa
 
 Momentos após sobreviver ao massacre que mudou sua vida, Grace descobre que sua luta estava longe de terminar.
 
@@ -74,24 +81,12 @@ Agora, um novo jogo mortal coloca diferentes famílias ocultistas em rota de col
 
 Mais perigosa do que nunca, ela precisará enfrentar um inimigo muito maior do que imaginava.
 
-### O que esperar
+#### O que esperar
 
 - Escala ainda maior que a do primeiro filme.
 - Novos personagens e novas regras.
 - Humor sombrio aliado a cenas de tensão constante.
 - Continuação direta dos acontecimentos do original. :contentReference[oaicite:0]{index=0}
-
-### Direção
-
-**Matt Bettinelli-Olpin & Tyler Gillett**
-
-### Gêneros
-
-Terror • Suspense • Comédia Sombria
-
-### Duração
-
-**1h48min** :contentReference[oaicite:1]{index=1}
 
 ---
 
@@ -102,16 +97,6 @@ Poucas continuações conseguem expandir o universo do filme original sem abando
 Assistir aos dois filmes na mesma noite permite acompanhar a evolução da protagonista, entender melhor os segredos por trás da família Le Domas e perceber como a franquia amplia seu universo mantendo a mistura de terror, humor ácido e sobrevivência que conquistou o público.
 
 É uma oportunidade perfeita para experimentar essa história da maneira como ela foi construída: um capítulo levando diretamente ao outro.
-
-## Informações da Sessão
-
-📅 **Data**
-
-**Sábado — 25/07/2026**
-
-📍 **Local**
-
-**[Sala 24](https://discord.gg/B5DKdJuuWc)**
 
 ---
 
@@ -129,13 +114,6 @@ Evite pesquisar sobre a sequência antes da primeira exibição e preserve todas
 
 Cada revelação faz parte da diversão.
 
-## Regras da Sessão
-
-- Entre no horário para não perder nenhuma exibição.
-- Mantenha o microfone mutado durante os filmes.
-- Evite spoilers entre a primeira e a segunda sessão.
-- Aproveite a experiência.
-
 ## Conclusão
 
 Da tensão claustrofóbica do primeiro jogo à expansão do universo apresentada na sequência, esta Sessão Dupla reúne duas das produções mais divertidas do terror contemporâneo.
@@ -143,9 +121,3 @@ Da tensão claustrofóbica do primeiro jogo à expansão do universo apresentada
 Violência estilizada, humor ácido, personagens marcantes e muita adrenalina fazem desta uma maratona perfeita para quem gosta de horror moderno.
 
 Uma noite inteira dedicada à sobrevivência.
-
----
-
-🍿 **Sessão Dupla Especial. Uma noite inteira dedicada ao horror.**
-
-**— Filmes HD Online Grátis**

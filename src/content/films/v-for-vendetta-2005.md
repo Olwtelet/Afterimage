@@ -1,23 +1,33 @@
 ---
-title: "Ideias são à prova de balas."
-date: 2026-07-04
+headline: "Ideias são à prova de balas."
+kicker: "Um clássico moderno sobre liberdade, resistência e o poder das ideias."
+summary: "Em um futuro dominado pelo medo, um homem mascarado desafia um regime totalitário e prova que nenhuma ideia pode ser executada."
+poster: "../../assets/films/v-for-vendetta-2005.jpg"
+posterAlt: "Cena de V de Vingança"
+tone: "#A31222"
+session:
+  date: 2026-07-04
+  time: "20:30"
+  room: "Sala 24"
+  roomUrl: "https://discord.gg/B5DKdJuuWc"
+features:
+  - title: "V de Vingança"
+    year: 2005
+    director: "James McTeigue"
+    runtime: 132
+    rating: "16"
+    genres:
+      - "Ação"
+      - "Drama"
+      - "Ficção Científica"
 tags:
-  - ação
-  - drama
-  - ficção-científica
-  - cult
-  - clássico
-  - indicação-da-semana
-category: "indicação"
-featured_image: "/assets/images/v-for-vendetta-2005.jpg"
-excerpt: "Em um futuro dominado pelo medo, um homem mascarado desafia um regime totalitário e prova que nenhuma ideia pode ser executada."
-glitch_intensity: "medium"
-color_scheme: "#A31222"
-layout: "layouts/post.njk"
+  - "ação"
+  - "drama"
+  - "ficção-científica"
+  - "cult"
+  - "clássico"
+  - "indicação-da-semana"
 ---
-
-# Ideias são à prova de balas.
-
 Alguns filmes entretêm.
 
 Outros permanecem relevantes por décadas.
@@ -66,37 +76,7 @@ As relações construídas durante a narrativa dão ainda mais força aos confli
 
 Mais do que cenas de ação, *V de Vingança* é lembrado por discursos, conversas e reflexões que permanecem na memória muito depois dos créditos finais.
 
-## Informações da Sessão
-
-📅 **Data**
-
-**Sábado — 04/07/2026**
-
-🕣 **Horário**
-
-**20:30 (Horário de Brasília)**
-
-📍 **Local**
-
-**[Sala 24](https://discord.gg/B5DKdJuuWc)**
-
 ---
-
-### Direção
-
-**James McTeigue**
-
-### Gêneros
-
-Ação • Drama • Ficção Científica
-
-### Duração
-
-**2h12min**
-
-### Classificação
-
-**16 anos**
 
 ## Sem Spoilers
 
@@ -106,13 +86,6 @@ Permita que seus personagens, seus diálogos e seus mistérios conduzam a experi
 
 Algumas ideias só revelam toda a sua força quando descobertas no momento certo.
 
-## Regras da Sessão
-
-- Entre alguns minutos antes do início.
-- Mantenha o microfone mutado durante toda a exibição.
-- Evite qualquer tipo de spoiler no chat.
-- Aproveite a experiência.
-
 ## Conclusão
 
 Mais do que um clássico da ficção científica, *V de Vingança* é uma obra sobre coragem, identidade e o poder transformador das ideias.
@@ -120,11 +93,3 @@ Mais do que um clássico da ficção científica, *V de Vingança* é uma obra s
 Com uma narrativa envolvente, atuações memoráveis e reflexões que permanecem atuais, o filme continua sendo uma das adaptações mais impactantes dos quadrinhos para o cinema.
 
 Uma escolha indispensável para quem aprecia histórias inteligentes, personagens marcantes e filmes capazes de inspirar debates muito depois do encerramento da sessão.
-
----
-
-🎭 **Um clássico moderno sobre liberdade, resistência e o poder das ideias.**
-
-🍿 **Filmes excepcionalmente bons. Todos os sábados.**
-
-**— Filmes HD Online Grátis**

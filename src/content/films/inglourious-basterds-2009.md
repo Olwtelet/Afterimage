@@ -1,23 +1,33 @@
 ---
-title: "A guerra será reescrita."
-date: 2026-06-27
+headline: "A guerra será reescrita."
+kicker: "Um dos filmes mais marcantes de Quentin Tarantino, combinando diálogos memoráveis, tensão constante e uma releitura ousada da história."
+summary: "Quentin Tarantino transforma um dos períodos mais sombrios da história em uma releitura ousada, marcada por diálogos inesquecíveis, tensão e vingança."
+poster: "../../assets/films/inglourious-basterds-2009.jpg"
+posterAlt: "Cena de Bastardos Inglórios"
+tone: "#8B1E1E"
+session:
+  date: 2026-06-27
+  time: "20:30"
+  room: "Sala 24"
+  roomUrl: "https://discord.gg/B5DKdJuuWc"
+features:
+  - title: "Bastardos Inglórios"
+    year: 2009
+    director: "Quentin Tarantino"
+    runtime: 153
+    rating: "18"
+    genres:
+      - "Guerra"
+      - "Drama"
+      - "Ação"
 tags:
-  - ação
-  - drama
-  - guerra
-  - vingança
-  - clássico
-  - indicação-da-semana
-category: "indicação"
-featured_image: "/assets/images/inglourious-basterds-2009.jpg"
-excerpt: "Quentin Tarantino transforma um dos períodos mais sombrios da história em uma releitura ousada, marcada por diálogos inesquecíveis, tensão e vingança."
-glitch_intensity: "medium"
-color_scheme: "#8B1E1E"
-layout: "layouts/post.njk"
+  - "ação"
+  - "drama"
+  - "guerra"
+  - "vingança"
+  - "clássico"
+  - "indicação-da-semana"
 ---
-
-# A guerra será reescrita.
-
 Existem filmes de guerra que buscam retratar a História.
 
 Outros escolhem reimaginá-la.
@@ -64,37 +74,7 @@ Tarantino transforma pequenos momentos em sequências memoráveis, construindo u
 
 Sem compromisso com os fatos históricos, *Bastardos Inglórios* propõe uma versão alternativa da Segunda Guerra Mundial, utilizando o cinema como ferramenta de imaginação, justiça e vingança.
 
-## Informações da Sessão
-
-📅 **Data**
-
-**Sábado — 27/06/2026**
-
-🕣 **Horário**
-
-**20:30 (Horário de Brasília)**
-
-📍 **Local**
-
-**[Sala 24](https://discord.gg/B5DKdJuuWc)**
-
 ---
-
-### Direção
-
-**Quentin Tarantino**
-
-### Gêneros
-
-Guerra • Drama • Ação
-
-### Duração
-
-**2h33min**
-
-### Classificação
-
-**18 anos**
 
 ## Sem Spoilers
 
@@ -104,13 +84,6 @@ Quanto menos você souber sobre seus personagens, seus planos e seus encontros, 
 
 Prepare-se para assistir a um filme que surpreende não apenas pelo que acontece, mas pela maneira como tudo é conduzido.
 
-## Regras da Sessão
-
-- Entre alguns minutos antes do início.
-- Mantenha o microfone mutado durante toda a exibição.
-- Evite qualquer tipo de spoiler no chat.
-- Aproveite a experiência.
-
 ## Conclusão
 
 Mais do que um filme de guerra, *Bastardos Inglórios* é uma celebração do poder do cinema de reinventar histórias.
@@ -118,11 +91,3 @@ Mais do que um filme de guerra, *Bastardos Inglórios* é uma celebração do po
 Com atuações memoráveis, diálogos brilhantes, personagens inesquecíveis e a assinatura inconfundível de Quentin Tarantino, esta é uma obra que continua sendo referência mais de uma década após seu lançamento.
 
 Uma escolha obrigatória para quem aprecia grandes roteiros, suspense bem construído e filmes capazes de transformar cada cena em um momento memorável.
-
----
-
-🔥 **Um dos filmes mais marcantes de Quentin Tarantino, combinando diálogos memoráveis, tensão constante e uma releitura ousada da história.**
-
-🍿 **Filmes excepcionalmente bons. Todos os sábados.**
-
-**— Filmes HD Online Grátis**

@@ -1,22 +1,31 @@
 ---
-title: "A fortuna da família está à venda. E ele pretende comprá-la com vingança."
-date: 2026-08-15
+headline: "A fortuna da família está à venda. E ele pretende comprá-la com vingança."
+kicker: "Uma comédia de humor ácido onde vingança, ambição e herança se encontram em um plano tão inteligente quanto imprevisível."
+summary: "Deserdado desde o nascimento, um homem transforma a disputa por uma herança bilionária em um jogo mortal repleto de humor ácido e reviravoltas."
+poster: "../../assets/films/the-inheritance-2025.webp"
+posterAlt: "Cena de Manual Prático da Vingança Lucrativa"
+tone: "#7A4B1F"
+session:
+  date: 2026-08-15
+  time: "20:30"
+  room: "Sala 24"
+  roomUrl: "https://discord.gg/B5DKdJuuWc"
+features:
+  - title: "Manual Prático da Vingança Lucrativa"
+    year: 2025
+    director: "Dan Berk & Robert Olsen"
+    runtime: 99
+    rating: "16"
+    genres:
+      - "Comédia"
+      - "Suspense"
 tags:
-  - comédia
-  - suspense
-  - crime
-  - vingança
-  - indicação-da-semana
-category: "indicação"
-featured_image: "/assets/images/the-inheritance-2025.jpg"
-excerpt: "Deserdado desde o nascimento, um homem transforma a disputa por uma herança bilionária em um jogo mortal repleto de humor ácido e reviravoltas."
-glitch_intensity: "medium"
-color_scheme: "#7A4B1F"
-layout: "layouts/post.njk"
+  - "comédia"
+  - "suspense"
+  - "crime"
+  - "vingança"
+  - "indicação-da-semana"
 ---
-
-# A fortuna da família está à venda. E ele pretende comprá-la com vingança.
-
 Famílias brigam por heranças desde que o mundo é mundo.
 
 Mas poucas disputas chegam tão longe quanto esta.
@@ -61,37 +70,7 @@ O filme encontra humor justamente nas situações mais absurdas, utilizando a di
 
 Mais do que uma história sobre dinheiro, o filme explora até onde alguém é capaz de ir quando acredita que a vida lhe deve uma reparação.
 
-## Informações da Sessão
-
-📅 **Data**
-
-**Sábado — 08/08/2026**
-
-🕣 **Horário**
-
-**20:30 (Horário de Brasília)**
-
-📍 **Local**
-
-**[Sala 24](https://discord.gg/B5DKdJuuWc)**
-
 ---
-
-### Direção
-
-**Dan Berk & Robert Olsen**
-
-### Gêneros
-
-Comédia • Suspense
-
-### Duração
-
-**1h39min**
-
-### Classificação
-
-**16 anos**
 
 ## Sem Spoilers
 
@@ -100,13 +79,6 @@ As maiores surpresas de *Manual Prático da Vingança Lucrativa* acontecem justa
 Evite pesquisar detalhes sobre a trama antes da sessão.
 
 Quanto menos você souber sobre os personagens e seus planos, mais divertida será a experiência.
-
-## Regras da Sessão
-
-- Entre alguns minutos antes do início.
-- Mantenha o microfone mutado durante toda a exibição.
-- Evite qualquer tipo de spoiler no chat.
-- Aproveite a experiência.
 
 ## Conclusão
 
@@ -118,9 +90,4 @@ Uma excelente escolha para quem aprecia comédias sombrias, histórias cheias de
 
 ---
 
-💰 **Uma comédia de humor ácido onde vingança, ambição e herança se encontram em um plano tão inteligente quanto imprevisível.**
-
-🍿 **Filmes excepcionalmente bons. Todos os sábados.**
-
-**— Filmes HD Online Grátis**
 ```

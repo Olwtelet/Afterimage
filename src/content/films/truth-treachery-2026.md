@@ -1,23 +1,33 @@
 ---
-title: "Quando a lealdade ao país entra em conflito com a consciência."
-date: 2026-08-08
+headline: "Quando a lealdade ao país entra em conflito com a consciência."
+kicker: "Uma emocionante história de coragem, consciência e resistência inspirada em fatos reais."
+summary: "Inspirado em uma história real, um jovem desafia um dos regimes mais cruéis da história ao escolher a verdade acima do medo."
+poster: "../../assets/films/truth-treachery-2026.webp"
+posterAlt: "Cena de Verdade e Traição"
+tone: "#4A4A4A"
+session:
+  date: 2026-08-08
+  time: "20:30"
+  room: "Sala 24"
+  roomUrl: "https://discord.gg/B5DKdJuuWc"
+features:
+  - title: "Verdade e Traição"
+    year: 2025
+    director: "Matt Whitaker"
+    runtime: 121
+    rating: "16"
+    genres:
+      - "Drama"
+      - "Histórico"
+      - "Suspense"
 tags:
-  - drama
-  - suspense
-  - histórico
-  - guerra
-  - clássico
-  - indicação-da-semana
-category: "indicação"
-featured_image: "/assets/images/truth-treachery-2026.jpg"
-excerpt: "Inspirado em uma história real, um jovem desafia um dos regimes mais cruéis da história ao escolher a verdade acima do medo."
-glitch_intensity: "medium"
-color_scheme: "#4A4A4A"
-layout: "layouts/post.njk"
+  - "drama"
+  - "suspense"
+  - "histórico"
+  - "guerra"
+  - "clássico"
+  - "indicação-da-semana"
 ---
-
-# Quando a lealdade ao país entra em conflito com a consciência.
-
 A maioria das grandes histórias de guerra acontece nos campos de batalha.
 
 Esta acontece dentro da consciência de um adolescente.
@@ -62,37 +72,7 @@ Cada panfleto distribuído, cada encontro secreto e cada decisão carregam o ris
 
 A tensão acompanha toda a narrativa, mesmo sem depender de cenas de ação.
 
-## Informações da Sessão
-
-📅 **Data**
-
-**Sábado — 08/08/2026**
-
-🕣 **Horário**
-
-**20:30 (Horário de Brasília)**
-
-📍 **Local**
-
-**[Sala 24](https://discord.gg/B5DKdJuuWc)**
-
 ---
-
-### Direção
-
-**Matt Whitaker**
-
-### Gêneros
-
-Drama • Histórico • Suspense
-
-### Duração
-
-**2h01min**
-
-### Classificação
-
-**16 anos**
 
 ## Sem Spoilers
 
@@ -101,13 +81,6 @@ Esta é uma história cujo verdadeiro impacto está em acompanhar as escolhas de
 Evite pesquisar detalhes sobre os acontecimentos antes da sessão.
 
 Permita que cada descoberta, cada risco e cada momento de coragem aconteçam naturalmente.
-
-## Regras da Sessão
-
-- Entre alguns minutos antes do início.
-- Mantenha o microfone mutado durante toda a exibição.
-- Evite qualquer tipo de spoiler no chat.
-- Aproveite a experiência.
 
 ## Conclusão
 
@@ -119,9 +92,4 @@ Uma excelente escolha para quem aprecia dramas históricos inspiradores, histór
 
 ---
 
-🕊️ **Uma emocionante história de coragem, consciência e resistência inspirada em fatos reais.**
-
-🍿 **Filmes excepcionalmente bons. Todos os sábados.**
-
-**— Filmes HD Online Grátis**
 ```

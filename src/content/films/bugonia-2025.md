@@ -1,23 +1,33 @@
 ---
-title: "E se a conspiração fosse real?"
-date: 2026-07-18
+headline: "E se a conspiração fosse real?"
+kicker: "Uma sátira perturbadora sobre paranoia, poder e conspirações, dirigida por um dos cineastas mais originais da atualidade."
+summary: "Dois conspiracionistas sequestram uma poderosa CEO acreditando que ela é uma alienígena infiltrada. Mas a verdade pode ser ainda mais desconcertante."
+poster: "../../assets/films/bugonia-2025.webp"
+posterAlt: "Cena de Bugonia"
+tone: "#556B2F"
+session:
+  date: 2026-07-18
+  time: "20:30"
+  room: "Sala 24"
+  roomUrl: "https://discord.gg/B5DKdJuuWc"
+features:
+  - title: "Bugonia"
+    year: 2025
+    director: "Yorgos Lanthimos"
+    runtime: 118
+    rating: "18"
+    genres:
+      - "Suspense Psicológico"
+      - "Ficção Científica"
+      - "Comédia Sombria"
 tags:
-  - suspense
-  - ficção-científica
-  - comédia
-  - perturbador
-  - bizarro
-  - indicação-da-semana
-category: "indicação"
-featured_image: "/assets/images/bugonia-2025.jpg"
-excerpt: "Dois conspiracionistas sequestram uma poderosa CEO acreditando que ela é uma alienígena infiltrada. Mas a verdade pode ser ainda mais desconcertante."
-glitch_intensity: "high"
-color_scheme: "#556B2F"
-layout: "layouts/post.njk"
+  - "suspense"
+  - "ficção-científica"
+  - "comédia"
+  - "perturbador"
+  - "bizarro"
+  - "indicação-da-semana"
 ---
-
-# E se a conspiração fosse real?
-
 Teorias da conspiração costumam nascer da desconfiança.
 
 Mas o que acontece quando alguém decide agir como se todas elas fossem verdade?
@@ -66,37 +76,7 @@ O resultado é um humor desconfortável, característico das obras de Lanthimos.
 
 Mais interessada em ideias do que em grandes efeitos visuais, a narrativa utiliza elementos de ficção científica para levantar perguntas sobre identidade, verdade e confiança.
 
-## Informações da Sessão
-
-📅 **Data**
-
-**Sábado — 18/07/2026**
-
-🕣 **Horário**
-
-**20:30 (Horário de Brasília)**
-
-📍 **Local**
-
-**[Sala 24](https://discord.gg/B5DKdJuuWc)**
-
 ---
-
-### Direção
-
-**Yorgos Lanthimos**
-
-### Gêneros
-
-Suspense Psicológico • Ficção Científica • Comédia Sombria
-
-### Duração
-
-**1h58min**
-
-### Classificação
-
-**18 anos**
 
 ## Sem Spoilers
 
@@ -108,13 +88,6 @@ Permita-se entrar na sessão apenas com a pergunta que move todo o filme:
 
 **E se eles estiverem certos?**
 
-## Regras da Sessão
-
-- Entre alguns minutos antes do início.
-- Mantenha o microfone mutado durante toda a exibição.
-- Evite qualquer tipo de spoiler no chat.
-- Aproveite a experiência.
-
 ## Conclusão
 
 Misturando paranoia, humor sombrio e ficção científica de forma singular, *Bugonia* entrega uma experiência que desafia expectativas e convida o público a questionar suas próprias certezas.
@@ -122,11 +95,3 @@ Misturando paranoia, humor sombrio e ficção científica de forma singular, *Bu
 É um filme que prefere provocar dúvidas em vez de oferecer respostas prontas, mantendo a tensão até seus momentos finais.
 
 Uma excelente escolha para quem aprecia histórias originais, sátiras inteligentes e obras que permanecem abertas à interpretação muito depois do encerramento da sessão.
-
----
-
-🐝 **Uma sátira perturbadora sobre paranoia, poder e conspirações, dirigida por um dos cineastas mais originais da atualidade.**
-
-🍿 **Filmes excepcionalmente bons. Todos os sábados.**
-
-**— Filmes HD Online Grátis**

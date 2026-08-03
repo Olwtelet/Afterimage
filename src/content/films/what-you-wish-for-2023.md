@@ -1,23 +1,33 @@
 ---
-title: "A oportunidade perfeita pode esconder um preço impagável."
-date: 2026-07-16
+headline: "A oportunidade perfeita pode esconder um preço impagável."
+kicker: "Um thriller elegante que transforma ambição, identidade e privilégio em um jogo mortal de consequências imprevisíveis."
+summary: "Um chef endividado encontra a chance de viver a vida que sempre sonhou. Mas alguns privilégios escondem segredos impossíveis de suportar."
+poster: "../../assets/films/what-you-wish-for-2023.webp"
+posterAlt: "Cena de Aquilo que Você Deseja"
+tone: "#4B2E1F"
+session:
+  date: 2026-07-16
+  time: "20:30"
+  room: "Sala 24"
+  roomUrl: "https://discord.gg/B5DKdJuuWc"
+features:
+  - title: "Aquilo que Você Deseja"
+    year: 2023
+    director: "Nicholas Tomnay"
+    runtime: 102
+    rating: "16"
+    genres:
+      - "Suspense"
+      - "Thriller"
+      - "Drama"
 tags:
-  - suspense
-  - thriller
-  - drama
-  - crime
-  - obsessão
-  - indicação-da-semana
-category: "indicação"
-featured_image: "/assets/images/what-you-wish-for-2023.jpg"
-excerpt: "Um chef endividado encontra a chance de viver a vida que sempre sonhou. Mas alguns privilégios escondem segredos impossíveis de suportar."
-glitch_intensity: "medium"
-color_scheme: "#4B2E1F"
-layout: "layouts/post.njk"
+  - "suspense"
+  - "thriller"
+  - "drama"
+  - "crime"
+  - "obsessão"
+  - "indicação-da-semana"
 ---
-
-# A oportunidade perfeita pode esconder um preço impagável.
-
 Todos já imaginaram como seria começar do zero.
 
 Uma nova identidade.
@@ -68,37 +78,7 @@ Mais do que sobreviver, Ryan precisa decidir até onde está disposto a ir para 
 
 Cada escolha cobra um preço.
 
-## Informações da Sessão
-
-📅 **Data**
-
-**Quinta-Feira — 16/07/2026**
-
-🕣 **Horário**
-
-**20:30 (Horário de Brasília)**
-
-📍 **Local**
-
-**[Sala 24](https://discord.gg/B5DKdJuuWc)**
-
 ---
-
-### Direção
-
-**Nicholas Tomnay**
-
-### Gêneros
-
-Suspense • Thriller • Drama
-
-### Duração
-
-**1h42min**
-
-### Classificação
-
-**16 anos**
 
 ## Sem Spoilers
 
@@ -107,13 +87,6 @@ Suspense • Thriller • Drama
 Evite trailers completos e comentários sobre a trama.
 
 Quanto menos você souber antes da sessão, mais impactante será acompanhar cada descoberta ao lado do protagonista.
-
-## Regras da Sessão
-
-- Entre alguns minutos antes do início.
-- Mantenha o microfone mutado durante toda a exibição.
-- Evite qualquer tipo de spoiler no chat.
-- Aproveite a experiência.
 
 ## Conclusão
 
@@ -125,9 +98,4 @@ Uma excelente escolha para quem aprecia histórias inteligentes, cheias de suspe
 
 ---
 
-🍽️ **Um thriller elegante que transforma ambição, identidade e privilégio em um jogo mortal de consequências imprevisíveis.**
-
-🍿 **Filmes excepcionalmente bons. Todos os sábados.**
-
-**— Filmes HD Online Grátis**
 ```

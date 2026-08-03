@@ -1,24 +1,34 @@
 ---
-title: "E se você pudesse desbloquear todo o potencial da sua mente?"
-date: 2026-08-22
+headline: "E se você pudesse desbloquear todo o potencial da sua mente?"
+kicker: "Um thriller inteligente que explora os limites da ambição, da inteligência e do preço do poder."
+summary: "Uma droga experimental promete liberar todo o potencial da mente humana. O problema é que nenhum poder vem sem consequências."
+poster: "../../assets/films/limitless-2011.jpg"
+posterAlt: "Cena de Sem Limites"
+tone: "#2E5FA8"
+session:
+  date: 2026-08-22
+  time: "20:30"
+  room: "Sala 24"
+  roomUrl: "https://discord.gg/B5DKdJuuWc"
+features:
+  - title: "Sem Limites"
+    year: 2011
+    director: "Neil Burger"
+    runtime: 105
+    rating: "14"
+    genres:
+      - "Ficção Científica"
+      - "Suspense"
+      - "Thriller"
 tags:
-  - ficção-científica
-  - suspense
-  - thriller
-  - drama
-  - obsessão
-  - cult
-  - indicação-da-semana
-category: "indicação"
-featured_image: "/assets/images/limitless-2011.jpg"
-excerpt: "Uma droga experimental promete liberar todo o potencial da mente humana. O problema é que nenhum poder vem sem consequências."
-glitch_intensity: "medium"
-color_scheme: "#2E5FA8"
-layout: "layouts/post.njk"
+  - "ficção-científica"
+  - "suspense"
+  - "thriller"
+  - "drama"
+  - "obsessão"
+  - "cult"
+  - "indicação-da-semana"
 ---
-
-# E se você pudesse desbloquear todo o potencial da sua mente?
-
 Todos já imaginaram como seria ter uma memória perfeita.
 
 Aprender qualquer idioma em poucos dias.
@@ -71,37 +81,7 @@ Mais do que ação, o filme aposta em estratégia, manipulação e decisões dif
 
 Quando tudo parece possível, o verdadeiro desafio passa a ser manter o controle.
 
-## Informações da Sessão
-
-📅 **Data**
-
-**Sábado — 22/08/2026**
-
-🕣 **Horário**
-
-**20:30 (Horário de Brasília)**
-
-📍 **Local**
-
-**[Sala 24](https://discord.gg/B5DKdJuuWc)**
-
 ---
-
-### Direção
-
-**Neil Burger**
-
-### Gêneros
-
-Ficção Científica • Suspense • Thriller
-
-### Duração
-
-**1h45min**
-
-### Classificação
-
-**14 anos**
 
 ## Sem Spoilers
 
@@ -110,13 +90,6 @@ Grande parte da experiência de *Sem Limites* está em acompanhar a transformaç
 Evite pesquisar detalhes da trama antes da sessão.
 
 Quanto menos você souber, maior será o impacto de cada descoberta.
-
-## Regras da Sessão
-
-- Entre alguns minutos antes do início.
-- Mantenha o microfone mutado durante toda a exibição.
-- Evite qualquer tipo de spoiler no chat.
-- Aproveite a experiência.
 
 ## Conclusão
 
@@ -128,9 +101,4 @@ Uma excelente escolha para quem gosta de histórias inteligentes, cheias de tens
 
 ---
 
-🧠 **Um thriller inteligente que explora os limites da ambição, da inteligência e do preço do poder.**
-
-🍿 **Filmes excepcionalmente bons. Todos os sábados.**
-
-**— Filmes HD Online Grátis**
 ```

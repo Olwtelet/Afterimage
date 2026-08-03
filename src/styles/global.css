@@ -1,0 +1,21 @@
+/* =============================================================================
+   Ponto de entrada único de estilo.
+
+   A ordem das camadas é declarada aqui, uma vez. A partir daí a especificidade
+   deixa de ser uma corrida: um componente sempre vence a base, e utilitário
+   sempre vence componente, independentemente de quantos seletores cada regra
+   tenha. Foi exatamente o que faltou no arquivo de 1896 linhas anterior, onde
+   .main-content e .posts-grid eram declarados duas vezes e brigavam entre si.
+   ========================================================================== */
+
+@layer reset, tokens, base, components, utilities;
+
+/* Archivo com eixo de largura (wdth) e JetBrains Mono com eixo de peso (wght).
+   Cada @font-face traz unicode-range, então o navegador baixa só o subconjunto
+   latino que a página realmente usa — os demais nunca saem da rede. */
+@import '@fontsource-variable/archivo/wdth.css' layer(base);
+@import '@fontsource-variable/jetbrains-mono/wght.css' layer(base);
+
+@import './reset.css';
+@import './tokens.css';
+@import './base.css';

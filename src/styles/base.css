@@ -1,0 +1,269 @@
+/* =============================================================================
+   Base — elementos, tipografia, foco, primitivas de layout e de sinal
+   ========================================================================== */
+
+@layer base {
+  body {
+    background: var(--void);
+    color: var(--ink);
+    font-family: var(--font-display);
+    font-variation-settings: 'wdth' var(--wdth-normal);
+    font-size: var(--text-base);
+    line-height: var(--leading-normal);
+    font-synthesis: none;
+  }
+
+  ::selection {
+    background: var(--accent-bar);
+    color: var(--void);
+  }
+
+  /* --- Foco --------------------------------------------------------------
+     O site antigo não tinha um único :focus-visible em 1896 linhas. Aqui o anel
+     é global e usa a cor de acento corrente, então acompanha o tema da página. */
+  :focus-visible {
+    outline: 2px solid var(--accent-ink);
+    outline-offset: 3px;
+    border-radius: 1px;
+  }
+
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* --- Tipografia --------------------------------------------------------- */
+  .u-slate {
+    font-size: var(--text-slate);
+    font-weight: 800;
+    font-variation-settings: 'wdth' var(--wdth-wide);
+    line-height: var(--leading-tight);
+    letter-spacing: var(--track-slate);
+    text-transform: uppercase;
+    text-wrap: balance;
+  }
+
+  .u-title {
+    font-size: var(--text-3xl);
+    font-weight: 700;
+    font-variation-settings: 'wdth' 108;
+    line-height: var(--leading-snug);
+    letter-spacing: var(--track-tight);
+    text-wrap: balance;
+  }
+
+  .u-heading {
+    font-size: var(--text-xl);
+    font-weight: 650;
+    line-height: var(--leading-snug);
+    letter-spacing: var(--track-tight);
+    text-wrap: balance;
+  }
+
+  /* Etiqueta técnica: mono, caixa alta, condensada. É a voz de "equipamento"
+     do site e aparece em toda metadado — timecode, canal, duração, gênero. */
+  .u-label {
+    font-family: var(--font-mono);
+    font-size: var(--text-2xs);
+    font-weight: 500;
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .u-mono {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0;
+  }
+
+  .u-prose {
+    max-width: var(--measure);
+    font-size: var(--text-lg);
+    line-height: var(--leading-relaxed);
+    color: var(--ink-dim);
+  }
+
+  /* --- Layout -------------------------------------------------------------- */
+  .u-page {
+    width: 100%;
+    max-width: var(--page-max);
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
+
+  /* A grade das sete barras. Em telas estreitas ela colapsa para uma coluna,
+     mas a razão 7 permanece disponível via --bars para quem precisar dela. */
+  .u-bars {
+    display: grid;
+    grid-template-columns: repeat(var(--bars), minmax(0, 1fr));
+    gap: var(--gutter);
+  }
+
+  .u-stack {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .u-hidden {
+    display: none !important;
+  }
+
+  .u-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* --- Primitivas de sinal ------------------------------------------------- */
+
+  /* Filete de sete barras. Usado como divisória, sublinhado e assinatura. */
+  .u-rule {
+    height: 2px;
+    border: 0;
+    background: linear-gradient(
+      to right,
+      var(--bar-1) 0 14.2857%,
+      var(--bar-2) 14.2857% 28.5714%,
+      var(--bar-3) 28.5714% 42.8571%,
+      var(--bar-4) 42.8571% 57.1428%,
+      var(--bar-5) 57.1428% 71.4285%,
+      var(--bar-6) 71.4285% 85.7142%,
+      var(--bar-7) 85.7142% 100%
+    );
+  }
+
+  /* Aberração cromática sutil, no lugar do glitch infinito do site antigo.
+     É estática: dá densidade à tipografia sem custar um único frame. */
+  .u-bleed {
+    text-shadow:
+      -0.02em 0 0 color-mix(in srgb, var(--bar-red) 42%, transparent),
+      0.02em 0 0 color-mix(in srgb, var(--bar-cyan) 42%, transparent);
+  }
+
+  /* --- Conteúdo editorial --------------------------------------------------
+     Estilos do Markdown renderizado das fichas.                              */
+  .prose {
+    max-width: var(--measure);
+    font-size: var(--text-lg);
+    line-height: var(--leading-relaxed);
+    color: var(--ink-dim);
+  }
+
+  .prose > * + * {
+    margin-block-start: var(--space-md);
+  }
+
+  .prose h2 {
+    margin-block-start: var(--space-xl);
+    font-size: var(--text-2xl);
+    font-weight: 700;
+    font-variation-settings: 'wdth' 110;
+    line-height: var(--leading-snug);
+    letter-spacing: var(--track-tight);
+    color: var(--ink);
+    text-wrap: balance;
+  }
+
+  /* Marcador de barra à esquerda de cada seção: o índice do capítulo virando
+     um segmento da carta de ajuste. */
+  .prose h2::before {
+    content: '';
+    display: block;
+    width: 2.5rem;
+    height: 3px;
+    margin-block-end: var(--space-xs);
+    background: var(--accent-bar);
+  }
+
+  .prose h3 {
+    margin-block-start: var(--space-lg);
+    font-size: var(--text-lg);
+    font-weight: 650;
+    color: var(--ink);
+    letter-spacing: var(--track-tight);
+  }
+
+  .prose h4 {
+    margin-block-start: var(--space-md);
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--accent-ink);
+  }
+
+  .prose strong {
+    color: var(--ink);
+    font-weight: 650;
+  }
+
+  .prose em {
+    font-style: italic;
+    color: var(--ink);
+  }
+
+  .prose a {
+    color: var(--accent-ink);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
+    transition: background-color var(--dur-cut) var(--ease-signal);
+  }
+
+  .prose a:hover {
+    background: color-mix(in srgb, var(--accent-bar) 22%, transparent);
+  }
+
+  .prose blockquote {
+    padding-inline-start: var(--space-md);
+    border-inline-start: 3px solid var(--accent-bar);
+    color: var(--ink);
+    font-size: var(--text-xl);
+    line-height: var(--leading-snug);
+    letter-spacing: var(--track-tight);
+    text-wrap: balance;
+  }
+
+  .prose ul,
+  .prose ol {
+    padding-inline-start: var(--space-md);
+  }
+
+  .prose li + li {
+    margin-block-start: var(--space-2xs);
+  }
+
+  .prose li::marker {
+    color: var(--accent-bar);
+  }
+
+  .prose hr {
+    height: 1px;
+    border: 0;
+    background: var(--line);
+    margin-block: var(--space-xl);
+  }
+
+  .prose img {
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--line);
+  }
+
+  .prose code {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    padding: 0.1em 0.35em;
+    background: var(--raised);
+    border: 1px solid var(--line);
+    color: var(--ink-yellow);
+  }
+}

@@ -1,24 +1,33 @@
 ---
-title: "Sobreviva por 30 dias enquanto o mundo te caça."
-date: 2026-04-25
+headline: "Sobreviva por 30 dias enquanto o mundo te caça."
+summary: "Quando sobreviver se torna entretenimento, cada segundo pode ser o último."
+poster: "../../assets/films/the-running-man-2026.jpg"
+posterAlt: "Cena de The Running Man"
+tone: "#FF3B30"
+session:
+  date: 2026-04-25
+  time: "20:30"
+  room: "Sala 24"
+  roomUrl: "https://discord.gg/B5DKdJuuWc"
+features:
+  - title: "The Running Man"
+    year: 2025
+    director: "Edgar Wright"
+    runtime: 137
+    rating: "16"
+    genres:
+      - "Ação"
+      - "Thriller"
+      - "Ficção Científica"
 tags:
-  - ação
-  - thriller
-  - ficção-científica
-  - sobrevivência
-  - indicação-da-semana
-  - distopia
-  - suspense
-category: "indicação"
-featured_image: "/assets/images/the-running-man-2026.jpg"
-excerpt: "Quando sobreviver se torna entretenimento, cada segundo pode ser o último."
-glitch_intensity: "high"
-color_scheme: "#FF3B30"
-layout: "layouts/post.njk"
+  - "ação"
+  - "thriller"
+  - "ficção-científica"
+  - "sobrevivência"
+  - "indicação-da-semana"
+  - "distopia"
+  - "suspense"
 ---
-
-# Sobreviva por 30 dias enquanto o mundo te caça.
-
 Quando o entretenimento ultrapassa qualquer limite, sobreviver deixa de ser uma questão de sorte e passa a ser um espetáculo assistido pelo mundo inteiro.
 
 Nossa indicação desta semana coloca um homem comum diante da maior audiência do planeta, onde cada passo é transmitido ao vivo e cada erro pode custar sua vida. Um thriller de ação que mistura tensão, crítica social e ficção científica em um ritmo que dificilmente dá espaço para respirar.
@@ -64,53 +73,10 @@ A tensão aumenta conforme a caçada evolui.
 
 O espectador acompanha cada decisão sabendo que qualquer erro pode ser fatal.
 
-## Informações da Sessão
-
-📅 **Data**
-
-Sábado — 25/04/2026
-
-🕣 **Horário**
-
-20:30 (Horário de Brasília)
-
-📍 **Local**
-
-**[Sala 24](https://discord.gg/B5DKdJuuWc)**
-
 ---
-
-### Direção
-
-**Edgar Wright**
-
-### Gêneros
-
-Ação • Thriller • Ficção Científica
-
-### Duração
-
-2h17min
-
-### Classificação
-
-16 anos
-
-## Regras da Sessão
-
-- Entre no horário.
-- Mantenha o microfone mutado.
-- Evite spoilers durante a exibição.
-- Aproveite a experiência.
 
 ## Conclusão
 
 Mais do que uma grande produção de ação, *The Running Man* propõe uma reflexão sobre até onde o entretenimento pode chegar quando audiência vale mais do que vidas.
 
 Uma excelente escolha para quem gosta de suspense, perseguições inteligentes e ficção científica com críticas sociais.
-
----
-
-🍿 **Filmes excepcionalmente bons. Todos os sábados.**
-
-**— Filmes HD Online Grátis**

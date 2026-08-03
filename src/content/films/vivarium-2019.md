@@ -1,23 +1,33 @@
 ---
-title: "Nem toda casa é um lar."
-date: 2026-06-13
+headline: "Nem toda casa é um lar."
+kicker: "Um dos conceitos mais perturbadores e originais do cinema moderno."
+summary: "Uma casa perfeita. Um bairro perfeito. Um pesadelo do qual simplesmente não existe saída."
+poster: "../../assets/films/vivarium-2019.jpg"
+posterAlt: "Cena de Vivarium"
+tone: "#7BAF7A"
+session:
+  date: 2026-06-13
+  time: "20:30"
+  room: "Sala 24"
+  roomUrl: "https://discord.gg/B5DKdJuuWc"
+features:
+  - title: "Vivarium"
+    year: 2019
+    director: "Lorcan Finnegan"
+    runtime: 97
+    rating: "14"
+    genres:
+      - "Ficção Científica"
+      - "Suspense"
+      - "Terror Psicológico"
 tags:
-  - ficção-científica
-  - suspense
-  - terror
-  - perturbador
-  - obscuro
-  - indicação-da-semana
-category: "indicação"
-featured_image: "/assets/images/vivarium-2019.jpg"
-excerpt: "Uma casa perfeita. Um bairro perfeito. Um pesadelo do qual simplesmente não existe saída."
-glitch_intensity: "high"
-color_scheme: "#7BAF7A"
-layout: "layouts/post.njk"
+  - "ficção-científica"
+  - "suspense"
+  - "terror"
+  - "perturbador"
+  - "obscuro"
+  - "indicação-da-semana"
 ---
-
-# Nem toda casa é um lar.
-
 Comprar uma casa costuma representar o início de uma nova vida.
 
 Em *Vivarium*, esse mesmo sonho se transforma em um dos pesadelos mais inquietantes do cinema contemporâneo.
@@ -74,37 +84,7 @@ O verdadeiro desconforto não nasce apenas da situação vivida pelos protagonis
 
 Nasce da possibilidade de reconhecer, naquele cenário absurdo, reflexos da própria realidade.
 
-## Informações da Sessão
-
-📅 **Data**
-
-**Sábado — 13/06/2026**
-
-🕣 **Horário**
-
-**20:30 (Horário de Brasília)**
-
-📍 **Local**
-
-**[Sala 24](https://discord.gg/B5DKdJuuWc)**
-
 ---
-
-### Direção
-
-**Lorcan Finnegan**
-
-### Gêneros
-
-Ficção Científica • Suspense • Terror Psicológico
-
-### Duração
-
-**1h37min**
-
-### Classificação
-
-**14 anos**
 
 ## Sem Spoilers
 
@@ -116,13 +96,6 @@ Entre sabendo apenas o essencial.
 
 O restante faz parte da experiência.
 
-## Regras da Sessão
-
-- Entre alguns minutos antes do início.
-- Mantenha o microfone mutado durante toda a exibição.
-- Evite qualquer tipo de spoiler no chat.
-- Aproveite a experiência.
-
 ## Conclusão
 
 Com uma proposta original e uma atmosfera que mistura estranhamento, suspense e reflexão, *Vivarium* transforma um ambiente comum em um dos cenários mais perturbadores do cinema recente.
@@ -130,11 +103,3 @@ Com uma proposta original e uma atmosfera que mistura estranhamento, suspense e 
 É um filme que divide interpretações, provoca debates e desafia o espectador a encontrar significado em cada detalhe.
 
 Uma excelente escolha para quem aprecia ficção científica inteligente, terror psicológico e histórias que permanecem ecoando muito depois do fim da sessão.
-
----
-
-🏡 **Um dos conceitos mais perturbadores e originais do cinema moderno.**
-
-🍿 **Filmes excepcionalmente bons. Todos os sábados.**
-
-**— Filmes HD Online Grátis**

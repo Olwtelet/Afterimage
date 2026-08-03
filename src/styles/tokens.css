@@ -1,0 +1,146 @@
+/* =============================================================================
+   CARTA DE AJUSTE — tokens
+   =============================================================================
+
+   Nada aqui é escolhido por gosto. Toda a paleta sai de duas fontes reais:
+
+   1. As BARRAS SMPTE a 75% de amplitude, que são as sete cores oficiais do
+      projeto. Elas são usadas como GRÁFICO — filetes, superfícies, marcações.
+
+   2. O padrão PLUGE, a faixa de calibração que fica abaixo das barras e contém
+      negros logo abaixo, igual e logo acima do preto de referência. Ele fornece
+      toda a rampa de superfícies escuras do site, o que dá aos cinzas uma origem
+      concreta em vez de uma escolha arbitrária.
+
+   Cada barra tem duas formas:
+     --bar-*  cor SMPTE literal, para preencher áreas e desenhar. Não use em texto.
+     --ink-*  a mesma cor elevada até passar de 4.5:1 sobre --void, para texto.
+
+   As barras azul e vermelha a 75% rendem 1.7:1 e 3.1:1 sobre preto — ilegíveis.
+   Manter as duas formas separadas é o que permite usar o SMPTE de verdade sem
+   sacrificar contraste em lugar nenhum.
+   ========================================================================== */
+
+@layer tokens {
+  :root {
+    /* --- Barras SMPTE 75% (gráfico) ------------------------------------- */
+    --bar-white: #c0c0c0;
+    --bar-yellow: #c0c000;
+    --bar-cyan: #00c0c0;
+    --bar-green: #00c000;
+    --bar-magenta: #c000c0;
+    --bar-red: #c00000;
+    --bar-blue: #0000c0;
+
+    /* --- Barras elevadas (texto, ≥4.5:1 sobre --void) -------------------- */
+    --ink-white: #e8e9ea;
+    --ink-yellow: #d6d63b;
+    --ink-cyan: #3bd6d6;
+    --ink-green: #45d145;
+    --ink-magenta: #e85ae8;
+    --ink-red: #f0564b;
+    --ink-blue: #6e8cff;
+
+    /* --- Rampa PLUGE (superfícies) --------------------------------------- */
+    --void: #050506; /* abaixo do preto: fundo da página */
+    --black: #0a0b0c; /* preto de referência */
+    --surface: #101113;
+    --raised: #17191b;
+    --line: #23262a;
+    --line-strong: #33373c;
+
+    /* --- Texto ----------------------------------------------------------- */
+    --ink: #e8e9ea; /* 11.4:1 */
+    --ink-dim: #9ba0a6; /* 7.0:1  */
+    --ink-mute: #7a8087; /* 4.7:1  */
+
+    /* --- Cor de acento corrente -------------------------------------------
+       Cada filme reescreve estas duas variáveis com a sua barra. Todo componente
+       lê daqui, então tingir uma página inteira custa duas linhas.             */
+    --accent-bar: var(--bar-cyan);
+    --accent-ink: var(--ink-cyan);
+
+    /* --- Tipografia -------------------------------------------------------
+       Archivo tem eixo de largura (62%–125%): títulos expandidos e etiquetas
+       técnicas condensadas saem da mesma fonte, sem baixar um arquivo a mais. */
+    --font-display: 'Archivo Variable', 'Archivo', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', monospace;
+
+    --wdth-wide: 118;
+    --wdth-normal: 100;
+    --wdth-tight: 84;
+
+    /* Escala fluida ancorada em 360px–1600px de viewport. */
+    --text-2xs: 0.6875rem;
+    --text-xs: 0.75rem;
+    --text-sm: 0.8125rem;
+    --text-base: clamp(0.9375rem, 0.9rem + 0.16vw, 1.0625rem);
+    --text-lg: clamp(1.0625rem, 1rem + 0.3vw, 1.25rem);
+    --text-xl: clamp(1.25rem, 1.1rem + 0.66vw, 1.75rem);
+    --text-2xl: clamp(1.5rem, 1.24rem + 1.15vw, 2.5rem);
+    --text-3xl: clamp(1.875rem, 1.4rem + 2.1vw, 3.5rem);
+    --text-4xl: clamp(2.375rem, 1.42rem + 4.2vw, 5.5rem);
+    --text-slate: clamp(2.75rem, 0.9rem + 8.2vw, 9rem);
+
+    --leading-tight: 0.94;
+    --leading-snug: 1.15;
+    --leading-normal: 1.5;
+    --leading-relaxed: 1.68;
+
+    --track-slate: -0.035em;
+    --track-tight: -0.02em;
+    --track-normal: 0em;
+    --track-label: 0.14em;
+    --track-wide: 0.22em;
+
+    /* --- Espaço -----------------------------------------------------------
+       Progressão de quarta, para o ritmo vertical nunca ser acidental.        */
+    --space-3xs: 0.25rem;
+    --space-2xs: 0.5rem;
+    --space-xs: 0.75rem;
+    --space-sm: 1rem;
+    --space-md: 1.5rem;
+    --space-lg: 2.25rem;
+    --space-xl: 3.5rem;
+    --space-2xl: 5.5rem;
+    --space-3xl: clamp(5rem, 3rem + 9vw, 10rem);
+
+    /* --- Grade ------------------------------------------------------------
+       Sete colunas, uma por barra. É a régua de todo o layout.                */
+    --bars: 7;
+    --gutter: clamp(1rem, 0.4rem + 2.4vw, 2.5rem);
+    --measure: 68ch; /* linha de leitura confortável */
+    --page-max: 84rem;
+    --strip-height: 3px; /* faixa de sinal fixa no topo */
+
+    /* --- Movimento --------------------------------------------------------
+       Nomes de vocabulário de transmissão. Corte é instantâneo; wipe é a
+       passagem; lock é o instante em que o sinal sintoniza.                   */
+    --dur-cut: 90ms;
+    --dur-wipe: 220ms;
+    --dur-pan: 420ms;
+    --dur-lock: 640ms;
+
+    --ease-signal: cubic-bezier(0.2, 0.85, 0.25, 1);
+    --ease-snap: cubic-bezier(0.55, 0, 0.1, 1);
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+    /* --- Profundidade ------------------------------------------------------ */
+    --z-grain: 1;
+    --z-header: 60;
+    --z-strip: 70;
+    --z-overlay: 80;
+    --z-tune: 90;
+  }
+
+  /* Uma barra por índice, para percorrer as sete em laço no CSS. */
+  :root {
+    --bar-1: var(--bar-white);
+    --bar-2: var(--bar-yellow);
+    --bar-3: var(--bar-cyan);
+    --bar-4: var(--bar-green);
+    --bar-5: var(--bar-magenta);
+    --bar-6: var(--bar-red);
+    --bar-7: var(--bar-blue);
+  }
+}

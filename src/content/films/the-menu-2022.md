@@ -1,23 +1,33 @@
 ---
-title: "Nada será servido por acaso."
-date: 2026-06-30
+headline: "Nada será servido por acaso."
+kicker: "Cardápio da noite: tensão, ironia e desconforto psicológico."
+summary: "Um jantar exclusivo. Um chef lendário. Um cardápio preparado para revelar muito mais do que sabores."
+poster: "../../assets/films/the-menu-2022.jpg"
+posterAlt: "Cena de The Menu"
+tone: "#C46B2A"
+session:
+  date: 2026-06-30
+  time: "20:30"
+  room: "Sala 24"
+  roomUrl: "https://discord.gg/B5DKdJuuWc"
+features:
+  - title: "The Menu"
+    year: 2022
+    director: "Mark Mylod"
+    runtime: 107
+    rating: "16"
+    genres:
+      - "Suspense"
+      - "Terror Psicológico"
+      - "Comédia Sombria"
 tags:
-  - suspense
-  - terror
-  - comédia
-  - perturbador
-  - obsessão
-  - indicação-da-semana
-category: "indicação"
-featured_image: "/assets/images/the-menu-2022.jpg"
-excerpt: "Um jantar exclusivo. Um chef lendário. Um cardápio preparado para revelar muito mais do que sabores."
-glitch_intensity: "medium"
-color_scheme: "#C46B2A"
-layout: "layouts/post.njk"
+  - "suspense"
+  - "terror"
+  - "comédia"
+  - "perturbador"
+  - "obsessão"
+  - "indicação-da-semana"
 ---
-
-# Nada será servido por acaso.
-
 Alguns filmes conseguem transformar situações comuns em experiências inesquecíveis.
 
 Outros fazem você nunca mais olhar da mesma forma para algo tão simples quanto um jantar.
@@ -66,37 +76,7 @@ Mesmo nos momentos mais desconfortáveis, o filme encontra espaço para ironizar
 
 Sem depender de sustos constantes, *The Menu* constrói seu horror através da expectativa, dos diálogos e da inquietação provocada por cada nova revelação.
 
-## Informações da Sessão
-
-📅 **Data**
-
-**Sábado — 30/06/2026**
-
-🕣 **Horário**
-
-**20:30 (Horário de Brasília)**
-
-📍 **Local**
-
-**[Sala 24](https://discord.gg/B5DKdJuuWc)**
-
 ---
-
-### Direção
-
-**Mark Mylod**
-
-### Gêneros
-
-Suspense • Terror Psicológico • Comédia Sombria
-
-### Duração
-
-**1h47min**
-
-### Classificação
-
-**16 anos**
 
 ## Sem Spoilers
 
@@ -110,13 +90,6 @@ Sente-se à mesa.
 
 E aproveite cada prato.
 
-## Regras da Sessão
-
-- Entre alguns minutos antes do início.
-- Mantenha o microfone mutado durante toda a exibição.
-- Evite qualquer tipo de spoiler no chat.
-- Aproveite a experiência.
-
 ## Conclusão
 
 Muito além de um suspense ambientado em um restaurante, *The Menu* entrega uma experiência cinematográfica que mistura crítica social, humor inteligente e tensão psicológica de maneira extremamente original.
@@ -124,11 +97,3 @@ Muito além de um suspense ambientado em um restaurante, *The Menu* entrega uma 
 É um daqueles filmes que convida o espectador a interpretar cada detalhe, tornando cada diálogo e cada cena parte de um grande banquete cuidadosamente preparado.
 
 Uma escolha perfeita para quem aprecia histórias imprevisíveis, personagens marcantes e filmes que continuam provocando discussões muito depois dos créditos finais.
-
----
-
-🍷 **Cardápio da noite: tensão, ironia e desconforto psicológico.**
-
-🍿 **Filmes excepcionalmente bons. Todos os sábados.**
-
-**— Filmes HD Online Grátis**
