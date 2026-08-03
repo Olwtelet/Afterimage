@@ -1,0 +1,122 @@
+---
+/**
+ * Ficha técnica de uma exibição.
+ *
+ * Estes dados moravam soltos no meio da prosa, como sequências de `### Direção`
+ * seguidas de um parágrafo. Agora são campos validados, o que os torna também
+ * legíveis por máquina — é daqui que sai o JSON-LD de cada filme.
+ */
+import type { Feature } from '~/content.config';
+import { ratingLabelOf, runtimeOf } from '~/lib/format';
+
+interface Props {
+  feature: Feature;
+  /** Numeração da exibição, quando a sessão tem mais de uma. */
+  order?: number | undefined;
+}
+
+const { feature, order } = Astro.props;
+---
+
+<article class="sheet">
+  <header class="sheet__head">
+    {
+      order !== undefined && (
+        <span class="sheet__order u-mono" aria-hidden="true">
+          {String(order).padStart(2, '0')}
+        </span>
+      )
+    }
+    <h3 class="sheet__title">
+      {feature.title}
+      <span class="sheet__year u-mono">{feature.year}</span>
+    </h3>
+  </header>
+
+  <dl class="sheet__specs">
+    <div>
+      <dt class="u-label">Direção</dt>
+      <dd>{feature.director}</dd>
+    </div>
+    <div>
+      <dt class="u-label">Duração</dt>
+      <dd>{runtimeOf(feature.runtime)}</dd>
+    </div>
+    {
+      feature.rating && (
+        <div>
+          <dt class="u-label">Classificação</dt>
+          <dd>{ratingLabelOf(feature.rating)}</dd>
+        </div>
+      )
+    }
+    {
+      feature.time && (
+        <div>
+          <dt class="u-label">Início</dt>
+          <dd>{feature.time}</dd>
+        </div>
+      )
+    }
+    <div class="sheet__genres">
+      <dt class="u-label">Gêneros</dt>
+      <dd>{feature.genres.join(' · ')}</dd>
+    </div>
+  </dl>
+</article>
+
+<style>
+  .sheet {
+    padding-block: var(--space-sm);
+    border-block-start: 1px solid var(--line);
+  }
+
+  .sheet__head {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2xs);
+    margin-block-end: var(--space-sm);
+  }
+
+  .sheet__order {
+    font-size: 0.625rem;
+    color: var(--accent-ink);
+  }
+
+  .sheet__title {
+    font-size: var(--text-lg);
+    font-weight: 700;
+    font-variation-settings: 'wdth' 106;
+    letter-spacing: var(--track-tight);
+    color: var(--ink);
+  }
+
+  .sheet__year {
+    margin-inline-start: 0.4rem;
+    font-size: var(--text-sm);
+    font-weight: 400;
+    color: var(--ink-mute);
+  }
+
+  .sheet__specs {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+    gap: var(--space-sm);
+    margin: 0;
+  }
+
+  .sheet__genres {
+    grid-column: 1 / -1;
+  }
+
+  .sheet__specs dt {
+    margin-block-end: 0.2rem;
+  }
+
+  .sheet__specs dd {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--ink);
+    text-wrap: balance;
+  }
+</style>

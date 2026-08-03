@@ -1,0 +1,349 @@
+---
+import { Image } from 'astro:assets';
+import { render } from 'astro:content';
+
+import Base from '~/layouts/Base.astro';
+import FeatureSheet from '~/components/ui/FeatureSheet.astro';
+import SessionRules from '~/components/ui/SessionRules.astro';
+import SessionCard from '~/components/ui/SessionCard.astro';
+import { getSessions, relatedTo, stateOf, type Session } from '~/lib/catalog';
+import {
+  isoDurationOf,
+  isoInstantOf,
+  longDateOf,
+  runtimeOf,
+  sessionCodeOf,
+  weekdayOf,
+} from '~/lib/format';
+import { SITE } from '~/lib/site';
+import { slugify } from '~/lib/slug';
+
+/**
+ * Sem anotar `getStaticPaths` com o tipo `GetStaticPaths`: a anotação alarga
+ * `props` para `Record<string, unknown>` e essa inferência sobrepõe a interface
+ * `Props`. Deixando o Astro inferir do objeto devolvido, cada prop chega tipada.
+ */
+export async function getStaticPaths() {
+  const sessions = await getSessions();
+  return sessions.map((session) => ({
+    params: { slug: session.slug },
+    props: { session, sessions: sessions as readonly Session[] },
+  }));
+}
+
+const { session, sessions } = Astro.props;
+const { headline, kicker, summary, poster, posterAlt, features, tags, session: slot } =
+  session.entry.data;
+
+const { Content } = await render(session.entry);
+
+const now = new Date();
+const state = stateOf(session, now);
+const related = relatedTo(sessions, session);
+const isDouble = features.length > 1;
+
+const STATE_LABEL = {
+  'no-ar': 'No ar agora',
+  proxima: 'A seguir',
+  agendada: 'Agendada',
+  exibida: 'Exibida',
+} as const;
+
+/* --- Dados estruturados ---------------------------------------------------
+   Só é possível porque a ficha agora carrega os campos de sessão validados; na
+   versão anterior essa informação existia apenas como prosa em Markdown. */
+const startsAt = isoInstantOf(slot.date, slot.time);
+const pageUrl = new URL(session.href, SITE.url).href;
+
+const schema = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'ScreeningEvent',
+    name: `${features.map((feature) => feature.title).join(' + ')} — ${SITE.name}`,
+    description: summary,
+    startDate: startsAt,
+    endDate: session.endsAt.toISOString(),
+    eventStatus: 'https://schema.org/EventScheduled',
+    eventAttendanceMode: 'https://schema.org/OnlineEventAttendanceMode',
+    url: pageUrl,
+    location: {
+      '@type': 'VirtualLocation',
+      name: slot.room,
+      url: slot.roomUrl,
+    },
+    organizer: { '@type': 'Organization', name: SITE.name, url: SITE.url },
+    isAccessibleForFree: true,
+    workPresented: features.map((feature) => ({
+      '@type': 'Movie',
+      name: feature.title,
+      dateCreated: String(feature.year),
+      director: { '@type': 'Person', name: feature.director },
+      genre: feature.genres,
+      duration: isoDurationOf(feature.runtime),
+      ...(feature.rating ? { contentRating: `BR-${feature.rating}` } : {}),
+    })),
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Início', item: SITE.url },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Programação',
+        item: new URL('/programacao/', SITE.url).href,
+      },
+      { '@type': 'ListItem', position: 3, name: headline, item: pageUrl },
+    ],
+  },
+];
+---
+
+<Base
+  title={headline}
+  description={summary}
+  type="article"
+  accent={session.bar}
+  schema={schema}
+>
+  <article class="film">
+    <!-- ===== Slate de abertura ========================================== -->
+    <header class="film__slate">
+      <div class="film__frame">
+        <Image
+          src={poster}
+          alt={posterAlt}
+          widths={[640, 960, 1440, 1920]}
+          sizes="100vw"
+          loading="eager"
+          fetchpriority="high"
+          class="film__poster"
+        />
+        <div class="film__veil" aria-hidden="true"></div>
+      </div>
+
+      <div class="film__head u-page">
+        <p class="film__eyebrow u-label">
+          <span>{STATE_LABEL[state]}</span>
+          <span aria-hidden="true">·</span>
+          <span>{sessionCodeOf(slot.date)}</span>
+          {isDouble && <><span aria-hidden="true">·</span><span>Sessão dupla</span></>}
+        </p>
+
+        <h1 class="film__title u-slate u-bleed">{headline}</h1>
+
+        <p class="film__films u-mono">
+          {features.map((feature) => `${feature.title} (${feature.year})`).join('  +  ')}
+        </p>
+
+        <p class="film__when">
+          <time datetime={startsAt}>
+            {weekdayOf(slot.date)}, {longDateOf(slot.date)} · {slot.time}
+          </time>
+          <span aria-hidden="true">·</span>
+          <span>{runtimeOf(session.totalRuntime)}</span>
+        </p>
+
+        <div class="film__actions">
+          <a class="btn btn--solid" href={slot.roomUrl} rel="noopener noreferrer" target="_blank">
+            Entrar na {slot.room}
+          </a>
+          <a class="btn btn--ghost" href="/programacao/">Ver a grade</a>
+        </div>
+      </div>
+    </header>
+
+    <!-- ===== Corpo ====================================================== -->
+    <div class="film__body u-page">
+      <div class="film__content prose">
+        <Content />
+        {kicker && <p class="film__kicker">{kicker}</p>}
+      </div>
+
+      <aside class="film__aside">
+        <section aria-labelledby="sheet-title">
+          <h2 class="u-label film__aside-title" id="sheet-title">
+            {isDouble ? 'Exibições' : 'Ficha técnica'}
+          </h2>
+          {
+            features.map((feature, index) => (
+              <FeatureSheet
+                feature={feature}
+                order={isDouble ? index + 1 : undefined}
+              />
+            ))
+          }
+        </section>
+
+        <SessionRules />
+
+        <section aria-labelledby="tags-title">
+          <h2 class="u-label film__aside-title" id="tags-title">Sinais</h2>
+          <ul class="film__tags" role="list">
+            {
+              tags.map((tag) => (
+                <li>
+                  <a class="chip" href={`/generos/${slugify(tag)}/`}>{tag}</a>
+                </li>
+              ))
+            }
+          </ul>
+        </section>
+      </aside>
+    </div>
+
+    <!-- ===== Relacionadas =============================================== -->
+    {
+      related.length > 0 && (
+        <section class="section u-page" aria-labelledby="related-title">
+          <div class="section__head">
+            <h2 class="section__title" data-channel="//" id="related-title">
+              Na mesma frequência
+            </h2>
+            <a class="section__link" href="/programacao/">Grade completa →</a>
+          </div>
+          <div class="catalog">
+            {related.map((item) => (
+              <SessionCard session={item} state={stateOf(item, now)} />
+            ))}
+          </div>
+        </section>
+      )
+    }
+  </article>
+</Base>
+
+<style>
+  /* ===== Slate ============================================================ */
+  .film__slate {
+    position: relative;
+    display: grid;
+    align-content: end;
+    min-block-size: clamp(26rem, 68svh, 44rem);
+    padding-block: var(--space-2xl) var(--space-xl);
+    overflow: clip;
+    isolation: isolate;
+  }
+
+  .film__frame {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+  }
+
+  .film__poster {
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+    /* Dessaturado o bastante para a tipografia ganhar, com a cor da barra
+       reentrando pelo véu — a imagem vira sinal, não ilustração. */
+    filter: saturate(0.35) contrast(1.08) brightness(0.62);
+  }
+
+  .film__veil {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(to top, var(--void) 4%, rgb(5 5 6 / 0.55) 55%, rgb(5 5 6 / 0.75)),
+      linear-gradient(
+        to right,
+        color-mix(in srgb, var(--accent-bar) 16%, transparent),
+        transparent 60%
+      );
+  }
+
+  .film__eyebrow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-block-end: var(--space-sm);
+    color: var(--accent-ink);
+  }
+
+  .film__title {
+    max-inline-size: 20ch;
+    font-size: var(--text-4xl);
+    color: var(--ink);
+  }
+
+  .film__films {
+    margin-block-start: var(--space-sm);
+    font-size: var(--text-sm);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent-ink);
+  }
+
+  .film__when {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-block-start: var(--space-2xs);
+    font-size: var(--text-sm);
+    color: var(--ink-dim);
+  }
+
+  .film__when time {
+    text-transform: capitalize;
+  }
+
+  .film__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2xs);
+    margin-block-start: var(--space-lg);
+  }
+
+  /* ===== Corpo ============================================================ */
+  .film__body {
+    display: grid;
+    gap: var(--space-xl);
+    padding-block: var(--space-2xl);
+  }
+
+  @media (min-width: 64rem) {
+    .film__body {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 20rem);
+      gap: var(--space-2xl);
+      align-items: start;
+    }
+
+    .film__aside {
+      position: sticky;
+      inset-block-start: 6rem;
+    }
+  }
+
+  .film__kicker {
+    margin-block-start: var(--space-xl);
+    padding-block-start: var(--space-md);
+    border-block-start: 1px solid var(--line);
+    font-size: var(--text-xl);
+    font-weight: 650;
+    line-height: var(--leading-snug);
+    letter-spacing: var(--track-tight);
+    color: var(--ink);
+    text-wrap: balance;
+  }
+
+  .film__aside {
+    display: grid;
+    gap: var(--space-lg);
+    align-content: start;
+  }
+
+  .film__aside-title {
+    display: block;
+    margin-block-end: var(--space-2xs);
+    color: var(--accent-ink);
+  }
+
+  .film__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin: 0;
+    padding: 0;
+  }
+</style>

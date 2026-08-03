@@ -1,0 +1,383 @@
+---
+import Base from '~/layouts/Base.astro';
+import { genresOf, getSessions, groupByMonth, stateOf } from '~/lib/catalog';
+import { isoInstantOf, ratingLabelOf, runtimeOf, weekdayOf } from '~/lib/format';
+import { accentStyle } from '~/lib/smpte';
+import { SITE } from '~/lib/site';
+
+const now = new Date();
+const sessions = await getSessions();
+const genres = genresOf(sessions);
+
+/* Ordem cronológica crescente: uma grade se lê para a frente, não para trás. */
+const chronological = [...sessions].sort(
+  (a, b) => a.startsAt.getTime() - b.startsAt.getTime(),
+);
+const months = groupByMonth(chronological);
+
+const upcoming = chronological.filter((session) => session.startsAt > now).length;
+
+const STATE_LABEL = {
+  'no-ar': 'No ar',
+  proxima: 'A seguir',
+  agendada: 'Agendada',
+  exibida: 'Exibida',
+} as const;
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: 'Programação',
+  description: `Grade completa das sessões do ${SITE.name}.`,
+  url: new URL('/programacao/', SITE.url).href,
+  isPartOf: { '@type': 'WebSite', name: SITE.name, url: SITE.url },
+};
+---
+
+<Base
+  title="Programação"
+  description={`Grade completa das ${sessions.length} sessões do ${SITE.name}, com data, horário, duração e classificação.`}
+  schema={schema}
+>
+  <header class="head u-page">
+    <p class="u-label head__eyebrow">Canal 02 · Grade</p>
+    <h1 class="head__title u-slate u-bleed">Programação</h1>
+    <p class="head__lede u-prose">
+      Toda a transmissão, do arquivo ao que ainda vai ao ar. Sessões aos sábados,
+      20:30 no horário de Brasília, sem paywall e sem cadastro.
+    </p>
+
+    <dl class="head__stats">
+      <div>
+        <dt class="u-label">No arquivo</dt>
+        <dd>{sessions.length}</dd>
+      </div>
+      <div>
+        <dt class="u-label">A exibir</dt>
+        <dd>{upcoming}</dd>
+      </div>
+      <div>
+        <dt class="u-label">Gêneros</dt>
+        <dd>{genres.length}</dd>
+      </div>
+    </dl>
+  </header>
+
+  <!-- ===== Filtro por gênero ============================================= -->
+  <nav class="filters u-page" aria-label="Filtrar por gênero">
+    <h2 class="u-label filters__title">Sinais</h2>
+    <ul class="filters__list" role="list">
+      {
+        genres.map((genre) => (
+          <li>
+            <a class="chip" href={`/generos/${genre.slug}/`}>
+              {genre.name}
+              <span class="chip__count">{genre.count}</span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </nav>
+
+  <!-- ===== Grade ========================================================= -->
+  <div class="guide u-page">
+    {
+      months.map((month) => (
+        <section class="month" aria-labelledby={`month-${month.key}`}>
+          <h2 class="month__label" id={`month-${month.key}`}>
+            <span class="month__name">{month.label}</span>
+            <span class="u-label month__count">
+              {month.sessions.length} {month.sessions.length > 1 ? 'sessões' : 'sessão'}
+            </span>
+          </h2>
+
+          <ol class="month__rows" role="list">
+            {month.sessions.map((session) => {
+              const { headline, features, session: slot, tags } = session.entry.data;
+              const state = stateOf(session, now);
+              const primary = features[0]!;
+
+              return (
+                <li class="row" style={accentStyle(session.bar)} data-state={state}>
+                  <a class="row__link" href={session.href}>
+                    <span class="row__bar" aria-hidden="true" />
+
+                    <time class="row__when" datetime={isoInstantOf(slot.date, slot.time)}>
+                      <span class="row__day">
+                        {String(slot.date.getUTCDate()).padStart(2, '0')}
+                      </span>
+                      <span class="u-label row__weekday">
+                        {weekdayOf(slot.date).slice(0, 3)}
+                      </span>
+                      <span class="u-label row__time">{slot.time}</span>
+                    </time>
+
+                    <span class="row__main">
+                      <span class="row__headline">{headline}</span>
+                      <span class="row__films u-mono">
+                        {features
+                          .map((feature) => `${feature.title} (${feature.year})`)
+                          .join('  +  ')}
+                      </span>
+                      <span class="row__tags u-label">
+                        {tags.slice(0, 3).join(' · ')}
+                      </span>
+                    </span>
+
+                    <span class="row__specs u-label">
+                      <span>{runtimeOf(session.totalRuntime)}</span>
+                      {primary.rating && <span>{ratingLabelOf(primary.rating)}</span>}
+                      <span class="row__state">{STATE_LABEL[state]}</span>
+                    </span>
+                  </a>
+                </li>
+              );
+            })}
+          </ol>
+        </section>
+      ))
+    }
+  </div>
+</Base>
+
+<style>
+  /* ===== Cabeçalho ======================================================== */
+  .head {
+    padding-block: var(--space-2xl) var(--space-lg);
+  }
+
+  .head__eyebrow {
+    color: var(--accent-ink);
+  }
+
+  .head__title {
+    margin-block: var(--space-2xs) var(--space-md);
+    font-size: var(--text-4xl);
+  }
+
+  .head__stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-lg);
+    margin-block-start: var(--space-lg);
+    padding-block-start: var(--space-sm);
+    border-block-start: 1px solid var(--line);
+  }
+
+  .head__stats dd {
+    margin: 0;
+    font-size: var(--text-2xl);
+    font-weight: 750;
+    font-variation-settings: 'wdth' 112;
+    letter-spacing: var(--track-tight);
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ===== Filtros ========================================================== */
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-sm);
+    padding-block: var(--space-md);
+    border-block: 1px solid var(--line);
+  }
+
+  .filters__title {
+    color: var(--accent-ink);
+    flex: none;
+  }
+
+  .filters__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* ===== Grade ============================================================ */
+  .guide {
+    padding-block: var(--space-lg) var(--space-2xl);
+  }
+
+  .month + .month {
+    margin-block-start: var(--space-xl);
+  }
+
+  .month__label {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    padding-block-end: var(--space-2xs);
+    border-block-end: 1px solid var(--line-strong);
+    position: sticky;
+    inset-block-start: calc(3.75rem + var(--strip-height));
+    background: var(--void);
+    z-index: 1;
+  }
+
+  .month__name {
+    font-size: var(--text-lg);
+    font-weight: 700;
+    font-variation-settings: 'wdth' 110;
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+
+  .month__rows {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  /* --- linha da grade ------------------------------------------------------ */
+  .row {
+    border-block-end: 1px solid var(--line);
+  }
+
+  .row__link {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--space-sm);
+    align-items: start;
+    padding: var(--space-sm) 0 var(--space-sm) var(--space-sm);
+    position: relative;
+    transition: background-color var(--dur-cut) var(--ease-signal);
+  }
+
+  .row__link:hover {
+    background: var(--surface);
+  }
+
+  /* Filete da barra do filme na borda esquerda: a coluna de cor da grade. */
+  .row__bar {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    inline-size: 3px;
+    background: var(--accent-bar);
+    transform: scaleY(0.34);
+    transform-origin: center;
+    transition: transform var(--dur-wipe) var(--ease-out);
+  }
+
+  .row__link:hover .row__bar {
+    transform: scaleY(1);
+  }
+
+  /* --- coluna de horário --------------------------------------------------- */
+  .row__when {
+    display: grid;
+    justify-items: start;
+    inline-size: 3.5rem;
+    flex: none;
+  }
+
+  .row__day {
+    font-size: var(--text-xl);
+    font-weight: 750;
+    font-variation-settings: 'wdth' 112;
+    line-height: 1;
+    letter-spacing: var(--track-tight);
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .row__weekday {
+    margin-block-start: 0.15rem;
+  }
+
+  .row__time {
+    color: var(--accent-ink);
+  }
+
+  /* --- coluna principal ----------------------------------------------------- */
+  .row__main {
+    display: grid;
+    gap: 0.15rem;
+    min-inline-size: 0;
+  }
+
+  .row__headline {
+    font-size: var(--text-lg);
+    font-weight: 650;
+    line-height: var(--leading-snug);
+    letter-spacing: var(--track-tight);
+    color: var(--ink);
+    text-wrap: balance;
+  }
+
+  .row__films {
+    font-size: var(--text-xs);
+    letter-spacing: 0.03em;
+    color: var(--accent-ink);
+  }
+
+  .row__tags {
+    color: var(--ink-mute);
+  }
+
+  /* --- coluna técnica ------------------------------------------------------- */
+  .row__specs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    grid-column: 2;
+    margin-block-start: 0.35rem;
+  }
+
+  @media (min-width: 56rem) {
+    .row__link {
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: var(--space-md);
+    }
+
+    .row__specs {
+      grid-column: auto;
+      margin-block-start: 0;
+      justify-content: end;
+      inline-size: 16rem;
+    }
+  }
+
+  .row__state {
+    color: var(--accent-ink);
+  }
+
+  .row[data-state='exibida'] {
+    opacity: 0.62;
+  }
+
+  .row[data-state='exibida']:hover {
+    opacity: 1;
+  }
+
+  .row[data-state='exibida'] .row__state {
+    color: var(--ink-mute);
+  }
+
+  .row[data-state='no-ar'] .row__state {
+    animation: on-air 2.4s steps(1, end) infinite;
+  }
+
+  @keyframes on-air {
+    0%,
+    72% {
+      opacity: 1;
+    }
+    76%,
+    82% {
+      opacity: 0.3;
+    }
+    86%,
+    100% {
+      opacity: 1;
+    }
+  }
+</style>

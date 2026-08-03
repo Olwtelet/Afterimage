@@ -1,0 +1,153 @@
+---
+import Base from '~/layouts/Base.astro';
+import SessionCard from '~/components/ui/SessionCard.astro';
+import {
+  genresOf,
+  getSessions,
+  sessionsWithTag,
+  stateOf,
+  type Genre,
+  type Session,
+} from '~/lib/catalog';
+import { BAR_ORDER } from '~/lib/smpte';
+import { SITE } from '~/lib/site';
+
+/** Sem anotar o retorno: a anotação alargaria `props` e apagaria a inferência. */
+export async function getStaticPaths() {
+  const sessions = await getSessions();
+  const genres = genresOf(sessions);
+
+  return genres.map((genre, index) => ({
+    params: { slug: genre.slug },
+    props: {
+      genre,
+      matches: sessionsWithTag(sessions, genre.slug) as readonly Session[],
+      barIndex: index % BAR_ORDER.length,
+      siblings: genres as readonly Genre[],
+    },
+  }));
+}
+
+const { genre, matches, barIndex, siblings } = Astro.props;
+const bar = BAR_ORDER[barIndex]!;
+const now = new Date();
+
+const others = siblings.filter((item) => item.slug !== genre.slug).slice(0, 14);
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: `Gênero: ${genre.name}`,
+  url: new URL(`/generos/${genre.slug}/`, SITE.url).href,
+  isPartOf: { '@type': 'WebSite', name: SITE.name, url: SITE.url },
+  mainEntity: {
+    '@type': 'ItemList',
+    numberOfItems: matches.length,
+    itemListElement: matches.map((session, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: session.entry.data.headline,
+      url: new URL(session.href, SITE.url).href,
+    })),
+  },
+};
+---
+
+<Base
+  title={`Gênero: ${genre.name}`}
+  description={`${matches.length} ${matches.length > 1 ? 'sessões' : 'sessão'} de ${genre.name} na curadoria do ${SITE.name}.`}
+  accent={bar}
+  schema={schema}
+>
+  <header class="head u-page">
+    <nav class="head__crumbs u-label" aria-label="Trilha">
+      <a href="/generos/">Sinais</a>
+      <span aria-hidden="true">/</span>
+      <span aria-current="page">{genre.name}</span>
+    </nav>
+
+    <h1 class="head__title u-slate u-bleed">{genre.name}</h1>
+
+    <p class="head__count u-label">
+      {matches.length} {matches.length > 1 ? 'sessões' : 'sessão'} · barra {bar.label}
+    </p>
+  </header>
+
+  <section class="section u-page" aria-label={`Sessões de ${genre.name}`}>
+    <div class="catalog">
+      {
+        matches.map((session, index) => (
+          <SessionCard
+            session={session}
+            state={stateOf(session, now)}
+            priority={index < 3}
+          />
+        ))
+      }
+    </div>
+  </section>
+
+  <nav class="others u-page" aria-label="Outros gêneros">
+    <h2 class="u-label others__title">Outros sinais</h2>
+    <ul class="others__list" role="list">
+      {
+        others.map((item) => (
+          <li>
+            <a class="chip" href={`/generos/${item.slug}/`}>
+              {item.name}
+              <span class="chip__count">{item.count}</span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </nav>
+</Base>
+
+<style>
+  .head {
+    padding-block: var(--space-2xl) var(--space-md);
+  }
+
+  .head__crumbs {
+    display: flex;
+    gap: 0.4rem;
+  }
+
+  .head__crumbs a {
+    color: var(--accent-ink);
+  }
+
+  .head__title {
+    margin-block: var(--space-2xs);
+    font-size: var(--text-4xl);
+    text-transform: capitalize;
+  }
+
+  .head__count {
+    padding-block-start: var(--space-2xs);
+    border-block-start: 1px solid var(--line);
+  }
+
+  .others {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-sm);
+    padding-block: var(--space-lg);
+    border-block-start: 1px solid var(--line);
+  }
+
+  .others__title {
+    color: var(--accent-ink);
+    flex: none;
+  }
+
+  .others__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin: 0;
+    padding: 0;
+  }
+</style>

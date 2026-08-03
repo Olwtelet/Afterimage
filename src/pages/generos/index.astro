@@ -1,0 +1,128 @@
+---
+import Base from '~/layouts/Base.astro';
+import { genresOf, getSessions } from '~/lib/catalog';
+import { BAR_ORDER } from '~/lib/smpte';
+import { SITE } from '~/lib/site';
+
+const sessions = await getSessions();
+const genres = genresOf(sessions);
+
+/* Cada gênero recebe uma barra pela sua posição na lista. Percorrer as sete em
+   ciclo faz o índice inteiro remontar a carta de ajuste. */
+const withBars = genres.map((genre, index) => ({
+  ...genre,
+  bar: BAR_ORDER[index % BAR_ORDER.length]!,
+}));
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: 'Gêneros',
+  url: new URL('/generos/', SITE.url).href,
+  isPartOf: { '@type': 'WebSite', name: SITE.name, url: SITE.url },
+};
+---
+
+<Base
+  title="Gêneros"
+  description={`Os ${genres.length} sinais que atravessam a curadoria do ${SITE.name}.`}
+  schema={schema}
+>
+  <header class="head u-page">
+    <p class="u-label head__eyebrow">Canal 03 · Índice</p>
+    <h1 class="head__title u-slate u-bleed">Sinais</h1>
+    <p class="head__lede u-prose">
+      Cada sessão carrega os seus. Juntos, os {genres.length} sinais desenham o
+      que esta curadoria acha que vale a pena assistir com atenção.
+    </p>
+  </header>
+
+  <ul class="grid u-page" role="list">
+    {
+      withBars.map((genre) => (
+        <li style={`--accent-bar:${genre.bar.bar};--accent-ink:${genre.bar.ink}`}>
+          <a class="tile" href={`/generos/${genre.slug}/`}>
+            <span class="tile__bar" aria-hidden="true" />
+            <span class="tile__name">{genre.name}</span>
+            <span class="tile__count u-mono">
+              {String(genre.count).padStart(2, '0')}
+            </span>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</Base>
+
+<style>
+  .head {
+    padding-block: var(--space-2xl) var(--space-lg);
+  }
+
+  .head__eyebrow {
+    color: var(--accent-ink);
+  }
+
+  .head__title {
+    margin-block: var(--space-2xs) var(--space-md);
+    font-size: var(--text-4xl);
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(13rem, 100%), 1fr));
+    gap: var(--gutter);
+    margin: 0;
+    padding-block: var(--space-lg) var(--space-2xl);
+    padding-inline: var(--gutter);
+    list-style: none;
+  }
+
+  .tile {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    gap: var(--space-2xs);
+    padding: var(--space-md) var(--space-sm) var(--space-sm);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    position: relative;
+    overflow: clip;
+    transition: border-color var(--dur-cut) var(--ease-signal);
+  }
+
+  .tile:hover {
+    border-color: color-mix(in srgb, var(--accent-bar) 60%, var(--line));
+  }
+
+  /* A barra ocupa a moldura inteira no hover — o gênero "entra no ar". */
+  .tile__bar {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline: 0;
+    block-size: 4px;
+    background: var(--accent-bar);
+    transition: block-size var(--dur-wipe) var(--ease-out);
+  }
+
+  .tile:hover .tile__bar {
+    block-size: 100%;
+    opacity: 0.14;
+  }
+
+  .tile__name {
+    font-size: var(--text-lg);
+    font-weight: 650;
+    line-height: var(--leading-snug);
+    letter-spacing: var(--track-tight);
+    color: var(--ink);
+    text-transform: capitalize;
+    position: relative;
+  }
+
+  .tile__count {
+    font-size: var(--text-xs);
+    color: var(--accent-ink);
+    position: relative;
+  }
+</style>

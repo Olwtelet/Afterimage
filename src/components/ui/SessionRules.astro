@@ -1,0 +1,66 @@
+---
+/**
+ * Regras da sessão.
+ *
+ * O mesmo texto estava copiado, palavra por palavra, nos 14 arquivos Markdown.
+ * Aqui ele existe uma vez — e mudar uma regra deixa de ser um trabalho de
+ * catorze edições.
+ */
+const RULES = [
+  'Entre alguns minutos antes do início.',
+  'Mantenha o microfone mutado durante toda a exibição.',
+  'Evite qualquer tipo de spoiler no chat.',
+  'Aproveite a experiência.',
+] as const;
+---
+
+<aside class="rules" aria-labelledby="rules-title">
+  <h2 class="u-label rules__title" id="rules-title">Regras da sessão</h2>
+  <ol class="rules__list" role="list">
+    {
+      RULES.map((rule, index) => (
+        <li>
+          <span class="rules__index u-mono" aria-hidden="true">
+            {String(index + 1).padStart(2, '0')}
+          </span>
+          {rule}
+        </li>
+      ))
+    }
+  </ol>
+</aside>
+
+<style>
+  .rules {
+    padding: var(--space-md);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-inline-start: 3px solid var(--accent-bar);
+  }
+
+  .rules__title {
+    color: var(--accent-ink);
+    margin-block-end: var(--space-sm);
+  }
+
+  .rules__list {
+    display: grid;
+    gap: var(--space-2xs);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .rules__list li {
+    display: grid;
+    grid-template-columns: 1.75rem 1fr;
+    align-items: baseline;
+    font-size: var(--text-sm);
+    color: var(--ink-dim);
+  }
+
+  .rules__index {
+    font-size: 0.625rem;
+    color: var(--ink-mute);
+  }
+</style>
