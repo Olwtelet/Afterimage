@@ -45,7 +45,8 @@ const films = defineCollection({
         date: z.coerce.date(),
         time: z.string().regex(/^\d{2}:\d{2}$/),
         room: z.string().min(1),
-        roomUrl: z.string().url(),
+        // z.url() no lugar de z.string().url(), que está depreciado nesta versão.
+        roomUrl: z.url(),
       }),
       features: z.array(feature).min(1).max(4),
       tags: z.array(z.string().min(1)).min(1),

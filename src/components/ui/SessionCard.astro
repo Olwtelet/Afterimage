@@ -17,9 +17,19 @@ interface Props {
   state: SessionState;
   /** A primeira fileira carrega antecipado; o resto fica preguiçoso. */
   priority?: boolean;
+  /**
+   * Nível do título do card. O card aparece sob seções de profundidade
+   * diferente, e fixar h3 abria um salto h1 -> h3 nas páginas de gênero, onde a
+   * grade vem logo abaixo do título da página.
+   */
+  headingLevel?: 2 | 3;
 }
 
-const { session, state, priority = false } = Astro.props;
+const { session, state, priority = false, headingLevel = 3 } = Astro.props;
+
+/* Precisa ser a união literal, não `string`: uma template literal com variável
+   colapsa para `string` e o Astro deixa de reconhecer a tag dinâmica. */
+const Heading: 'h2' | 'h3' = headingLevel === 2 ? 'h2' : 'h3';
 const { headline, summary, poster, posterAlt, features, session: slot } = session.entry.data;
 
 const primary = features[0]!;
@@ -62,7 +72,7 @@ const STATE_LABEL: Record<SessionState, string> = {
         {rating && <><span aria-hidden="true">·</span><span>{ratingLabelOf(rating)}</span></>}
       </p>
 
-      <h3 class="card__headline">{headline}</h3>
+      <Heading class="card__headline">{headline}</Heading>
       <p class="card__title">{titles}</p>
       <p class="card__summary">{summary}</p>
     </div>

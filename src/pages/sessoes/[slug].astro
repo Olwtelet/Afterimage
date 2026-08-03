@@ -55,6 +55,16 @@ const STATE_LABEL = {
 const startsAt = isoInstantOf(slot.date, slot.time);
 const pageUrl = new URL(session.href, SITE.url).href;
 
+/*
+ * O <title> leva o nome do filme, não a manchete: é o que as pessoas digitam no
+ * buscador, e as manchetes editoriais daqui passam de 80 caracteres, sendo
+ * cortadas no meio da frase no resultado da busca. A manchete continua sendo o
+ * h1 e o título dos cartões sociais, onde cabe a frase inteira.
+ */
+const seoTitle = features
+  .map((feature) => `${feature.title} (${feature.year})`)
+  .join(' + ');
+
 const schema = [
   {
     '@context': 'https://schema.org',
@@ -101,14 +111,15 @@ const schema = [
 ---
 
 <Base
-  title={headline}
+  title={seoTitle}
+  socialTitle={headline}
   description={summary}
   type="article"
   accent={session.bar}
   schema={schema}
 >
   <article class="film">
-    <!-- ===== Slate de abertura ========================================== -->
+    {/* ===== Slate de abertura ========================================== */}
     <header class="film__slate">
       <div class="film__frame">
         <Image
@@ -154,7 +165,7 @@ const schema = [
       </div>
     </header>
 
-    <!-- ===== Corpo ====================================================== -->
+    {/* ===== Corpo ====================================================== */}
     <div class="film__body u-page">
       <div class="film__content prose">
         <Content />
@@ -193,7 +204,7 @@ const schema = [
       </aside>
     </div>
 
-    <!-- ===== Relacionadas =============================================== -->
+    {/* ===== Relacionadas =============================================== */}
     {
       related.length > 0 && (
         <section class="section u-page" aria-labelledby="related-title">

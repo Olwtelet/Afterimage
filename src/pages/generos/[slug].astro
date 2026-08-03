@@ -73,7 +73,8 @@ const schema = {
     </p>
   </header>
 
-  <section class="section u-page" aria-label={`Sessões de ${genre.name}`}>
+  <section class="section u-page" aria-labelledby="matches-title">
+    <h2 class="u-sr-only" id="matches-title">Sessões de {genre.name}</h2>
     <div class="catalog">
       {
         matches.map((session, index) => (
@@ -81,6 +82,7 @@ const schema = {
             session={session}
             state={stateOf(session, now)}
             priority={index < 3}
+            headingLevel={3}
           />
         ))
       }

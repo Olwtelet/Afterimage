@@ -1,254 +1,190 @@
-## Customização
+# Filmes HD Online Grátis
 
-### Cores
+Site de curadoria de cinema. Uma sessão por sábado, escolhida a dedo, com o
+motivo da escolha registrado. O site é o arquivo público dessas escolhas — a
+exibição em si acontece ao vivo, na sala do Discord.
 
-Edite as variáveis CSS em `src/assets/css/styles.css`:
+**Não é streaming.** O site não hospeda nem distribui nenhum filme.
 
-```css
-:root {
-  --neon-purple: #9D00FF;
-  --hot-pink: #FF10F0;
-  --cyber-blue: #00F0FF;
-  --acid-green: #39FF14;
-  /* ... mais cores */
-}
-```
-
-### Informações do Site
-
-Atualize `src/_data/site.json`:
-
-```json
-{
-  "title": "Filmes HD Online Grátis",
-  "description": "Sua descrição",
-  "url": "https://filmeshdonlinegratis.com",
-  "author": "Olwtelet"
-}
-```
-
-### Navegação
-
-Modifique `src/_data/navigation.json` pra mudar os itens do menu.
-
-### Tipografia
-
-O site usa Google Fonts por padrão:
-- **Press Start 2P** - Títulos em pixel
-- **Jersey 10** - Fonte de terminal
-- Mude as fontes em `src/_includes/partials/head.njk`.
-
-## Criando Conteúdo
-
-### Nova Ficha de Filme
-
-Crie um novo arquivo Markdown em `src/filmes/`:
-
-```markdown
----
-title: "Título do Filme"
-date: 2026-07-17
-tags: 
-  - terror
-  - cult
-category: "sessão-especial"
-featured_image: "/assets/images/nome-do-filme.jpg"
-excerpt: "Descrição curta"
-color_scheme: "#FF10F0"
-layout: "layouts/post.njk"
 ---
 
-Seu conteúdo aqui...
+## O conceito: carta de ajuste
+
+A identidade vem das barras de teste SMPTE — o padrão que a televisão exibia
+quando não havia programa no ar. Ele não é usado como enfeite retrô; é a
+gramática do projeto:
+
+- **As sete barras são a grade.** `--bars: 7` ancora o layout.
+- **Os cinzas vêm do PLUGE**, a faixa de calibração abaixo das barras, que marca
+  os pretos contra os quais tudo mais é medido. Toda superfície escura do site
+  sai dali, o que dá aos cinzas uma origem concreta em vez de uma escolha
+  arbitrária.
+- **Cada filme recebe uma barra.** O campo `tone` de cada ficha — a cor curada
+  daquela sessão — é mapeado para a barra SMPTE de matiz mais próximo
+  (`src/lib/smpte.ts`). A página inteira é tingida por ela. Lido de uma vez, o
+  catálogo remonta a carta.
+
+### Cada barra tem duas formas
+
+```
+--bar-*   SMPTE literal a 75%.  Para gráfico. Nunca em texto.
+--ink-*   A mesma cor elevada.  Para texto: ≥4.5:1 sobre o fundo.
 ```
 
-### Nova Página
+A separação não é preciosismo: azul e vermelho a 75% rendem **1.7:1** e
+**3.1:1** sobre preto. Mantê-los em duas formas é o que permite usar o padrão
+literal sem sacrificar contraste em lugar nenhum.
 
-Crie um arquivo Markdown (ou `.njk`) em `src/pages/`:
-
-```markdown
 ---
-layout: layouts/page.njk
-title: "Título da Página"
-permalink: /caminho-da-pagina/
+
+## Rodando
+
+```bash
+npm install
+npm run dev
+```
+
+| Comando | O que faz |
+| --- | --- |
+| `npm run dev` | Servidor de desenvolvimento |
+| `npm run build` | Build de produção em `dist/` |
+| `npm run preview` | Serve o build local |
+| `npm run check` | Diagnóstico do Astro + TypeScript |
+| `npm run verify` | `check` + `build` — rode antes de abrir PR |
+| `npm run assets:social` | Regera `og.png` e `apple-touch-icon.png` |
+
 ---
 
-Conteúdo da página...
+## Publicando uma sessão
+
+Crie um `.md` em `src/content/films/`. O schema é validado no build
+(`src/content.config.ts`), então um campo faltando ou malformado quebra o build
+em vez de virar uma página torta.
+
+```yaml
+---
+headline: "A manchete editorial — a provocação, não o nome do filme"
+kicker: "Frase de fecho da ficha"            # opcional
+summary: "Resumo curto, até 300 caracteres."
+poster: "../../assets/films/nome-do-arquivo.jpg"
+posterAlt: "Descrição da imagem"
+tone: "#556B2F"                              # define a barra SMPTE da sessão
+session:
+  date: 2026-07-18                           # data de calendário, autoritativa
+  time: "20:30"                              # horário de Brasília
+  room: "Sala 24"
+  roomUrl: "https://discord.gg/..."
+features:
+  - title: "Nome real do filme"
+    year: 2025
+    director: "Direção"
+    runtime: 118                             # minutos
+    rating: "18"                             # L | 10 | 12 | 14 | 16 | 18
+    genres: ["Suspense", "Ficção Científica"]
+tags: ["suspense", "perturbador"]
+---
+
+O texto editorial, em Markdown.
 ```
 
-## Easter Eggs
+Sessão dupla: acrescente uma segunda entrada em `features`, cada uma com seu
+`time`.
 
-Tente o **Código Konami** na página inicial:  
-`↑ ↑ ↓ ↓ ← → ← → B A`
+Nada mais precisa ser tocado. Data, duração, classificação, contagem regressiva,
+posição na grade, gêneros, busca, feed e JSON-LD saem daí.
 
-Desbloqueia o modo glitch extremo!
+### Duas noções de tempo
 
-## Deploy
+`session.date` é uma **data de calendário** e é formatada em UTC. `startsAt` é um
+**instante**, montado a partir dela mais o horário de Brasília, e é formatado no
+fuso da sessão. Confundir as duas desloca tudo em um dia — está documentado em
+`src/lib/format.ts`.
 
-### Netlify (Recomendado)
+---
 
-1. Suba pro GitHub
-2. Conecte ao Netlify
-3. Comando de build: `npm run build`
-4. Diretório de publicação: `_site`
+## Arquitetura
 
-O `netlify.toml` já está configurado!
+```
+src/
+  content/films/     fichas em Markdown, validadas por zod
+  content.config.ts  o schema
+  lib/
+    site.ts          identidade do site — fonte única de verdade
+    smpte.ts         as sete barras e o mapeamento tom -> barra
+    catalog.ts       sessões, estados, próxima sessão, gêneros
+    format.ts        datas, durações, códigos
+    slug.ts          slugs com acento transliterado
+  components/
+    signal/          carta de ajuste, faixa de sinal, textura
+    ui/              cabeçalho, rodapé, cards, slates
+    islands/         o pouco que precisa de JavaScript
+  layouts/Base.astro
+  pages/
+  styles/            tokens, reset, base, componentes
+supabase/migrations/ RLS do mural e função da audiência
+```
 
-### Outras Plataformas
+### Camadas de CSS
 
-O site funciona em qualquer hospedagem estática:
-- Vercel
-- GitHub Pages
-- Cloudflare Pages
-- Render
+`@layer reset, tokens, base, components, utilities` é declarado uma vez, em
+`styles/global.css`. A partir daí a especificidade deixa de ser uma corrida:
+componente sempre vence base, utilitário sempre vence componente,
+independentemente de quantos seletores cada regra tenha.
 
-## Gerenciamento de Imagens
+### JavaScript
 
-### Consiga Imagens Estéticas
+Zero por padrão. As ilhas são cinco — busca, mural, transmissão, audiência,
+calibração — e somam **~5 KB embutidos** na home, sem nenhum bundle externo.
+A transição entre páginas usa `@view-transition` nativo do CSS; o progresso de
+leitura usa `animation-timeline: scroll()`. Nenhum dos dois custa um byte de JS.
 
-O projeto inclui um scraper de imagens customizado pra baixar imagens vaporwave/cyberpunk:
+---
+
+## Banco de dados
+
+O mural e o contador falam direto com o Supabase pelo navegador, com a chave
+`publishable` — que é feita para isso. **Quem impõe as regras é o RLS**, não o
+JavaScript do cliente. Aplique a migração antes de esperar que funcionem:
 
 ```bash
-# Baixe imagens estéticas
-npm run scrape-images
-
-# Copie pro site e atualize as fichas
-npm run integrate-images
-npm run update-images
+supabase db push
 ```
 
-**O que ele faz:**
-- Baixa imagens do Unsplash, Pexels, Pixabay
-- Busca por: vaporwave, cyberpunk, glitch art, etc.
-- Filtra pela sua paleta de cores (roxo, rosa, ciano)
-- Salva os créditos dos fotógrafos automaticamente
-- Cria uma galeria HTML pra pré-visualizar
+Ou cole `supabase/migrations/0001_audience.sql` no SQL Editor do projeto. Sem
+ela, o mural mostra um aviso e o contador exibe traços — nenhum dos dois quebra
+a página.
 
-**Pré-visualize as imagens antes de usar:**
-```bash
-open moodboard/gallery.html
-```
+Recados nascem com `approved = false`. Para publicar um, marque `approved` no
+painel do Supabase.
 
-### Configurando as Chaves de API
-
-O scraper de imagens usa chaves de API gratuitas dos provedores. Pra configurar:
-
-1. **Copie o arquivo de ambiente de exemplo:**
-```bash
-   cp .env.example .env
-```
-
-2. **Consiga chaves de API gratuitas em:**
-   - **Pexels**: https://www.pexels.com/api/ (grátis, sem cartão de crédito)
-   - **Pixabay**: https://pixabay.com/api/docs/ (grátis, sem cartão de crédito)
-
-3. **Adicione suas chaves no `.env`:**
-```bash
-   PEXELS_API_KEY=sua_chave_do_pexels_aqui
-   PIXABAY_API_KEY=sua_chave_do_pixabay_aqui
-```
-
-4. **Rode o scraper:**
-```bash
-   npm run scrape-images
-```
-
-**Nota:** O arquivo `.env` está fora do git pra manter suas chaves privadas. Nunca suba chaves de API pro git!
-
-Veja `scripts/README.md` pra documentação detalhada.
-
-## Desenvolvimento
-
-### Scripts Disponíveis
-
-- `npm run dev` - Inicia o servidor de desenvolvimento
-- `npm run build` - Builda pra produção
-- `npm run build:min` - Builda e minifica os assets
-- `npm run debug` - Builda com saída de debug
-- `npm run clean` - Remove a pasta de build
-- `npm run scrape-images` - Baixa imagens estéticas
-- `npm run integrate-images` - Copia imagens pro site
-- `npm run update-images` - Atualiza as fichas com imagens
-
-### Modo Watch
-
-O servidor de dev observa mudanças em:
-- Templates (.njk, .md)
-- Arquivos CSS
-- Arquivos JavaScript
-
-## Performance
-
-O site é otimizado pra velocidade:
-
-- Geração de HTML estático
-- CSS crítico inline
-- Lazy loading de imagens
-- Assets minificados (em produção)
-
-Metas de pontuação no Lighthouse:
-- Performance: 90+
-- Acessibilidade: 100
-- Boas Práticas: 90+
-- SEO: 100
+---
 
 ## Acessibilidade
 
-Construído com acessibilidade em mente:
-
-- HTML semântico
-- Labels ARIA onde necessário
-- Suporte a navegação por teclado
-- Suporte a `prefers-reduced-motion`
-- Contraste de cores WCAG AA
-- Compatível com leitor de tela
-
-## Créditos
-
-### Construído Com
-
-- **[Eleventy](https://www.11ty.dev/)** - Gerador de site estático
-- **[Nunjucks](https://mozilla.github.io/nunjucks/)** - Motor de templates
-- **[Press Start 2P](https://fonts.google.com/specimen/Press+Start+2P)** & **[Jersey 10](https://fonts.google.com/specimen/Jersey+10)** - Fontes do Google
-- **[Pexels](https://www.pexels.com/)** & **[Pixabay](https://pixabay.com/)** - Fotos gratuitas de banco de imagens
-- **[Supabase](https://supabase.com/)** - Banco de dados do Mural
-
-### Inspiração
-
-- Design web do fim dos anos 90/início dos 2000 (GeoCities, Angelfire)
-- Estética vaporwave e Y2K
-- Barras de teste SMPTE Color Bars
-- Cultura de sinal de TV fora do ar
-
-## Apoie Este Projeto
-
-Se esse site foi útil pra você, considere apoiar:
-
-<div align="center">
-
-[![Ko-fi](https://img.shields.io/badge/Ko--fi-Apoie%20o%20Olwtelet-FF5E5B?style=for-the-badge&logo=ko-fi&logoColor=white)](https://ko-fi.com/Olwtelet)
-[![Discord](https://img.shields.io/badge/Discord-Entre%20no%20Servidor-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/wSSJEJAJgt)
-
-</div>
-
-Seu apoio ajuda a:
-- Manter e melhorar esse site e o servidor
-- Escolher e curar mais filmes toda semana
-- Manter tudo funcionando
-
-Até uma pequena contribuição faz diferença! Obrigado!
-
-## Licença
-
-Todos os direitos reservados — código e conteúdo de propriedade de Olwtelet.
+- Anel de foco global em `:focus-visible`, na cor de acento da página.
+- Um `<h1>` por página, sem salto de nível de heading — verificado nas 41 rotas.
+- Toda imagem sai com `width`/`height`.
+- `prefers-reduced-motion` desligado na raiz, não regra a regra.
+- Menus e diálogos em `<dialog>`: gestão de foco, `Esc` e inércia do fundo pela
+  plataforma.
+- Contraste conferido nos elementos renderizados; o mais apertado é a etiqueta
+  técnica de 9px, com 5.26:1.
 
 ---
 
-<div align="center">
+## Deploy
 
-**Curadoria por [Olwtelet](https://discord.gg/wSSJEJAJgt)**
+Netlify, configurado em `netlify.toml`: CSP, `Permissions-Policy`, cache
+imutável apenas para assets com hash, e os 301 que preservam as rotas do site
+anterior. Funciona igual em Vercel, Cloudflare Pages ou qualquer host estático —
+basta publicar `dist/`.
 
-*Feito com 💜, café e neon além da conta.*
+---
 
-[Servidor do Discord](https://discord.gg/wSSJEJAJgt) • [YouTube](https://www.youtube.com/@FilmesHDOn-lineGrátis) • [Steam](https://steamcommunity.com/groups/FilmesHDOnlineGratis)
+## Comunidade
 
-</div>
+[Discord](https://discord.gg/wSSJEJAJgt) ·
+[YouTube](https://www.youtube.com/@FilmesHDOn-lineGrátis) ·
+[Steam](https://steamcommunity.com/groups/FilmesHDOnlineGratis)
+
+Curadoria por **Olwtelet**. Código e conteúdo de propriedade do autor.

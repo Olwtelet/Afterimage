@@ -38,7 +38,7 @@ const schema = {
   schema={schema}
   {...accent ? { accent } : {}}
 >
-  <!-- ===== Carta de ajuste ================================================ -->
+  {/* ===== Carta de ajuste ================================================ */}
   <section class="hero" aria-labelledby="hero-title">
     <TestCard class="hero__card" ident={`FHDOG · ${sessionCodeOf(now)} · 87.6 MHz`} />
 
@@ -62,10 +62,10 @@ const schema = {
     </a>
   </section>
 
-  <!-- ===== Sessão em destaque ============================================= -->
+  {/* ===== Sessão em destaque ============================================= */}
   {featured && <SessionSlate session={featured} state={stateOf(featured, now)} />}
 
-  <!-- ===== Catálogo ======================================================== -->
+  {/* ===== Catálogo ======================================================== */}
   <section class="section u-page" id="programacao" aria-labelledby="catalog-title">
     <div class="section__head">
       <h2 class="section__title" data-channel="02" id="catalog-title">No arquivo</h2>
@@ -85,7 +85,7 @@ const schema = {
     </div>
   </section>
 
-  <!-- ===== Gêneros ========================================================= -->
+  {/* ===== Gêneros ========================================================= */}
   <section class="section u-page" aria-labelledby="genres-title">
     <div class="section__head">
       <h2 class="section__title" data-channel="03" id="genres-title">Sinais</h2>

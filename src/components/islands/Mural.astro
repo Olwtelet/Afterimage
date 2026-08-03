@@ -29,7 +29,7 @@ const VIBES = [
   data-endpoint={`${SUPABASE.url}/rest/v1/${SUPABASE.muralTable}`}
   data-key={SUPABASE.publishableKey}
 >
-  <!-- ===== Formulário ==================================================== -->
+  {/* ===== Formulário ==================================================== */}
   <form class="form" data-mural-form novalidate>
     <h2 class="u-label form__title">Deixar um recado</h2>
 
@@ -72,11 +72,11 @@ const VIBES = [
         placeholder="O que ficou da última sessão?"></textarea>
     </label>
 
-    <!--
+    {/*
       Armadilha: um campo que pessoa nenhuma vê nem alcança por teclado, mas que
       preenchedor automático de formulário completa. Vindo preenchido, o envio é
       descartado em silêncio.
-    -->
+    */}
     <div class="trap" aria-hidden="true">
       <label>
         Não preencha este campo
@@ -92,7 +92,7 @@ const VIBES = [
     <p class="form__status" data-mural-status role="status" aria-live="polite"></p>
   </form>
 
-  <!-- ===== Recados ======================================================= -->
+  {/* ===== Recados ======================================================= */}
   <div class="entries">
     <h2 class="u-label entries__title">No mural</h2>
     <ol class="entries__list" data-mural-list role="list">
