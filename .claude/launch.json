@@ -2,10 +2,10 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "fhdog-dev",
+      "name": "fhdog",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["eleventy", "--serve", "--port=8080"],
-      "port": 8080
+      "runtimeArgs": ["astro", "dev", "--port", "4321"],
+      "port": 4321
     }
   ]
 }

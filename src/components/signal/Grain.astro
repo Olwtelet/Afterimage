@@ -1,0 +1,68 @@
+---
+/**
+ * Textura de sinal: ruído + linhas de varredura, sobrepostos à página inteira.
+ *
+ * Tudo aqui é ESTÁTICO. O site anterior animava as scanlines infinitamente e
+ * mantinha até oito loops de requestAnimationFrame vivos ao mesmo tempo — a
+ * aba nunca ficava ociosa. A textura entrega a mesma sensação de tubo por dois
+ * gradientes e um turbulence rasterizado uma vez, custando zero frame.
+ */
+---
+
+<div class="grain" aria-hidden="true"></div>
+
+<style>
+  .grain {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-grain);
+    pointer-events: none;
+    /* O compositor trata a camada isoladamente e nunca repinta o conteúdo. */
+    contain: strict;
+  }
+
+  /* Linhas de varredura. 3px de período é o ponto em que a textura aparece sem
+     virar moiré em telas de alta densidade. */
+  .grain::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgb(0 0 0 / 0.22) 0 1px,
+      transparent 1px 3px
+    );
+    opacity: 0.55;
+  }
+
+  /* Grão de filme + vinheta. O turbulence é resolvido pelo navegador uma única
+     vez e vira bitmap; não há custo por frame. */
+  .grain::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(ellipse 120% 90% at 50% 50%, transparent 55%, rgb(0 0 0 / 0.55) 100%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.42'/%3E%3C/svg%3E");
+    background-size:
+      100% 100%,
+      140px 140px;
+    mix-blend-mode: overlay;
+    opacity: 0.5;
+  }
+
+  /* Em telas pequenas a varredura só suja a leitura: o pixel já é denso demais
+     para o padrão ler como textura. */
+  @media (max-width: 45rem) {
+    .grain::before {
+      opacity: 0.3;
+    }
+  }
+
+  /* Quem pede menos movimento normalmente também pede menos ruído visual. */
+  @media (prefers-reduced-motion: reduce) {
+    .grain::after {
+      opacity: 0.25;
+    }
+  }
+</style>

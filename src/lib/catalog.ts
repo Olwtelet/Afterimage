@@ -1,5 +1,6 @@
 import { getCollection, type CollectionEntry } from 'astro:content';
 
+import { monthLabelOf } from './format';
 import { barFor, type Bar } from './smpte';
 import { slugify } from './slug';
 
@@ -117,11 +118,6 @@ export interface MonthGroup {
   readonly sessions: readonly Session[];
 }
 
-const MONTH_LABEL = new Intl.DateTimeFormat('pt-BR', {
-  month: 'long',
-  year: 'numeric',
-  timeZone: 'America/Sao_Paulo',
-});
 
 /** Agrupa as sessões por mês, para a grade de programação. */
 export function groupByMonth(sessions: readonly Session[]): MonthGroup[] {
@@ -137,7 +133,7 @@ export function groupByMonth(sessions: readonly Session[]): MonthGroup[] {
 
   return [...groups.entries()].map(([key, items]) => ({
     key,
-    label: MONTH_LABEL.format(items[0]!.entry.data.session.date),
+    label: monthLabelOf(items[0]!.entry.data.session.date),
     sessions: items,
   }));
 }

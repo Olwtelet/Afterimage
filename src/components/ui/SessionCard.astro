@@ -1,0 +1,224 @@
+---
+/**
+ * Card de sessão do catálogo.
+ *
+ * Cada card é tingido pela barra SMPTE do seu filme, então a grade lida em
+ * conjunto remonta a carta de ajuste. A cor não é decoração aplicada por cima:
+ * ela vem do `tone` curado na ficha.
+ */
+import { Image } from 'astro:assets';
+
+import { accentStyle } from '~/lib/smpte';
+import { runtimeOf, shortDateOf, isoDateOf, ratingLabelOf } from '~/lib/format';
+import type { Session, SessionState } from '~/lib/catalog';
+
+interface Props {
+  session: Session;
+  state: SessionState;
+  /** A primeira fileira carrega antecipado; o resto fica preguiçoso. */
+  priority?: boolean;
+}
+
+const { session, state, priority = false } = Astro.props;
+const { headline, summary, poster, posterAlt, features, session: slot } = session.entry.data;
+
+const primary = features[0]!;
+const titles = features.map((feature) => feature.title).join(' + ');
+const rating = primary.rating;
+
+const STATE_LABEL: Record<SessionState, string> = {
+  'no-ar': 'No ar agora',
+  proxima: 'A seguir',
+  agendada: 'Agendada',
+  exibida: 'Exibida',
+};
+---
+
+<article class="card" style={accentStyle(session.bar)} data-state={state}>
+  <a class="card__link" href={session.href}>
+    <div class="card__frame">
+      <Image
+        src={poster}
+        alt={posterAlt}
+        widths={[320, 480, 720]}
+        sizes="(min-width: 64rem) 24rem, (min-width: 40rem) 45vw, 92vw"
+        loading={priority ? 'eager' : 'lazy'}
+        fetchpriority={priority ? 'high' : 'auto'}
+        class="card__image"
+      />
+      <span class="card__bar" aria-hidden="true"></span>
+      {
+        state !== 'exibida' && (
+          <span class="card__state u-label">{STATE_LABEL[state]}</span>
+        )
+      }
+    </div>
+
+    <div class="card__body">
+      <p class="card__meta u-label">
+        <time datetime={isoDateOf(slot.date)}>{shortDateOf(slot.date)}</time>
+        <span aria-hidden="true">·</span>
+        <span>{runtimeOf(session.totalRuntime)}</span>
+        {rating && <><span aria-hidden="true">·</span><span>{ratingLabelOf(rating)}</span></>}
+      </p>
+
+      <h3 class="card__headline">{headline}</h3>
+      <p class="card__title">{titles}</p>
+      <p class="card__summary">{summary}</p>
+    </div>
+  </a>
+</article>
+
+<style>
+  .card {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    transition:
+      border-color var(--dur-wipe) var(--ease-signal),
+      transform var(--dur-wipe) var(--ease-signal);
+  }
+
+  .card:hover {
+    border-color: color-mix(in srgb, var(--accent-bar) 55%, var(--line));
+    transform: translateY(-2px);
+  }
+
+  .card__link {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    height: 100%;
+  }
+
+  /* Foco no card inteiro, não só no texto do link. */
+  .card__link:focus-visible {
+    outline: none;
+  }
+
+  .card:has(.card__link:focus-visible) {
+    outline: 2px solid var(--accent-ink);
+    outline-offset: 3px;
+  }
+
+  .card__frame {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    overflow: clip;
+    background: var(--black);
+  }
+
+  .card__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* Dessaturado em repouso, cor cheia no hover: o sinal "sintoniza" ao ser
+       observado. O site antigo aplicava blur(.2px) e sepia em TODA imagem,
+       inclusive nos pôsteres, permanentemente. */
+    filter: saturate(0.45) contrast(1.06);
+    transition:
+      filter var(--dur-pan) var(--ease-signal),
+      transform var(--dur-pan) var(--ease-signal);
+  }
+
+  .card:hover .card__image {
+    filter: saturate(1) contrast(1.04);
+    transform: scale(1.03);
+  }
+
+  /* Filete da barra do filme: cresce da esquerda no hover. */
+  .card__bar {
+    position: absolute;
+    inset-inline: 0;
+    inset-block-end: 0;
+    height: 3px;
+    background: var(--accent-bar);
+    transform: scaleX(0.14);
+    transform-origin: left;
+    transition: transform var(--dur-pan) var(--ease-out);
+  }
+
+  .card:hover .card__bar {
+    transform: scaleX(1);
+  }
+
+  .card__state {
+    position: absolute;
+    inset-block-start: 0.5rem;
+    inset-inline-start: 0.5rem;
+    padding: 0.2rem 0.45rem;
+    background: var(--accent-bar);
+    color: var(--void);
+    font-weight: 700;
+  }
+
+  .card[data-state='no-ar'] .card__state {
+    animation: on-air 2.4s steps(1, end) infinite;
+  }
+
+  @keyframes on-air {
+    0%,
+    72% {
+      opacity: 1;
+    }
+    76%,
+    82% {
+      opacity: 0.35;
+    }
+    86%,
+    100% {
+      opacity: 1;
+    }
+  }
+
+  .card__body {
+    display: grid;
+    align-content: start;
+    gap: var(--space-2xs);
+    padding: var(--space-sm);
+  }
+
+  .card__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0;
+  }
+
+  .card__headline {
+    font-size: var(--text-lg);
+    font-weight: 700;
+    font-variation-settings: 'wdth' 106;
+    line-height: var(--leading-snug);
+    letter-spacing: var(--track-tight);
+    color: var(--ink);
+    text-wrap: balance;
+  }
+
+  .card__title {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: 0.04em;
+    color: var(--accent-ink);
+  }
+
+  .card__summary {
+    margin: 0;
+    font-size: var(--text-sm);
+    line-height: var(--leading-normal);
+    color: var(--ink-mute);
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    overflow: hidden;
+  }
+
+  .card[data-state='exibida'] .card__image {
+    opacity: 0.72;
+  }
+
+  .card[data-state='exibida']:hover .card__image {
+    opacity: 1;
+  }
+</style>

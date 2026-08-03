@@ -1,0 +1,81 @@
+---
+/**
+ * Um único ponto de saída para tudo que vai no <head>.
+ *
+ * O site anterior tinha duas camadas de SEO — e a completa, com canonical e
+ * JSON-LD, nunca era incluída por template nenhum. As duas ainda discordavam
+ * entre si sobre descrição, imagem de OG e handle do Twitter.
+ */
+import { SITE } from '~/lib/site';
+
+interface Props {
+  title: string;
+  description?: string | undefined;
+  /** Caminho absoluto da imagem social, relativo à raiz do site. */
+  image?: string | undefined;
+  imageAlt?: string | undefined;
+  type?: 'website' | 'article';
+  /** JSON-LD já montado pela página. */
+  schema?: Record<string, unknown> | readonly Record<string, unknown>[] | undefined;
+  noindex?: boolean;
+}
+
+const {
+  title,
+  description = SITE.description,
+  image = SITE.ogImage,
+  imageAlt = `${SITE.name} — carta de ajuste`,
+  type = 'website',
+  schema,
+  noindex = false,
+} = Astro.props;
+
+const canonical = new URL(Astro.url.pathname, Astro.site ?? SITE.url).href;
+const socialImage = new URL(image, Astro.site ?? SITE.url).href;
+const fullTitle = Astro.url.pathname === '/' ? title : `${title} · ${SITE.name}`;
+const schemas = schema ? (Array.isArray(schema) ? schema : [schema]) : [];
+---
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<title>{fullTitle}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical} />
+
+<meta name="author" content={SITE.author} />
+<meta name="theme-color" content="#050506" />
+<meta name="color-scheme" content="dark" />
+{
+  noindex ? (
+    <meta name="robots" content="noindex,follow" />
+  ) : (
+    <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1" />
+  )
+}
+
+<meta property="og:type" content={type} />
+<meta property="og:site_name" content={SITE.name} />
+<meta property="og:title" content={fullTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical} />
+<meta property="og:image" content={socialImage} />
+<meta property="og:image:alt" content={imageAlt} />
+<meta property="og:locale" content={SITE.locale} />
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={fullTitle} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={socialImage} />
+<meta name="twitter:image:alt" content={imageAlt} />
+
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<link rel="alternate" type="application/rss+xml" title={SITE.name} href="/rss.xml" />
+<link rel="sitemap" href="/sitemap-index.xml" />
+
+{
+  schemas.map((entry) => (
+    <script type="application/ld+json" set:html={JSON.stringify(entry)} is:inline />
+  ))
+}

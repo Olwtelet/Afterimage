@@ -1,0 +1,340 @@
+---
+/**
+ * O slate da sessão em destaque.
+ *
+ * É a informação que o site existe para dar e que, até aqui, não aparecia em
+ * lugar nenhum: qual é a próxima sessão, quando, e onde. Ela vivia enterrada em
+ * prosa no meio de um arquivo Markdown.
+ *
+ * A contagem regressiva é a única ilha com relógio da página. Ela roda a cada
+ * segundo apenas enquanto está visível: um IntersectionObserver desliga o
+ * intervalo quando o slate sai da tela.
+ */
+import { Image } from 'astro:assets';
+
+import { accentStyle } from '~/lib/smpte';
+import {
+  isoInstantOf,
+  longDateOf,
+  ratingLabelOf,
+  runtimeOf,
+  sessionCodeOf,
+  weekdayOf,
+} from '~/lib/format';
+import type { Session, SessionState } from '~/lib/catalog';
+
+interface Props {
+  session: Session;
+  state: SessionState;
+}
+
+const { session, state } = Astro.props;
+/* O pôster é redundante: leva ao mesmo destino do botão "Ver a ficha" e não
+   acrescenta informação que já não esteja no texto. Por isso entra decorativo,
+   com alt vazio e fora da ordem de tabulação, em vez de repetir o link para
+   quem navega por leitor de tela. */
+const { headline, summary, poster, features, session: slot } = session.entry.data;
+
+const primary = features[0]!;
+const titles = features.map((feature) => feature.title).join('  +  ');
+const isPast = state === 'exibida';
+---
+
+<section class="slate" style={accentStyle(session.bar)} aria-labelledby="slate-title">
+  <div class="slate__grid u-page">
+    <div class="slate__head">
+      <p class="slate__eyebrow u-label">
+        <span class="slate__dot" data-live={state === 'no-ar'} aria-hidden="true"></span>
+        {
+          state === 'no-ar'
+            ? 'No ar agora'
+            : isPast
+              ? 'Última sessão'
+              : 'Próxima sessão'
+        }
+        <span aria-hidden="true">·</span>
+        <span>{sessionCodeOf(slot.date)}</span>
+      </p>
+
+      <h2 class="slate__title u-slate u-bleed" id="slate-title">{headline}</h2>
+
+      <p class="slate__film u-mono">{titles}</p>
+      <p class="slate__summary">{summary}</p>
+
+      <div class="slate__actions">
+        <a class="btn btn--solid" href={session.href}>Ver a ficha</a>
+        <a
+          class="btn btn--ghost"
+          href={slot.roomUrl}
+          rel="noopener noreferrer"
+          target="_blank"
+        >
+          Entrar na {slot.room}
+        </a>
+      </div>
+    </div>
+
+    <div class="slate__aside">
+      <a class="slate__poster" href={session.href} tabindex="-1" aria-hidden="true">
+        <Image
+          src={poster}
+          alt=""
+          widths={[420, 640, 900]}
+          sizes="(min-width: 64rem) 28rem, 92vw"
+          loading="eager"
+          fetchpriority="high"
+          class="slate__image"
+        />
+      </a>
+
+      <dl class="slate__specs">
+        <div>
+          <dt class="u-label">Quando</dt>
+          <dd>
+            <time datetime={isoInstantOf(slot.date, slot.time)}>
+              {weekdayOf(slot.date)}, {longDateOf(slot.date)} · {slot.time}
+            </time>
+          </dd>
+        </div>
+        <div>
+          <dt class="u-label">Direção</dt>
+          <dd>{primary.director}</dd>
+        </div>
+        <div>
+          <dt class="u-label">Duração</dt>
+          <dd>{runtimeOf(session.totalRuntime)}</dd>
+        </div>
+        {
+          primary.rating && (
+            <div>
+              <dt class="u-label">Classificação</dt>
+              <dd>{ratingLabelOf(primary.rating)}</dd>
+            </div>
+          )
+        }
+      </dl>
+
+      {
+        !isPast && (
+          <div
+            class="slate__countdown"
+            data-countdown
+            data-starts={session.startsAt.toISOString()}
+            data-ends={session.endsAt.toISOString()}
+          >
+            <p class="u-label">Entra no ar em</p>
+            <p class="slate__clock u-mono" data-countdown-value aria-live="off">
+              --:--:--
+            </p>
+          </div>
+        )
+      }
+    </div>
+  </div>
+</section>
+
+<script>
+  /** Recebe os elementos já resolvidos: closures não herdam o estreitamento. */
+  function mount(slate: HTMLElement, output: HTMLElement, label: HTMLElement): void {
+    const startsAt = new Date(slate.dataset.starts ?? '').getTime();
+    const endsAt = new Date(slate.dataset.ends ?? '').getTime();
+    const pad = (value: number): string => String(Math.floor(value)).padStart(2, '0');
+
+    let timer: number | undefined;
+
+    function tick(): void {
+      const remaining = startsAt - Date.now();
+
+      if (remaining <= 0) {
+        const live = Date.now() < endsAt;
+        label.textContent = live ? 'Em exibição' : 'Sessão encerrada';
+        output.textContent = live ? 'NO AR' : '--:--:--';
+        stop();
+        return;
+      }
+
+      const days = Math.floor(remaining / 86_400_000);
+      const hours = (remaining / 3_600_000) % 24;
+      const minutes = (remaining / 60_000) % 60;
+      const seconds = (remaining / 1000) % 60;
+
+      output.textContent = days > 0
+        ? `${days}d ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`
+        : `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+    }
+
+    function start(): void {
+      if (timer !== undefined) return;
+      tick();
+      timer = window.setInterval(tick, 1000);
+    }
+
+    function stop(): void {
+      if (timer === undefined) return;
+      window.clearInterval(timer);
+      timer = undefined;
+    }
+
+    // Pinta o valor imediatamente: o placeholder nunca deve chegar aos olhos de
+    // ninguém, mesmo que o observer demore um quadro a mais para entregar.
+    tick();
+
+    // Daí em diante o relógio só corre enquanto o slate está na tela.
+    new IntersectionObserver((entries) => {
+      for (const entry of entries) entry.isIntersecting ? start() : stop();
+    }).observe(slate);
+
+    document.addEventListener('visibilitychange', () => {
+      document.hidden ? stop() : start();
+    });
+  }
+
+  const slate = document.querySelector<HTMLElement>('[data-countdown]');
+  const output = slate?.querySelector<HTMLElement>('[data-countdown-value]');
+  const label = slate?.querySelector<HTMLElement>('.u-label');
+
+  if (slate && output && label) mount(slate, output, label);
+</script>
+
+<style>
+  .slate {
+    position: relative;
+    padding-block: var(--space-2xl);
+    border-block-end: 1px solid var(--line);
+  }
+
+  .slate__grid {
+    display: grid;
+    gap: var(--space-xl);
+    align-items: start;
+  }
+
+  @media (min-width: 64rem) {
+    .slate__grid {
+      grid-template-columns: minmax(0, 4fr) minmax(0, 3fr);
+      gap: var(--space-2xl);
+    }
+  }
+
+  /* --- cabeça -------------------------------------------------------------- */
+  .slate__eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 0 var(--space-sm);
+    color: var(--accent-ink);
+  }
+
+  .slate__dot {
+    inline-size: 0.5rem;
+    block-size: 0.5rem;
+    background: var(--accent-bar);
+    border-radius: 50%;
+  }
+
+  .slate__dot[data-live='true'] {
+    animation: pulse 1.8s var(--ease-signal) infinite;
+  }
+
+  @keyframes pulse {
+    50% {
+      opacity: 0.25;
+      transform: scale(0.8);
+    }
+  }
+
+  .slate__title {
+    font-size: var(--text-4xl);
+    color: var(--ink);
+  }
+
+  .slate__film {
+    margin-block-start: var(--space-sm);
+    font-size: var(--text-sm);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent-ink);
+  }
+
+  .slate__summary {
+    margin-block-start: var(--space-sm);
+    max-inline-size: 48ch;
+    font-size: var(--text-lg);
+    line-height: var(--leading-relaxed);
+    color: var(--ink-dim);
+  }
+
+  .slate__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2xs);
+    margin-block-start: var(--space-lg);
+  }
+
+  /* --- lateral ------------------------------------------------------------- */
+  .slate__aside {
+    display: grid;
+    gap: var(--space-md);
+  }
+
+  .slate__poster {
+    display: block;
+    position: relative;
+    aspect-ratio: 16 / 9;
+    overflow: clip;
+    border: 1px solid var(--line);
+    background: var(--black);
+  }
+
+  .slate__image {
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+    filter: saturate(0.55) contrast(1.05);
+  }
+
+  .slate__specs {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+    gap: var(--space-sm);
+    margin: 0;
+    padding-block-start: var(--space-sm);
+    border-block-start: 1px solid var(--line);
+  }
+
+  .slate__specs dt {
+    margin-block-end: 0.2rem;
+  }
+
+  .slate__specs dd {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--ink);
+    text-wrap: balance;
+  }
+
+  .slate__specs time {
+    text-transform: capitalize;
+  }
+
+  /* --- contagem ------------------------------------------------------------ */
+  .slate__countdown {
+    padding: var(--space-sm);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-inline-start: 3px solid var(--accent-bar);
+  }
+
+  .slate__countdown p {
+    margin: 0;
+  }
+
+  .slate__clock {
+    margin-block-start: 0.25rem !important;
+    font-size: var(--text-2xl);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+</style>

@@ -1,0 +1,171 @@
+---
+/**
+ * Encerramento de transmissão.
+ *
+ * Fecha a página com o mesmo vocabulário com que ela abre: filete de sete
+ * barras, blocos de navegação e uma linha técnica de identificação — o ident de
+ * emissora, que é onde a assinatura da curadoria vive, discreta como manda o
+ * lugar dela.
+ */
+import { NAVIGATION, SITE } from '~/lib/site';
+
+const year = new Date().getFullYear();
+
+const connect = [
+  { label: 'Discord', href: SITE.social.discord },
+  { label: 'YouTube', href: SITE.social.youtube },
+  { label: 'Steam', href: SITE.social.steam },
+] as const;
+
+const resources = [
+  { label: 'Feed RSS', href: '/rss.xml' },
+  { label: 'Gêneros', href: '/generos/' },
+  { label: 'Contato', href: `mailto:${SITE.email}` },
+] as const;
+---
+
+<footer class="footer">
+  <hr class="u-rule" />
+
+  <div class="footer__inner u-page">
+    <div class="footer__brand">
+      <p class="footer__signoff u-slate">Fim da transmissão</p>
+      <p class="footer__tagline">{SITE.tagline}</p>
+    </div>
+
+    <nav class="footer__cols" aria-label="Rodapé">
+      <div>
+        <h2 class="u-label">Navegar</h2>
+        <ul role="list">
+          {NAVIGATION.map((item) => <li><a href={item.href}>{item.label}</a></li>)}
+        </ul>
+      </div>
+
+      <div>
+        <h2 class="u-label">Comunidade</h2>
+        <ul role="list">
+          {
+            connect.map((item) => (
+              <li>
+                <a href={item.href} rel="noopener noreferrer" target="_blank">
+                  {item.label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+
+      <div>
+        <h2 class="u-label">Arquivo</h2>
+        <ul role="list">
+          {resources.map((item) => <li><a href={item.href}>{item.label}</a></li>)}
+        </ul>
+      </div>
+    </nav>
+  </div>
+
+  <!-- Linha de identificação: o ident da emissora, em mono, no fim do sinal. -->
+  <div class="footer__ident u-page">
+    <p class="u-label">© {year} {SITE.name}</p>
+    <p class="u-label footer__sign">
+      <span>Curadoria</span>
+      <a href={SITE.social.github} rel="noopener noreferrer" target="_blank">Olwtelet</a>
+    </p>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    margin-block-start: var(--space-3xl);
+    border-block-start: 1px solid var(--line);
+  }
+
+  .footer .u-rule {
+    margin: 0;
+  }
+
+  .footer__inner {
+    display: grid;
+    gap: var(--space-xl);
+    padding-block: var(--space-xl);
+  }
+
+  @media (min-width: 56rem) {
+    .footer__inner {
+      grid-template-columns: minmax(0, 3fr) minmax(0, 4fr);
+      align-items: start;
+    }
+  }
+
+  .footer__signoff {
+    font-size: var(--text-2xl);
+    color: var(--ink);
+  }
+
+  .footer__tagline {
+    margin-block-start: var(--space-2xs);
+    max-width: 28ch;
+    color: var(--ink-mute);
+    font-size: var(--text-sm);
+  }
+
+  .footer__cols {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+    gap: var(--space-lg);
+  }
+
+  .footer__cols h2 {
+    margin-block-end: var(--space-xs);
+    padding-block-end: var(--space-2xs);
+    border-block-end: 1px solid var(--line);
+  }
+
+  .footer__cols ul {
+    display: grid;
+    gap: 0.4rem;
+    margin: 0;
+    padding: 0;
+  }
+
+  .footer__cols a {
+    font-size: var(--text-sm);
+    color: var(--ink-dim);
+    transition: color var(--dur-cut) var(--ease-signal);
+  }
+
+  .footer__cols a:hover {
+    color: var(--accent-ink);
+  }
+
+  .footer__ident {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    padding-block: var(--space-sm);
+    border-block-start: 1px solid var(--line);
+  }
+
+  .footer__ident p {
+    margin: 0;
+    font-size: 0.5625rem;
+    color: color-mix(in srgb, var(--ink-mute) 70%, transparent);
+  }
+
+  .footer__sign {
+    display: inline-flex;
+    gap: 0.5rem;
+  }
+
+  .footer__sign a {
+    color: var(--ink-mute);
+    transition: color var(--dur-cut) var(--ease-signal);
+  }
+
+  .footer__sign a:hover {
+    color: var(--accent-ink);
+  }
+</style>

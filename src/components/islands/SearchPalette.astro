@@ -1,0 +1,357 @@
+---
+/**
+ * Paleta de comandos (⌘K / Ctrl+K).
+ *
+ * Substitui a busca antiga, que era um <input> estilizado por atributo `style`,
+ * baixava o índice em toda página, não tinha navegação por teclado e quebrava
+ * com exceção quando a consulta continha um parêntese — o termo era interpolado
+ * cru dentro de um `new RegExp`.
+ *
+ * Aqui o índice só é buscado no primeiro uso, os resultados são um listbox ARIA
+ * de verdade, e nenhum trecho de consulta chega perto de um construtor de regex.
+ */
+---
+
+<dialog class="palette" data-search aria-label="Buscar sessões">
+  <form class="palette__box" method="dialog" role="search">
+    <div class="palette__field">
+      <span class="u-label palette__prefix" aria-hidden="true">Buscar</span>
+      <input
+        type="search"
+        class="palette__input"
+        data-search-input
+        placeholder="Título, gênero, direção…"
+        autocomplete="off"
+        spellcheck="false"
+        role="combobox"
+        aria-expanded="false"
+        aria-controls="search-results"
+        aria-autocomplete="list"
+        aria-label="Buscar sessões"
+      />
+      <kbd class="palette__esc u-mono">esc</kbd>
+    </div>
+
+    <ul class="palette__results" id="search-results" role="listbox" data-search-results></ul>
+
+    <p class="palette__status u-label" data-search-status role="status" aria-live="polite"></p>
+  </form>
+</dialog>
+
+<script>
+  interface SearchDoc {
+    readonly title: string;
+    readonly headline: string;
+    readonly summary: string;
+    readonly href: string;
+    readonly date: string;
+    readonly bar: string;
+    readonly terms: string;
+  }
+
+  /**
+   * Os elementos chegam como parâmetros não-nulos: dentro de closures o
+   * TypeScript não preserva o estreitamento de um `if` externo, e conferir
+   * cada um em toda função seria ruído.
+   */
+  function mount(
+    dialog: HTMLDialogElement,
+    input: HTMLInputElement,
+    list: HTMLUListElement,
+    status: HTMLParagraphElement,
+  ): void {
+    let index: SearchDoc[] | null = null;
+    let matches: SearchDoc[] = [];
+    let active = -1;
+
+    /** Remove acentos para que "acao" encontre "ação". */
+    const fold = (value: string): string =>
+      value
+        .normalize('NFD')
+        .replace(/[̀-ͯ]/g, '')
+        .toLowerCase();
+
+    async function loadIndex(): Promise<void> {
+      if (index) return;
+      try {
+        const response = await fetch('/busca.json');
+        if (!response.ok) throw new Error(String(response.status));
+        index = (await response.json()) as SearchDoc[];
+      } catch {
+        index = [];
+        status.textContent = 'Índice indisponível. Tente recarregar a página.';
+      }
+    }
+
+    function render(): void {
+      list.replaceChildren();
+
+      for (const [position, doc] of matches.entries()) {
+        const item = document.createElement('li');
+        item.role = 'option';
+        item.id = `search-option-${position}`;
+        item.ariaSelected = String(position === active);
+        item.className = 'palette__result';
+        item.style.setProperty('--accent-bar', doc.bar);
+
+        const link = document.createElement('a');
+        link.href = doc.href;
+        link.tabIndex = -1;
+
+        const title = document.createElement('span');
+        title.className = 'palette__result-title';
+        title.textContent = doc.title;
+
+        const meta = document.createElement('span');
+        meta.className = 'palette__result-meta u-label';
+        meta.textContent = doc.date;
+
+        const headline = document.createElement('span');
+        headline.className = 'palette__result-headline';
+        headline.textContent = doc.headline;
+
+        link.append(title, meta, headline);
+        item.append(link);
+        item.addEventListener('pointermove', () => setActive(position));
+        list.append(item);
+      }
+
+      input.ariaExpanded = String(matches.length > 0);
+      input.setAttribute(
+        'aria-activedescendant',
+        active >= 0 ? `search-option-${active}` : '',
+      );
+    }
+
+    function setActive(position: number): void {
+      active = position;
+      for (const [i, node] of [...list.children].entries()) {
+        node.ariaSelected = String(i === position);
+      }
+      input.setAttribute(
+        'aria-activedescendant',
+        active >= 0 ? `search-option-${active}` : '',
+      );
+      list.children[position]?.scrollIntoView({ block: 'nearest' });
+    }
+
+    function search(query: string): void {
+      const needle = fold(query.trim());
+
+      if (needle.length < 2) {
+        matches = [];
+        active = -1;
+        status.textContent = '';
+        render();
+        return;
+      }
+
+      if (index === null) {
+        status.textContent = 'Carregando índice…';
+        return;
+      }
+
+      const words = needle.split(/\s+/);
+      matches = index
+        .filter((doc) => words.every((word) => doc.terms.includes(word)))
+        .slice(0, 8);
+      active = matches.length > 0 ? 0 : -1;
+
+      status.textContent =
+        matches.length === 0
+          ? 'Nenhuma sessão encontrada.'
+          : `${matches.length} ${matches.length > 1 ? 'sessões' : 'sessão'}`;
+      render();
+    }
+
+    async function open(): Promise<void> {
+      if (dialog.open) return;
+      dialog.showModal();
+      input.value = '';
+      matches = [];
+      active = -1;
+      render();
+      status.textContent = '';
+
+      await loadIndex();
+      // Quem digita rápido começa antes do índice chegar. Sem esta segunda
+      // passada, a consulta já digitada ficaria presa em "nenhum resultado".
+      if (input.value) search(input.value);
+    }
+
+    input.addEventListener('input', () => search(input.value));
+
+    input.addEventListener('keydown', (event) => {
+      if (matches.length === 0) return;
+
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        setActive((active + 1) % matches.length);
+      } else if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        setActive((active - 1 + matches.length) % matches.length);
+      } else if (event.key === 'Enter') {
+        const target = matches[active];
+        if (target) {
+          event.preventDefault();
+          window.location.href = target.href;
+        }
+      }
+    });
+
+    document.addEventListener('keydown', (event) => {
+      const isShortcut = event.key.toLowerCase() === 'k' && (event.metaKey || event.ctrlKey);
+      if (!isShortcut) return;
+      event.preventDefault();
+      dialog.open ? dialog.close() : void open();
+    });
+
+    for (const trigger of document.querySelectorAll('[data-search-open]')) {
+      trigger.addEventListener('click', () => void open());
+      // Aquece o índice na intenção, não no clique: quando a paleta abre, os
+      // resultados já estão prontos.
+      trigger.addEventListener('pointerenter', () => void loadIndex(), { once: true });
+      trigger.addEventListener('focus', () => void loadIndex(), { once: true });
+    }
+
+    dialog.addEventListener('click', (event) => {
+      if (event.target === dialog) dialog.close();
+    });
+  }
+
+  const dialog = document.querySelector<HTMLDialogElement>('[data-search]');
+  const input = document.querySelector<HTMLInputElement>('[data-search-input]');
+  const list = document.querySelector<HTMLUListElement>('[data-search-results]');
+  const status = document.querySelector<HTMLParagraphElement>('[data-search-status]');
+
+  if (dialog && input && list && status) mount(dialog, input, list, status);
+</script>
+
+<style>
+  .palette {
+    margin: 0;
+    inline-size: 100%;
+    max-inline-size: 100%;
+    block-size: 100%;
+    max-block-size: 100%;
+    background: transparent;
+    padding: max(8vh, 3rem) var(--gutter) var(--gutter);
+    overflow-y: auto;
+  }
+
+  .palette::backdrop {
+    background: rgb(5 5 6 / 0.86);
+    backdrop-filter: blur(6px);
+  }
+
+  .palette[open] .palette__box {
+    animation: palette-in var(--dur-wipe) var(--ease-out);
+  }
+
+  @keyframes palette-in {
+    from {
+      opacity: 0;
+      transform: translateY(-0.75rem);
+    }
+  }
+
+  .palette__box {
+    max-inline-size: 42rem;
+    margin-inline: auto;
+    background: var(--black);
+    border: 1px solid var(--line-strong);
+    box-shadow: 0 2.5rem 5rem rgb(0 0 0 / 0.6);
+  }
+
+  .palette__field {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-sm);
+    border-block-end: 1px solid var(--line);
+  }
+
+  .palette__prefix {
+    color: var(--accent-ink);
+    flex: none;
+  }
+
+  .palette__input {
+    flex: 1;
+    min-inline-size: 0;
+    background: none;
+    border: none;
+    outline: none;
+    font-size: var(--text-lg);
+    color: var(--ink);
+  }
+
+  .palette__input::placeholder {
+    color: var(--ink-mute);
+  }
+
+  .palette__input::-webkit-search-cancel-button {
+    display: none;
+  }
+
+  .palette__esc {
+    flex: none;
+    font-size: 0.625rem;
+    padding: 0.15rem 0.35rem;
+    border: 1px solid var(--line);
+    color: var(--ink-mute);
+  }
+
+  .palette__results {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    max-block-size: 60vh;
+    overflow-y: auto;
+  }
+
+  .palette__result + .palette__result {
+    border-block-start: 1px solid var(--line);
+  }
+
+  .palette__result a {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.15rem var(--space-sm);
+    padding: var(--space-xs) var(--space-sm);
+    border-inline-start: 3px solid transparent;
+  }
+
+  .palette__result[aria-selected='true'] a {
+    background: var(--surface);
+    border-inline-start-color: var(--accent-bar);
+  }
+
+  .palette__result-title {
+    font-weight: 650;
+    color: var(--ink);
+  }
+
+  .palette__result-meta {
+    text-align: end;
+  }
+
+  .palette__result-headline {
+    grid-column: 1 / -1;
+    font-size: var(--text-sm);
+    color: var(--ink-mute);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .palette__status:empty {
+    display: none;
+  }
+
+  .palette__status {
+    margin: 0;
+    padding: var(--space-2xs) var(--space-sm);
+    border-block-start: 1px solid var(--line);
+  }
+</style>

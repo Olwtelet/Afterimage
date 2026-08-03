@@ -1,0 +1,76 @@
+---
+/**
+ * Marca do canal: as sete barras reduzidas a um bloco, seguidas do nome.
+ * É a carta de ajuste em escala de assinatura.
+ */
+import { BAR_ORDER } from '~/lib/smpte';
+import { SITE } from '~/lib/site';
+
+interface Props {
+  /** `full` mostra o nome por extenso; `compact` só a sigla. */
+  variant?: 'full' | 'compact';
+}
+
+const { variant = 'full' } = Astro.props;
+---
+
+<span class="mark" data-variant={variant}>
+  <span class="mark__bars" aria-hidden="true">
+    {BAR_ORDER.map((bar) => <i style={`background:${bar.bar}`} />)}
+  </span>
+  <span class="mark__name">
+    {variant === 'compact' ? SITE.shortName : SITE.name}
+  </span>
+</span>
+
+<style>
+  .mark {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+  }
+
+  .mark__bars {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    width: 1.75rem;
+    height: 1.125rem;
+    flex: none;
+  }
+
+  .mark__bars i {
+    display: block;
+  }
+
+  .mark__name {
+    font-weight: 750;
+    font-size: 0.8125rem;
+    font-variation-settings: 'wdth' var(--wdth-tight);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--ink);
+  }
+
+  /* O grupo inteiro reage ao hover do link que o envolve. */
+  :global(a:hover) .mark__bars i {
+    animation: flicker 420ms var(--ease-snap);
+  }
+
+  :global(a:hover) .mark__bars i:nth-child(2) {
+    animation-delay: 30ms;
+  }
+  :global(a:hover) .mark__bars i:nth-child(4) {
+    animation-delay: 60ms;
+  }
+  :global(a:hover) .mark__bars i:nth-child(6) {
+    animation-delay: 90ms;
+  }
+
+  @keyframes flicker {
+    50% {
+      transform: scaleY(0.55);
+      filter: brightness(1.7);
+    }
+  }
+</style>

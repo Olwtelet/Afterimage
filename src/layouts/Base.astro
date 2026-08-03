@@ -1,0 +1,124 @@
+---
+/**
+ * Casca única de toda página.
+ *
+ * A transição entre páginas usa @view-transition nativo do CSS: o "corte de
+ * canal" acontece sem uma linha de JavaScript e sem router no cliente, ao
+ * contrário das bibliotecas de view transition que embarcam runtime.
+ */
+import Seo from '~/components/Seo.astro';
+import Grain from '~/components/signal/Grain.astro';
+import SignalStrip from '~/components/signal/SignalStrip.astro';
+import Header from '~/components/ui/Header.astro';
+import Footer from '~/components/ui/Footer.astro';
+import SearchPalette from '~/components/islands/SearchPalette.astro';
+import { SITE } from '~/lib/site';
+import { BARS, type Bar } from '~/lib/smpte';
+
+import '~/styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string | undefined;
+  image?: string | undefined;
+  imageAlt?: string | undefined;
+  type?: 'website' | 'article';
+  schema?: Record<string, unknown> | readonly Record<string, unknown>[] | undefined;
+  noindex?: boolean;
+  /** Barra SMPTE que tinge a página inteira. */
+  accent?: Bar;
+  /** Classe extra no <body>, para páginas com fundo próprio. */
+  bodyClass?: string;
+}
+
+const { accent = BARS.cyan, bodyClass, ...seo } = Astro.props;
+---
+
+<!doctype html>
+<html lang={SITE.lang} style={`--accent-bar:${accent.bar};--accent-ink:${accent.ink}`}>
+  <head>
+    <Seo {...seo} />
+    <style is:inline>
+      /* Corte de canal entre páginas — nativo, zero JavaScript. */
+      @view-transition {
+        navigation: auto;
+      }
+    </style>
+  </head>
+
+  <body class={bodyClass}>
+    <a href="#conteudo" class="skip">Pular para o conteúdo</a>
+
+    <SignalStrip />
+    <Grain />
+    <Header />
+
+    <main id="conteudo">
+      <slot />
+    </main>
+
+    <Footer />
+    <SearchPalette />
+
+    <script>
+      // Ident de emissora no console. Não aparece na página, não custa layout.
+      console.log(
+        '%c▌▌▌▌▌▌▌ %cFILMES HD ONLINE GRÁTIS%c\ncuradoria · Olwtelet',
+        'color:#C0C000;font-size:14px',
+        'color:#E8E9EA;font-weight:700;letter-spacing:2px',
+        'color:#7A8087;font-size:11px',
+      );
+    </script>
+  </body>
+</html>
+
+<style is:global>
+  @layer components {
+    .skip {
+      position: absolute;
+      inset-block-start: -100%;
+      inset-inline-start: var(--gutter);
+      z-index: var(--z-tune);
+      padding: 0.75rem 1rem;
+      background: var(--accent-bar);
+      color: var(--void);
+      font-weight: 700;
+      font-size: var(--text-sm);
+      letter-spacing: var(--track-label);
+      text-transform: uppercase;
+      transition: inset-block-start var(--dur-wipe) var(--ease-out);
+    }
+
+    .skip:focus {
+      inset-block-start: 0.5rem;
+    }
+
+    /* O corte: a página sai por um deslocamento horizontal curto, como um
+       horizontal hold perdendo e reencontrando o quadro. */
+    @media (prefers-reduced-motion: no-preference) {
+      ::view-transition-old(root) {
+        animation: channel-out var(--dur-cut) var(--ease-snap) both;
+      }
+
+      ::view-transition-new(root) {
+        animation: channel-in var(--dur-wipe) var(--ease-out) both;
+      }
+
+      @keyframes channel-out {
+        to {
+          opacity: 0;
+          transform: translateX(-1.5%);
+          filter: brightness(2.4) saturate(0);
+        }
+      }
+
+      @keyframes channel-in {
+        from {
+          opacity: 0;
+          transform: translateX(1.5%);
+          filter: brightness(2.4) saturate(0);
+        }
+      }
+    }
+  }
+</style>

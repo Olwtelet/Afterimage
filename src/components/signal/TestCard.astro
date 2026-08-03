@@ -1,0 +1,143 @@
+---
+/**
+ * A carta de ajuste.
+ *
+ * Reproduz a estrutura real do padrão SMPTE: as sete barras a 75%, a faixa de
+ * barras invertidas e o rodapé de calibração com o PLUGE — os negros logo
+ * abaixo, igual e logo acima do preto de referência, que são a origem de toda a
+ * rampa de superfícies do site.
+ *
+ * A "sintonia" é decorativa por construção: o conteúdo já está pintado e
+ * interativo no primeiro frame, e as barras animam por cima em transform e
+ * opacity. Nada bloqueia o LCP — ao contrário do loader do site anterior, que
+ * cobria a tela por 500ms e ficava preso para sempre se o JavaScript falhasse.
+ */
+import { BAR_ORDER } from '~/lib/smpte';
+
+interface Props {
+  /** Rótulo técnico impresso no rodapé da carta. */
+  ident?: string;
+  /** `full` desenha o padrão completo; `bars` só a faixa superior. */
+  variant?: 'full' | 'bars';
+  class?: string;
+}
+
+const { ident, variant = 'full', class: className } = Astro.props;
+
+/* Faixa invertida do padrão real: azul, preto, magenta, preto, ciano, preto, branco. */
+const REVERSE = ['#0000C0', '#050506', '#C000C0', '#050506', '#00C0C0', '#050506', '#C0C0C0'];
+
+/* Rodapé de calibração: -I, branco 100%, +Q, preto, PLUGE, preto. */
+const PLUGE = [
+  { color: '#00214C', flex: 5 },
+  { color: '#FFFFFF', flex: 5 },
+  { color: '#32006A', flex: 5 },
+  { color: '#050506', flex: 5 },
+  { color: '#040405', flex: 1 }, // abaixo do preto
+  { color: '#0A0B0C', flex: 1 }, // preto de referência
+  { color: '#141618', flex: 1 }, // acima do preto
+  { color: '#050506', flex: 3 },
+];
+---
+
+<div class:list={['card', `card--${variant}`, className]} aria-hidden="true">
+  <div class="card__bars">
+    {
+      BAR_ORDER.map((bar, index) => (
+        <span
+          class="card__bar"
+          style={`background:${bar.bar};--i:${index}`}
+        />
+      ))
+    }
+  </div>
+
+  {
+    variant === 'full' && (
+      <>
+        <div class="card__reverse">
+          {REVERSE.map((color, index) => (
+            <span style={`background:${color};--i:${index}`} />
+          ))}
+        </div>
+        <div class="card__pluge">
+          {PLUGE.map(({ color, flex }) => (
+            <span style={`background:${color};flex:${flex}`} />
+          ))}
+        </div>
+      </>
+    )
+  }
+
+  {ident && <p class="card__ident u-label">{ident}</p>}
+</div>
+
+<style>
+  .card {
+    display: grid;
+    grid-template-rows: 1fr;
+    position: relative;
+    overflow: clip;
+    background: var(--void);
+  }
+
+  .card--full {
+    /* Proporções do padrão real: barras, faixa invertida, calibração. */
+    grid-template-rows: 1fr 0.14fr 0.2fr;
+  }
+
+  .card__bars,
+  .card__reverse,
+  .card__pluge {
+    display: flex;
+  }
+
+  .card__bars > *,
+  .card__reverse > * {
+    flex: 1;
+  }
+
+  /* Sintonia: cada barra entra do seu próprio lado, escalonada da esquerda para
+     a direita, como uma varredura. Só transform e opacity — nada que force
+     layout ou paint. */
+  .card__bar,
+  .card__reverse > * {
+    transform-origin: center top;
+    animation: tune var(--dur-lock) var(--ease-out) both;
+    animation-delay: calc(var(--i) * 42ms);
+  }
+
+  @keyframes tune {
+    from {
+      transform: scaleY(0.02);
+      opacity: 0;
+      filter: saturate(0);
+    }
+    60% {
+      opacity: 1;
+    }
+    to {
+      transform: scaleY(1);
+      opacity: 1;
+      filter: saturate(1);
+    }
+  }
+
+  .card__ident {
+    position: absolute;
+    inset-block-end: 0.5rem;
+    inset-inline-start: 0.75rem;
+    margin: 0;
+    color: rgb(255 255 255 / 0.55);
+    mix-blend-mode: difference;
+    font-size: 0.5625rem;
+    letter-spacing: var(--track-wide);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card__bar,
+    .card__reverse > * {
+      animation: none;
+    }
+  }
+</style>

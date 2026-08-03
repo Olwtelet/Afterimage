@@ -1,0 +1,73 @@
+---
+/**
+ * A faixa de sinal — o resíduo permanente da carta de ajuste.
+ *
+ * É a mesma peça em dois papéis: identidade fixa no topo de toda página e
+ * indicador de progresso de leitura. As barras nascem apagadas e vão travando
+ * conforme o visitante desce, como um sintonizador encontrando o canal.
+ *
+ * O progresso usa animation-timeline: scroll(), que roda na thread de composição.
+ * Onde não houver suporte, a faixa simplesmente aparece travada — degradação
+ * silenciosa, sem uma linha de JavaScript em nenhum dos dois caminhos.
+ */
+import { BAR_ORDER } from '~/lib/smpte';
+---
+
+<div class="strip" aria-hidden="true">
+  <div class="strip__dim">
+    {BAR_ORDER.map((bar) => <span style={`background:${bar.bar}`} />)}
+  </div>
+  <div class="strip__lock">
+    {BAR_ORDER.map((bar) => <span style={`background:${bar.bar}`} />)}
+  </div>
+</div>
+
+<style>
+  .strip {
+    position: fixed;
+    inset-block-start: 0;
+    inset-inline: 0;
+    z-index: var(--z-strip);
+    height: var(--strip-height);
+    pointer-events: none;
+    background: var(--void);
+  }
+
+  .strip__dim,
+  .strip__lock {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+  }
+
+  .strip__dim {
+    opacity: 0.22;
+  }
+
+  .strip__lock {
+    transform-origin: left center;
+    /* Sem suporte a scroll timeline a faixa fica cheia: o indicador some, a
+       identidade permanece. */
+    transform: scaleX(1);
+  }
+
+  @supports (animation-timeline: scroll()) {
+    .strip__lock {
+      animation: lock linear both;
+      animation-timeline: scroll(root block);
+    }
+
+    @keyframes lock {
+      from {
+        transform: scaleX(0);
+      }
+      to {
+        transform: scaleX(1);
+      }
+    }
+  }
+
+  /* Progresso de leitura é informação, não decoração: continua funcionando com
+     movimento reduzido, já que a barra acompanha o scroll em vez de animar sozinha. */
+</style>

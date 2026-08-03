@@ -1,0 +1,233 @@
+---
+import Base from '~/layouts/Base.astro';
+import TestCard from '~/components/signal/TestCard.astro';
+import SessionSlate from '~/components/ui/SessionSlate.astro';
+import SessionCard from '~/components/ui/SessionCard.astro';
+import { featuredSession, genresOf, getSessions, stateOf } from '~/lib/catalog';
+import { SITE } from '~/lib/site';
+import { sessionCodeOf } from '~/lib/format';
+
+const now = new Date();
+const sessions = await getSessions();
+const featured = featuredSession(sessions, now);
+const catalog = sessions.filter((session) => session.slug !== featured?.slug).slice(0, 6);
+const genres = genresOf(sessions).slice(0, 12);
+
+const accent = featured?.bar;
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: SITE.name,
+  alternateName: SITE.shortName,
+  url: SITE.url,
+  description: SITE.description,
+  inLanguage: SITE.lang,
+  publisher: {
+    '@type': 'Organization',
+    name: SITE.name,
+    url: SITE.url,
+    sameAs: [SITE.social.discord, SITE.social.youtube, SITE.social.steam],
+  },
+};
+---
+
+<Base
+  title={`${SITE.name} — curadoria semanal de cinema`}
+  description={SITE.description}
+  schema={schema}
+  {...accent ? { accent } : {}}
+>
+  <!-- ===== Carta de ajuste ================================================ -->
+  <section class="hero" aria-labelledby="hero-title">
+    <TestCard class="hero__card" ident={`FHDOG · ${sessionCodeOf(now)} · 87.6 MHz`} />
+
+    <div class="hero__content u-page">
+      <p class="hero__eyebrow u-label">Carta de ajuste · Canal 01</p>
+      <h1 class="hero__title u-slate u-bleed" id="hero-title">{SITE.tagline}</h1>
+      <p class="hero__lede">{SITE.description}</p>
+
+      <p class="hero__meta u-label">
+        <span>{sessions.length} sessões no arquivo</span>
+        <span aria-hidden="true">·</span>
+        <span>Sábados, 20:30</span>
+        <span aria-hidden="true">·</span>
+        <span>Sem paywall</span>
+      </p>
+    </div>
+
+    <a class="hero__scroll u-label" href="#programacao" aria-label="Ir para a programação">
+      Sintonizar
+      <span aria-hidden="true">↓</span>
+    </a>
+  </section>
+
+  <!-- ===== Sessão em destaque ============================================= -->
+  {featured && <SessionSlate session={featured} state={stateOf(featured, now)} />}
+
+  <!-- ===== Catálogo ======================================================== -->
+  <section class="section u-page" id="programacao" aria-labelledby="catalog-title">
+    <div class="section__head">
+      <h2 class="section__title" data-channel="02" id="catalog-title">No arquivo</h2>
+      <a class="section__link" href="/programacao/">Grade completa →</a>
+    </div>
+
+    <div class="catalog">
+      {
+        catalog.map((session, index) => (
+          <SessionCard
+            session={session}
+            state={stateOf(session, now)}
+            priority={index < 3}
+          />
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- ===== Gêneros ========================================================= -->
+  <section class="section u-page" aria-labelledby="genres-title">
+    <div class="section__head">
+      <h2 class="section__title" data-channel="03" id="genres-title">Sinais</h2>
+      <a class="section__link" href="/generos/">Todos os gêneros →</a>
+    </div>
+
+    <ul class="genres" role="list">
+      {
+        genres.map((genre) => (
+          <li>
+            <a class="chip" href={`/generos/${genre.slug}/`}>
+              {genre.name}
+              <span class="chip__count">{genre.count}</span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+</Base>
+
+<style>
+  /* ===== Carta de ajuste ==================================================
+     O padrão SMPTE ocupa a tela como fundo e a manchete é tipografada por
+     cima. O texto está pintado no primeiro frame — a sintonia das barras é
+     puramente decorativa e não segura o LCP.                                */
+  .hero {
+    position: relative;
+    display: grid;
+    align-content: center;
+    min-block-size: clamp(30rem, 82svh, 52rem);
+    padding-block: var(--space-2xl);
+    overflow: clip;
+    isolation: isolate;
+  }
+
+  .hero__card {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+  }
+
+  /* Véu que rebaixa as barras a um plano de fundo legível. Sem ele o padrão
+     a 75% competiria com a tipografia e nada seria lido. */
+  .hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+      linear-gradient(to right, var(--void) 8%, rgb(5 5 6 / 0.62) 62%, rgb(5 5 6 / 0.25)),
+      linear-gradient(to bottom, rgb(5 5 6 / 0.5), transparent 30% 70%, var(--void));
+  }
+
+  .hero__eyebrow {
+    color: var(--ink-white);
+    margin-block-end: var(--space-sm);
+  }
+
+  .hero__title {
+    max-inline-size: 16ch;
+    color: var(--ink);
+  }
+
+  .hero__lede {
+    max-inline-size: 46ch;
+    margin-block-start: var(--space-md);
+    font-size: var(--text-lg);
+    line-height: var(--leading-relaxed);
+    color: var(--ink-dim);
+  }
+
+  .hero__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-block-start: var(--space-lg);
+    padding-block-start: var(--space-sm);
+    border-block-start: 1px solid var(--line);
+    max-inline-size: 34rem;
+  }
+
+  /* Entrada da tipografia: sobe junto com a sintonia das barras, meio passo
+     atrás, para o conjunto ler como um único movimento. */
+  @media (prefers-reduced-motion: no-preference) {
+    .hero__eyebrow,
+    .hero__title,
+    .hero__lede,
+    .hero__meta {
+      animation: rise var(--dur-lock) var(--ease-out) both;
+    }
+    .hero__title {
+      animation-delay: 80ms;
+    }
+    .hero__lede {
+      animation-delay: 160ms;
+    }
+    .hero__meta {
+      animation-delay: 240ms;
+    }
+
+    @keyframes rise {
+      from {
+        opacity: 0;
+        transform: translateY(0.75rem);
+      }
+    }
+  }
+
+  .hero__scroll {
+    position: absolute;
+    inset-block-end: var(--space-md);
+    inset-inline-start: 50%;
+    translate: -50% 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    color: var(--ink-dim);
+    transition: color var(--dur-cut) var(--ease-signal);
+  }
+
+  .hero__scroll:hover {
+    color: var(--ink);
+  }
+
+  .hero__scroll span {
+    animation: nudge 2.4s var(--ease-signal) infinite;
+  }
+
+  @keyframes nudge {
+    50% {
+      transform: translateY(0.25rem);
+    }
+  }
+
+  /* ===== Gêneros ========================================================== */
+  .genres {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0;
+    padding: 0;
+  }
+</style>
