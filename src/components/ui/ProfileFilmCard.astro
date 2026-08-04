@@ -1,0 +1,158 @@
+---
+/**
+ * Card de filme nas listas do perfil.
+ *
+ * Distinto do SessionCard: aquele nasce do Markdown e usa `astro:assets` para
+ * gerar srcset no build. Este vem do banco, onde o pôster é uma URL simples que
+ * pode ter sido trocada pelo painel — não há como otimizá-la em tempo de build
+ * porque ela não existe no build.
+ *
+ * Por isso o `loading="lazy"` e as dimensões explícitas: sem elas o perfil
+ * ganharia deslocamento de layout a cada imagem que chega.
+ */
+import { barFor } from '~/lib/smpte';
+import type { FilmCard } from '~/lib/profiles';
+
+interface Props {
+  film: FilmCard;
+}
+
+const { film } = Astro.props;
+const bar = barFor(film.tone);
+---
+
+<article class="pcard glitch-sweep" style={`--accent-bar:${bar.bar};--accent-ink:${bar.ink}`}>
+  <a class="pcard__link" href={`/sessoes/${film.slug}/`}>
+    <div class="pcard__frame">
+      {
+        film.poster_url ? (
+          <img
+            class="pcard__image"
+            src={film.poster_url}
+            alt=""
+            width="480"
+            height="270"
+            loading="lazy"
+            decoding="async"
+          />
+        ) : (
+          <span class="pcard__blank" aria-hidden="true" />
+        )
+      }
+      <span class="pcard__bar" aria-hidden="true"></span>
+    </div>
+
+    <div class="pcard__body">
+      <h3 class="pcard__title">{film.headline}</h3>
+      <p class="pcard__summary">{film.summary}</p>
+    </div>
+  </a>
+</article>
+
+<style>
+  .pcard {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    transition:
+      border-color var(--dur-wipe) var(--ease-signal),
+      transform var(--dur-wipe) var(--ease-signal);
+  }
+
+  .pcard:hover {
+    border-color: color-mix(in srgb, var(--accent-bar) 55%, var(--line));
+    transform: translateY(-2px);
+  }
+
+  .pcard:has(.pcard__link:focus-visible) {
+    outline: 2px solid var(--accent-ink);
+    outline-offset: 3px;
+  }
+
+  .pcard__link {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    block-size: 100%;
+  }
+
+  .pcard__link:focus-visible {
+    outline: none;
+  }
+
+  .pcard__frame {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    overflow: clip;
+    background: var(--black);
+  }
+
+  .pcard__image {
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+    filter: saturate(0.45) contrast(1.06);
+    transition:
+      filter var(--dur-pan) var(--ease-signal),
+      transform var(--dur-pan) var(--ease-signal);
+  }
+
+  .pcard:hover .pcard__image {
+    filter: saturate(1) contrast(1.04);
+    transform: scale(1.03);
+  }
+
+  /* Sem pôster: as barras do canal ocupam o lugar em vez de um vazio. */
+  .pcard__blank {
+    display: block;
+    block-size: 100%;
+    background: repeating-linear-gradient(
+      90deg,
+      var(--accent-bar) 0 12.5%,
+      var(--black) 12.5% 25%
+    );
+    opacity: 0.25;
+  }
+
+  .pcard__bar {
+    position: absolute;
+    inset-inline: 0;
+    inset-block-end: 0;
+    block-size: 3px;
+    background: var(--accent-bar);
+    transform: scaleX(0.14);
+    transform-origin: left;
+    transition: transform var(--dur-pan) var(--ease-out);
+  }
+
+  .pcard:hover .pcard__bar {
+    transform: scaleX(1);
+  }
+
+  .pcard__body {
+    display: grid;
+    align-content: start;
+    gap: var(--space-2xs);
+    padding: var(--space-sm);
+  }
+
+  .pcard__title {
+    font-size: var(--text-lg);
+    font-weight: 700;
+    font-variation-settings: 'wdth' 106;
+    line-height: var(--leading-snug);
+    letter-spacing: var(--track-tight);
+    color: var(--ink);
+    text-wrap: balance;
+  }
+
+  .pcard__summary {
+    margin: 0;
+    font-size: var(--text-sm);
+    line-height: var(--leading-normal);
+    color: var(--ink-mute);
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+  }
+</style>

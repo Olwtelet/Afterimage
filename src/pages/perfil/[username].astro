@@ -1,0 +1,507 @@
+---
+/**
+ * Perfil público.
+ *
+ * Renderizado no servidor porque depende do banco e muda a cada interação —
+ * pré-renderizar significaria servir contagens paradas no tempo do último build.
+ *
+ * Aberto a quem não está logado: um perfil que só existe para quem tem conta não
+ * é público. Quem impõe isso é o RLS, não esta página.
+ */
+import Base from '~/layouts/Base.astro';
+import Glitch from '~/components/signal/Glitch.astro';
+import ProfileFilmCard from '~/components/ui/ProfileFilmCard.astro';
+import { server } from '~/lib/db/server';
+import { findProfile, loadProfilePage } from '~/lib/profiles';
+import { avatarOf } from '~/lib/auth';
+import { roleColor } from '~/lib/discord';
+import { barFor } from '~/lib/smpte';
+import { SITE } from '~/lib/site';
+
+export const prerender = false;
+
+const { username } = Astro.params;
+const db = server(Astro.cookies, Astro.request.headers);
+
+const profile = username ? await findProfile(db, username) : null;
+
+if (!profile) {
+  return new Response('Perfil não encontrado', {
+    status: 404,
+    headers: { 'content-type': 'text/plain; charset=utf-8' },
+  });
+}
+
+const { stats, favorites, watched, comments } = await loadProfilePage(db, profile);
+
+const isMine = Astro.locals.session?.userId === profile.id;
+const bar = barFor(profile.discord_id.slice(-6).padStart(6, '0'));
+
+const joined = new Intl.DateTimeFormat('pt-BR', {
+  month: 'long',
+  year: 'numeric',
+  timeZone: 'UTC',
+}).format(new Date(profile.created_at));
+
+const dateOf = (iso: string): string =>
+  new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short', timeZone: 'UTC' })
+    .format(new Date(iso))
+    .replace('.', '');
+
+const figures = [
+  { label: 'Assistidas', value: stats.watched },
+  { label: 'Favoritas', value: stats.favorites },
+  { label: 'Avaliações', value: stats.ratings },
+  { label: 'Anotações', value: stats.comments },
+] as const;
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'ProfilePage',
+  dateCreated: profile.created_at,
+  mainEntity: {
+    '@type': 'Person',
+    name: profile.display_name,
+    alternateName: profile.username,
+    image: avatarOf(profile),
+  },
+};
+---
+
+<Base
+  title={profile.display_name}
+  description={`Perfil de ${profile.display_name} no ${SITE.name}: ${stats.watched} sessões assistidas.`}
+  accent={bar}
+  schema={schema}
+>
+  {/* ===== Identificação ================================================== */}
+  <header class="who">
+    <div class="who__banner" aria-hidden="true">
+      {profile.banner_url && <img src={profile.banner_url} alt="" loading="eager" />}
+      <span class="who__veil"></span>
+    </div>
+
+    <div class="who__inner u-page">
+      <img
+        class="who__avatar"
+        src={avatarOf(profile)}
+        alt=""
+        width="112"
+        height="112"
+        loading="eager"
+      />
+
+      <div class="who__id">
+        <Glitch
+          tag="h1"
+          text={profile.display_name}
+          trigger="reveal"
+          class="who__name u-slate u-bleed"
+        />
+
+        <p class="who__meta u-label">
+          <span>@{profile.username}</span>
+          <span aria-hidden="true">·</span>
+          <span>Desde {joined}</span>
+          {
+            stats.position && (
+              <>
+                <span aria-hidden="true">·</span>
+                <span class="who__rank">
+                  {stats.position}º de {stats.total}
+                </span>
+              </>
+            )
+          }
+        </p>
+
+        {/*
+          Selo e cargos são espelhos do Discord e existem só para serem vistos.
+          Nada nesta plataforma é liberado por eles.
+        */}
+        {
+          (profile.guild_member || profile.guild_roles.length > 0) && (
+            <ul class="who__roles" role="list">
+              {profile.guild_member && (
+                <li class="who__badge">
+                  <span class="who__dot" aria-hidden="true" />
+                  Na comunidade
+                </li>
+              )}
+              {profile.guild_roles.slice(0, 5).map((role) => (
+                <li class="who__role" style={`--role:${roleColor(role.color)}`}>
+                  {role.name}
+                </li>
+              ))}
+            </ul>
+          )
+        }
+
+        {profile.bio && <p class="who__bio">{profile.bio}</p>}
+
+        {
+          !profile.guild_member && (
+            <a
+              class="btn btn--ghost who__join"
+              href={SITE.social.discord}
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              Entrar no servidor
+            </a>
+          )
+        }
+      </div>
+    </div>
+  </header>
+
+  {/* ===== Números ======================================================== */}
+  <section class="figures u-page" aria-label="Participação">
+    <dl class="figures__list">
+      {
+        figures.map((figure) => (
+          <div>
+            <dt class="u-label">{figure.label}</dt>
+            <dd>{String(figure.value).padStart(2, '0')}</dd>
+          </div>
+        ))
+      }
+    </dl>
+  </section>
+
+  {/* ===== Favoritas ====================================================== */}
+  <section class="section u-page" aria-labelledby="fav-title">
+    <div class="section__head">
+      <div>
+        <h2 class="section__title" data-channel="01" id="fav-title">Favoritas</h2>
+        <p class="section__note">O que ficou depois dos créditos</p>
+      </div>
+    </div>
+
+    {
+      favorites.length > 0 ? (
+        <div class="catalog m-stagger">
+          {favorites.map((film) => <ProfileFilmCard film={film} />)}
+        </div>
+      ) : (
+        <p class="empty u-label">
+          {isMine ? 'Você ainda não marcou nenhuma favorita' : 'Nenhuma favorita ainda'}
+        </p>
+      )
+    }
+  </section>
+
+  {/* ===== Assistidas ===================================================== */}
+  <section class="section u-page" aria-labelledby="watched-title">
+    <div class="section__head">
+      <div>
+        <h2 class="section__title" data-channel="02" id="watched-title">Assistidas</h2>
+        <p class="section__note">A sala em ordem de chegada</p>
+      </div>
+      {watched.length > 0 && <span class="section__link">{watched.length} sessões</span>}
+    </div>
+
+    {
+      watched.length > 0 ? (
+        <ol class="log m-rows" role="list">
+          {watched.map((film) => (
+            <li class="log__row" style={`--accent-bar:${barFor(film.tone).bar}`}>
+              <a class="log__link" href={`/sessoes/${film.slug}/`}>
+                <span class="log__bar" aria-hidden="true" />
+                <time class="log__when u-label" datetime={film.watched_at}>
+                  {dateOf(film.watched_at)}
+                </time>
+                <span class="log__title">{film.headline}</span>
+                {film.score && (
+                  <span class="log__score" aria-label={`Nota ${film.score} de 3`}>
+                    {'★'.repeat(film.score)}
+                    <span class="log__score-off">{'☆'.repeat(3 - film.score)}</span>
+                  </span>
+                )}
+              </a>
+            </li>
+          ))}
+        </ol>
+      ) : (
+        <p class="empty u-label">
+          {isMine ? 'Nenhuma sessão marcada ainda' : 'Nenhuma sessão registrada'}
+        </p>
+      )
+    }
+  </section>
+
+  {/* ===== Anotações ====================================================== */}
+  {
+    comments.length > 0 && (
+      <section class="section u-page" aria-labelledby="notes-title">
+        <div class="section__head">
+          <div>
+            <h2 class="section__title" data-channel="03" id="notes-title">Anotações</h2>
+            <p class="section__note">O que foi escrito à margem</p>
+          </div>
+        </div>
+
+        <ul class="notes m-rows" role="list">
+          {comments.map((note) => (
+            <li class="notes__item">
+              <p class="notes__body">{note.body}</p>
+              <p class="notes__meta u-label">
+                {note.film && (
+                  <a class="m-underline" href={`/sessoes/${note.film.slug}/`}>
+                    {note.film.headline}
+                  </a>
+                )}
+                <span aria-hidden="true">·</span>
+                <time datetime={note.created_at}>{dateOf(note.created_at)}</time>
+                {note.edited && <span>· editada</span>}
+              </p>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
+</Base>
+
+<style>
+  /* ===== Identificação ==================================================== */
+  .who {
+    position: relative;
+    padding-block-end: var(--space-lg);
+  }
+
+  .who__banner {
+    position: relative;
+    block-size: clamp(8rem, 22vw, 15rem);
+    overflow: clip;
+    background:
+      linear-gradient(115deg, var(--accent-bar) 0%, transparent 45%),
+      var(--surface);
+  }
+
+  .who__banner img {
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+    filter: saturate(0.5) contrast(1.05);
+  }
+
+  /* Mesmo véu do hero: o banner é fundo, não conteúdo. */
+  .who__veil {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgb(5 5 6 / 0.35), var(--void));
+  }
+
+  .who__inner {
+    display: grid;
+    gap: var(--space-md);
+    /* Sobe sobre o banner: a foto atravessa a borda entre os dois blocos. */
+    margin-block-start: clamp(-4rem, -8vw, -3rem);
+    position: relative;
+  }
+
+  @media (min-width: 48rem) {
+    .who__inner {
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: end;
+      gap: var(--space-lg);
+    }
+  }
+
+  .who__avatar {
+    inline-size: clamp(4.5rem, 12vw, 7rem);
+    block-size: clamp(4.5rem, 12vw, 7rem);
+    object-fit: cover;
+    background: var(--raised);
+    /* Quadrado com filete de acento: o sistema não tem círculos. */
+    border: 1px solid var(--line-strong);
+    box-shadow: -3px 0 0 var(--accent-bar);
+  }
+
+  .who__name {
+    font-size: var(--text-3xl);
+    color: var(--ink);
+  }
+
+  .who__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-block-start: var(--space-2xs);
+  }
+
+  .who__rank {
+    color: var(--accent-ink);
+  }
+
+  .who__roles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin: var(--space-sm) 0 0;
+    padding: 0;
+  }
+
+  .who__badge,
+  .who__role {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.2rem 0.5rem;
+    border: 1px solid var(--line);
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--ink-dim);
+  }
+
+  .who__badge {
+    border-color: color-mix(in srgb, var(--bar-green) 45%, var(--line));
+    color: var(--ink-green);
+  }
+
+  .who__dot {
+    inline-size: 0.375rem;
+    block-size: 0.375rem;
+    background: var(--bar-green);
+    border-radius: 50%;
+  }
+
+  /* O cargo carrega a cor do Discord num filete, não no texto: cor de cargo é
+     arbitrária e não tem compromisso com contraste. */
+  .who__role {
+    border-inline-start: 2px solid var(--role);
+  }
+
+  .who__bio {
+    max-inline-size: 52ch;
+    margin-block-start: var(--space-sm);
+    color: var(--ink-dim);
+  }
+
+  .who__join {
+    margin-block-start: var(--space-md);
+  }
+
+  /* ===== Números ========================================================== */
+  .figures {
+    padding-block: var(--space-lg);
+  }
+
+  .figures__list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr));
+    gap: var(--space-md);
+    margin: 0;
+    padding-block: var(--space-md);
+    border-block: 1px solid var(--line);
+  }
+
+  .figures__list dd {
+    margin: 0;
+    font-size: var(--text-2xl);
+    font-weight: 750;
+    font-variation-settings: 'wdth' 112;
+    letter-spacing: var(--track-tight);
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ===== Registro de sessões ============================================== */
+  .log {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .log__row {
+    border-block-end: 1px solid var(--line);
+  }
+
+  .log__link {
+    display: grid;
+    grid-template-columns: 3px auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--space-sm);
+    padding-block: var(--space-xs);
+    transition: background-color var(--dur-cut) var(--ease-signal);
+  }
+
+  .log__link:hover {
+    background: var(--surface);
+  }
+
+  .log__bar {
+    align-self: stretch;
+    background: var(--accent-bar);
+    transform: scaleY(0.35);
+    transform-origin: center;
+    transition: transform var(--dur-wipe) var(--ease-out);
+  }
+
+  .log__link:hover .log__bar {
+    transform: scaleY(1);
+  }
+
+  .log__when {
+    min-inline-size: 3.5rem;
+  }
+
+  .log__title {
+    color: var(--ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .log__score {
+    color: var(--accent-ink);
+    font-size: var(--text-sm);
+    letter-spacing: 0.1em;
+  }
+
+  .log__score-off {
+    color: var(--ink-mute);
+  }
+
+  /* ===== Anotações ======================================================== */
+  .notes {
+    display: grid;
+    gap: var(--space-md);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .notes__item {
+    max-inline-size: var(--measure);
+    padding-inline-start: var(--space-sm);
+    border-inline-start: 2px solid var(--line-strong);
+  }
+
+  .notes__body {
+    color: var(--ink-dim);
+    line-height: var(--leading-relaxed);
+    white-space: pre-wrap;
+  }
+
+  .notes__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-block-start: var(--space-2xs);
+  }
+
+  .notes__meta a {
+    color: var(--accent-ink);
+  }
+
+  /* ===== Vazio ============================================================ */
+  .empty {
+    padding: var(--space-lg);
+    border: 1px dashed var(--line);
+    text-align: center;
+  }
+</style>
