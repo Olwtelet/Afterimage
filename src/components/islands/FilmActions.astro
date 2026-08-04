@@ -135,7 +135,7 @@ const { slug } = Astro.props;
           : await db.from('favorites').delete().eq('user_id', userId).eq('film_id', filmId);
 
         if (error) fail(() => { favorite = was; });
-        else say(favorite ? 'Guardada nas favoritas' : 'Removida das favoritas');
+        else say(favorite ? 'Guardado nos favoritos' : 'Removido dos favoritos');
       });
 
       seenButton.addEventListener('click', async () => {

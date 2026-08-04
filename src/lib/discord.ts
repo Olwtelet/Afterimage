@@ -1,17 +1,17 @@
 /**
  * Integração com o Discord.
  *
- * REGRA QUE NÃO SE QUEBRA: nada aqui concede permissão. Cargos, pertencimento ao
- * servidor e nickname são espelhados para serem EXIBIDOS. Nenhuma política do
- * banco lê essas colunas, e nenhuma rota decide acesso a partir delas — quem
- * decide é `is_admin()`, contra a tabela `admins`, no Postgres.
+ * REGRA QUE NÃO SE QUEBRA: nada aqui concede permissão. Avatar, banner, nickname
+ * e pertencimento ao servidor são espelhados para serem EXIBIDOS. Nenhuma
+ * política do banco lê essas colunas e nenhuma rota decide acesso a partir
+ * delas — quem decide é `is_admin()`, contra a tabela `admins`, no Postgres.
  *
- * Isso é intencional e vale insistir: se um cargo do Discord liberasse recurso
- * aqui, a segurança da plataforma passaria a depender de quem tem permissão de
- * gerenciar cargos lá. São dois sistemas com donos diferentes.
+ * Vale insistir: se algo vindo do Discord liberasse recurso aqui, a segurança da
+ * plataforma passaria a depender de quem administra o servidor de lá. São dois
+ * sistemas com donos diferentes.
  *
- * Tudo é tolerante a falha. Sem bot configurado, sem rede, ou com o Discord
- * fora do ar, o perfil apenas fica sem o selo de membro e sem cargos.
+ * Tudo é tolerante a falha. Sem bot configurado, sem rede, ou com o Discord fora
+ * do ar, o perfil apenas fica sem o selo de membro — o login funciona igual.
  */
 import type { Session } from '@supabase/supabase-js';
 
@@ -22,7 +22,6 @@ import {
 } from 'astro:env/server';
 
 import { elevated } from './db/server';
-import type { DiscordRole } from './db/types';
 
 const API = 'https://discord.com/api/v10';
 const CDN = 'https://cdn.discordapp.com';
@@ -47,15 +46,7 @@ interface DiscordUser {
 }
 
 interface GuildMember {
-  roles?: string[];
   nick?: string | null;
-}
-
-interface GuildRole {
-  id: string;
-  name: string;
-  color: number;
-  position: number;
 }
 
 const avatarUrl = (user: DiscordUser): string | null =>
@@ -82,7 +73,7 @@ export async function syncDiscordProfile(session: Session): Promise<void> {
   const user = (await discordFetch('/users/@me', token, 'Bearer')) as DiscordUser | null;
   if (!user) return;
 
-  const { guild_member, guild_roles, nickname } = await readGuildStanding(user.id);
+  const { guild_member, nickname } = await readGuildStanding(user.id);
 
   const db = elevated();
   await db
@@ -93,7 +84,6 @@ export async function syncDiscordProfile(session: Session): Promise<void> {
       avatar_url: avatarUrl(user),
       banner_url: bannerUrl(user),
       guild_member,
-      guild_roles,
       updated_at: new Date().toISOString(),
     })
     .eq('id', session.user.id);
@@ -101,19 +91,22 @@ export async function syncDiscordProfile(session: Session): Promise<void> {
 
 interface GuildStanding {
   guild_member: boolean;
-  guild_roles: DiscordRole[];
   nickname: string | null;
 }
 
 /**
- * Consulta pertencimento e cargos pelo bot.
+ * Consulta pertencimento ao servidor pelo bot.
  *
- * Pelo bot, e não pelo token do usuário, porque o token de usuário só lista
- * servidores — para saber os CARGOS de alguém é preciso alguém dentro do
- * servidor perguntando. Sem bot configurado, devolve o estado neutro.
+ * Pelo bot, e não pelo token do usuário, porque o token de usuário lista os
+ * servidores dele mas não confirma a associação do ponto de vista do servidor.
+ * Sem bot configurado, devolve o estado neutro e o login segue normal.
+ *
+ * Os CARGOS eram lidos aqui e foram removidos: nada na plataforma os exibia mais,
+ * e manter a busca custaria uma segunda ida à API do Discord dentro do fluxo de
+ * login para alimentar uma coluna que ninguém lê.
  */
 async function readGuildStanding(discordId: string): Promise<GuildStanding> {
-  const neutral: GuildStanding = { guild_member: false, guild_roles: [], nickname: null };
+  const neutral: GuildStanding = { guild_member: false, nickname: null };
 
   if (!DISCORD_BOT_TOKEN || !DISCORD_GUILD_ID) return neutral;
 
@@ -127,29 +120,12 @@ async function readGuildStanding(discordId: string): Promise<GuildStanding> {
     // 404 do Discord vira `null` aqui: a pessoa simplesmente não é membro.
     if (!member) return neutral;
 
-    const all = (await discordFetch(
-      `/guilds/${DISCORD_GUILD_ID}/roles`,
-      DISCORD_BOT_TOKEN,
-      'Bot',
-    )) as GuildRole[] | null;
-
-    const owned = new Set(member.roles ?? []);
-    const roles = (all ?? [])
-      .filter((role) => owned.has(role.id) && role.name !== '@everyone')
-      // Ordem hierárquica do servidor, para o cargo principal vir primeiro.
-      .sort((a, b) => b.position - a.position)
-      .map(({ id, name, color }) => ({ id, name, color }));
-
-    return { guild_member: true, guild_roles: roles, nickname: member.nick ?? null };
+    return { guild_member: true, nickname: member.nick ?? null };
   } catch {
     return neutral;
   }
 }
 
-/** `#5865F2` a partir do inteiro que o Discord devolve. Cinza quando não há cor. */
-export function roleColor(color: number): string {
-  return color === 0 ? '#868C93' : `#${color.toString(16).padStart(6, '0')}`;
-}
 
 /**
  * Anuncia uma sessão no canal do servidor.

@@ -1,6 +1,6 @@
 ---
 /**
- * Suas favoritas.
+ * Seus favoritos.
  *
  * Rota privada: exige sessão e redireciona quem não tem, preservando o destino.
  * Diferente da lista que aparece no perfil público, aqui vem tudo — com busca,
@@ -25,17 +25,17 @@ const items = await loadLibrary(db, session.userId, 'favorites');
 ---
 
 <Base
-  title="Suas favoritas"
+  title="Seus favoritos"
   description="As sessões que você guardou"
   accent={BARS.magenta}
   noindex
 >
   <header class="head u-page">
-    <p class="u-label head__eyebrow m-enter" style="--m-step:0">Sua conta · Favoritas</p>
+    <p class="u-label head__eyebrow m-enter" style="--m-step:0">Sua conta · Favoritos</p>
 
     <Glitch
       tag="h1"
-      text="Favoritas"
+      text="Favoritos"
       trigger="reveal"
       class="page-title u-slate u-bleed m-enter"
     />

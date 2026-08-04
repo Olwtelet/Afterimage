@@ -1,5 +1,5 @@
 /**
- * Biblioteca pessoal: favoritas e assistidas.
+ * Biblioteca pessoal: favoritos e assistidos.
  *
  * As duas tabelas têm a mesma forma — (usuário, filme, data) — e diferem apenas
  * no nome da coluna de data. Uma função só evita duas cópias que sairiam de

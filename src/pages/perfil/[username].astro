@@ -14,7 +14,6 @@ import ProfileFilmCard from '~/components/ui/ProfileFilmCard.astro';
 import { server } from '~/lib/db/server';
 import { findProfile, loadProfilePage } from '~/lib/profiles';
 import { avatarOf } from '~/lib/auth';
-import { roleColor } from '~/lib/discord';
 import { barFor } from '~/lib/smpte';
 import { SITE } from '~/lib/site';
 
@@ -49,8 +48,8 @@ const dateOf = (iso: string): string =>
     .replace('.', '');
 
 const figures = [
-  { label: 'Assistidas', value: stats.watched },
-  { label: 'Favoritas', value: stats.favorites },
+  { label: 'Assistidos', value: stats.watched },
+  { label: 'Favoritos', value: stats.favorites },
   { label: 'Avaliações', value: stats.ratings },
   { label: 'Anotações', value: stats.comments },
 ] as const;
@@ -116,26 +115,15 @@ const schema = {
         </p>
 
         {/*
-          Selo e cargos são espelhos do Discord e existem só para serem vistos.
-          Nada nesta plataforma é liberado por eles.
+          Selo de pertencimento ao servidor: espelho do Discord, exibido e nada
+          mais. Nenhuma permissão desta plataforma deriva dele.
         */}
-        {
-          (profile.guild_member || profile.guild_roles.length > 0) && (
-            <ul class="who__roles" role="list">
-              {profile.guild_member && (
-                <li class="who__badge">
-                  <span class="who__dot" aria-hidden="true" />
-                  Na comunidade
-                </li>
-              )}
-              {profile.guild_roles.slice(0, 5).map((role) => (
-                <li class="who__role" style={`--role:${roleColor(role.color)}`}>
-                  {role.name}
-                </li>
-              ))}
-            </ul>
-          )
-        }
+        {profile.guild_member && (
+          <p class="who__badge">
+            <span class="who__dot" aria-hidden="true" />
+            Na comunidade
+          </p>
+        )}
 
         {profile.bio && <p class="who__bio">{profile.bio}</p>}
 
@@ -169,11 +157,11 @@ const schema = {
     </dl>
   </section>
 
-  {/* ===== Favoritas ====================================================== */}
+  {/* ===== Favoritos ====================================================== */}
   <section class="section u-page" aria-labelledby="fav-title">
     <div class="section__head">
       <div>
-        <h2 class="section__title" data-channel="01" id="fav-title">Favoritas</h2>
+        <h2 class="section__title" data-channel="01" id="fav-title">Favoritos</h2>
         <p class="section__note">O que ficou depois dos créditos</p>
       </div>
     </div>
@@ -191,11 +179,11 @@ const schema = {
     }
   </section>
 
-  {/* ===== Assistidas ===================================================== */}
+  {/* ===== Assistidos ===================================================== */}
   <section class="section u-page" aria-labelledby="watched-title">
     <div class="section__head">
       <div>
-        <h2 class="section__title" data-channel="02" id="watched-title">Assistidas</h2>
+        <h2 class="section__title" data-channel="02" id="watched-title">Assistidos</h2>
         <p class="section__note">A sala em ordem de chegada</p>
       </div>
       {watched.length > 0 && <span class="section__link">{watched.length} sessões</span>}
@@ -331,30 +319,18 @@ const schema = {
     color: var(--accent-ink);
   }
 
-  .who__roles {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.35rem;
-    margin: var(--space-sm) 0 0;
-    padding: 0;
-  }
 
-  .who__badge,
-  .who__role {
+  .who__badge {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
+    margin-block-start: var(--space-sm);
     padding: 0.2rem 0.5rem;
-    border: 1px solid var(--line);
+    border: 1px solid color-mix(in srgb, var(--bar-green) 45%, var(--line));
     font-family: var(--font-mono);
     font-size: 0.625rem;
     letter-spacing: var(--track-label);
     text-transform: uppercase;
-    color: var(--ink-dim);
-  }
-
-  .who__badge {
-    border-color: color-mix(in srgb, var(--bar-green) 45%, var(--line));
     color: var(--ink-green);
   }
 
@@ -365,11 +341,6 @@ const schema = {
     border-radius: 50%;
   }
 
-  /* O cargo carrega a cor do Discord num filete, não no texto: cor de cargo é
-     arbitrária e não tem compromisso com contraste. */
-  .who__role {
-    border-inline-start: 2px solid var(--role);
-  }
 
   .who__bio {
     max-inline-size: 52ch;

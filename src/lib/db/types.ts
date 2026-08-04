@@ -20,17 +20,8 @@ export interface Profile {
   readonly bio: string | null;
   /** Espelho do Discord. Informativo: nenhuma permissão deriva daqui. */
   readonly guild_member: boolean;
-  readonly guild_roles: readonly DiscordRole[];
   readonly created_at: string;
   readonly updated_at: string;
-}
-
-/** Cargo do Discord. Existe para ser exibido, nunca para autorizar. */
-export interface DiscordRole {
-  readonly id: string;
-  readonly name: string;
-  /** Inteiro de 24 bits vindo do Discord; convertido para hex na exibição. */
-  readonly color: number;
 }
 
 export interface FilmFeature {
