@@ -238,7 +238,12 @@
      `popover` nativo: fechar ao clicar fora e com Esc vem da plataforma, sem
      listener nenhum e sem armadilha de foco escrita à mão. */
   .session__panel {
-    position: absolute;
+    /* `fixed`, não `absolute`.
+       O cabeçalho é sticky e acompanha a rolagem, mas o painel ficava ancorado
+       ao documento e escorregava para fora da tela junto com o topo da página.
+       Como popover vive na top layer, `fixed` o prende à viewport e os dois
+       passam a andar juntos. */
+    position: fixed;
     inset: auto;
     margin: 0;
     inline-size: min(15rem, calc(100vw - 2rem));

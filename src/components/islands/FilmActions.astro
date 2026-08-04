@@ -62,6 +62,15 @@ const { slug } = Astro.props;
     Entre para marcar esta sessão
   </a>
 
+  {/*
+    Terceiro estado, e o que faltava: a ficha existe no site mas não tem linha
+    no banco. Sem ele o bloco ficava vazio, sem diferença visível entre
+    "carregando", "nada a fazer aqui" e "quebrado".
+  */}
+  <p class="acts__absent u-label" data-acts-absent hidden>
+    Esta sessão ainda não está no catálogo — marcações indisponíveis
+  </p>
+
   <p class="acts__status u-label" data-acts-status role="status" aria-live="polite"></p>
 </section>
 
@@ -75,6 +84,7 @@ const { slug } = Astro.props;
   if (root) {
     const controls = root.querySelector<HTMLElement>('[data-acts-controls]');
     const enter = root.querySelector<HTMLAnchorElement>('[data-acts-enter]');
+    const absent = root.querySelector<HTMLElement>('[data-acts-absent]');
     const status = root.querySelector<HTMLElement>('[data-acts-status]');
     const favButton = root.querySelector<HTMLButtonElement>('[data-act="favorite"]');
     const seenButton = root.querySelector<HTMLButtonElement>('[data-act="watched"]');
@@ -82,7 +92,7 @@ const { slug } = Astro.props;
     const stars = [...root.querySelectorAll<HTMLButtonElement>('.star')];
     const slug = root.dataset.slug ?? '';
 
-    if (controls && enter && status && favButton && seenButton && clearButton) {
+    if (controls && enter && absent && status && favButton && seenButton && clearButton) {
       const db = browser();
       let userId: string | null = null;
       let filmId: string | null = null;
@@ -175,28 +185,48 @@ const { slug } = Astro.props;
         else say('Avaliação removida');
       });
 
+      /**
+       * Toda saída revela exatamente um dos três blocos.
+       *
+       * A versão anterior tinha um caminho que retornava sem revelar nenhum, e o
+       * resultado era um espaço em branco: quem olhava não distinguia
+       * "carregando" de "indisponível" nem de "quebrado".
+       */
+      const reveal = (which: 'controls' | 'enter' | 'absent'): void => {
+        controls.hidden = which !== 'controls';
+        enter.hidden = which !== 'enter';
+        absent.hidden = which !== 'absent';
+        root.dataset.state = which;
+      };
+
       void (async () => {
         const {
           data: { session },
         } = await db.auth.getSession();
 
         if (!session) {
-          enter.hidden = false;
           // Volta para esta ficha depois de entrar.
           enter.href = `/auth/entrar/?next=${encodeURIComponent(location.pathname)}`;
+          reveal('enter');
           return;
         }
 
         userId = session.user.id;
 
-        const { data: film } = await db
+        const { data: film, error } = await db
           .from('films')
           .select('id')
           .eq('slug', slug)
           .maybeSingle<{ id: string }>();
 
-        // Sem linha no banco não há o que marcar: a ficha existe só no Markdown.
-        if (!film) return;
+        // Sem linha no banco não há o que marcar — a ficha existe só no Markdown,
+        // ou a migração do catálogo ainda não foi aplicada. Nos dois casos o
+        // certo é dizer isso, não sumir.
+        if (error || !film) {
+          reveal('absent');
+          return;
+        }
+
         filmId = film.id;
 
         const [fav, seen, rated] = await Promise.all([
@@ -210,7 +240,7 @@ const { slug } = Astro.props;
         score = rated.data?.score ?? null;
 
         paint();
-        controls.hidden = false;
+        reveal('controls');
       })();
     }
   }
@@ -228,8 +258,18 @@ const { slug } = Astro.props;
   }
 
   .acts__row[hidden],
-  .acts__enter[hidden] {
+  .acts__enter[hidden],
+  .acts__absent[hidden] {
     display: none;
+  }
+
+  /* Indisponível: dito em voz baixa, com o filete de aviso à esquerda em vez de
+     cor de erro. Não é um defeito da página — é uma sessão que ainda não entrou
+     no catálogo. */
+  .acts__absent {
+    padding-inline-start: var(--space-sm);
+    border-inline-start: 2px solid var(--line-strong);
+    color: var(--ink-mute);
   }
 
   .acts__row {
