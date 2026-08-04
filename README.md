@@ -142,9 +142,12 @@ leitura usa `animation-timeline: scroll()`. Nenhum dos dois custa um byte de JS.
 
 ## Banco de dados
 
-O mural e o contador falam direto com o Supabase pelo navegador, com a chave
-`publishable` — que é feita para isso. **Quem impõe as regras é o RLS**, não o
-JavaScript do cliente.
+> **Primeira vez?** [`docs/CONFIGURACAO.md`](docs/CONFIGURACAO.md) leva do zero
+> ao ar: Discord, Supabase, migrações, administrador e deploy na Vercel.
+
+O mural, o contador e a plataforma falam com o Supabase pelo navegador, com a
+chave `publishable` — que é feita para isso. **Quem impõe as regras é o RLS**,
+não o JavaScript do cliente.
 
 ### Colocar no ar
 
