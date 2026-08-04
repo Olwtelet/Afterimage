@@ -40,7 +40,8 @@ const { accent = BARS.cyan, bodyClass, ...seo } = Astro.props;
 <!doctype html>
 <html lang={SITE.lang} style={`--accent-bar:${accent.bar};--accent-ink:${accent.ink}`}>
   <head>
-    <Seo {...seo} />
+    {/* A barra da página vira a faixa da prévia sem cada rota repetir a cor. */}
+    <Seo {...seo} themeColor={accent.bar} />
     <style is:inline>
       /*
        * A ordem das camadas precisa ser declarada AQUI, antes de qualquer outra

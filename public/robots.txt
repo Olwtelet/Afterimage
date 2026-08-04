@@ -1,4 +1,10 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://filmeshdonlinegratis.netlify.app/sitemap-index.xml
+# O painel e o fluxo de login não são conteúdo. O painel já responde 404 para
+# quem não administra, mas não há motivo para um rastreador gastar requisição
+# descobrindo isso — nem para as rotas de autenticação entrarem em índice.
+Disallow: /admin/
+Disallow: /auth/
+
+Sitemap: https://filmeshdonlinegratis.vercel.app/sitemap-index.xml

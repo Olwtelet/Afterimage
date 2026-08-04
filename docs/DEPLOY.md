@@ -130,7 +130,7 @@ real. Para falhas de login, **Supabase → Logs → Auth**.
 Depois que ele propagar, volte a **dois** lugares e troque o endereço:
 
 1. Supabase → *URL Configuration* → Site URL e Redirect URLs
-2. `src/lib/site.ts` → a constante `SITE_URL`
+2. `src/lib/site.ts` → a constante `SITE_URL` (hoje aponta para o domínio .vercel.app)
 
 O segundo importa mais do que parece: é dele que saem canonical, Open Graph,
 sitemap e RSS. Ficar para trás significa o buscador indexando o domínio antigo.

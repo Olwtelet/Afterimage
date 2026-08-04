@@ -6,7 +6,17 @@
  * Twitter. Agora existe um arquivo só, tipado, e o compilador reclama se algo faltar.
  */
 
-export const SITE_URL = 'https://filmeshdonlinegratis.netlify.app';
+/**
+ * Domínio de produção.
+ *
+ * Daqui saem canonical, Open Graph, sitemap e RSS — ou seja, é este valor que
+ * decide para onde aponta a imagem da prévia quando alguém compartilha um link.
+ * Enquanto ele apontava para o Netlify anterior, o `og:image` referenciava um
+ * domínio morto e a prévia saía sem banner nenhum.
+ *
+ * Ao trocar de domínio, troque aqui E nas Redirect URLs do Supabase.
+ */
+export const SITE_URL = 'https://filmeshdonlinegratis.vercel.app';
 
 export interface SocialLinks {
   readonly discord: string;
