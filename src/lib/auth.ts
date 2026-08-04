@@ -97,9 +97,25 @@ export function requireAdmin(session: Session | null): Response | null {
   });
 }
 
-/** URL do avatar do Discord, com fallback para o avatar padrão da plataforma. */
-export function avatarOf(profile: Pick<Profile, 'avatar_url' | 'discord_id'>): string {
+/**
+ * URL do avatar, com recuo para o avatar padrão do Discord.
+ *
+ * O Discord deriva o avatar padrão de `(snowflake >> 22) % 6`. O identificador
+ * nem sempre é um snowflake — a view de ranking, por exemplo, expõe o id do
+ * perfil, que é um UUID — e `BigInt()` num UUID LANÇA, derrubando a página
+ * inteira por causa de uma imagem de recuo.
+ *
+ * Por isso os dígitos são extraídos antes: qualquer entrada produz um índice
+ * estável, e nenhuma produz exceção. Uma função de fallback que quebra é uma
+ * contradição.
+ */
+export function avatarOf(profile: {
+  avatar_url: string | null;
+  discord_id?: string | null;
+}): string {
   if (profile.avatar_url) return profile.avatar_url;
-  const fallback = (BigInt(profile.discord_id || '0') >> 22n) % 6n;
-  return `https://cdn.discordapp.com/embed/avatars/${fallback}.png`;
+
+  const digits = (profile.discord_id ?? '').replace(/\D/g, '');
+  const index = digits ? Number((BigInt(digits) >> 22n) % 6n) : 0;
+  return `https://cdn.discordapp.com/embed/avatars/${index}.png`;
 }

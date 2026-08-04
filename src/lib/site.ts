@@ -66,7 +66,8 @@ export const NAVIGATION: readonly NavItem[] = [
   { label: 'Início', href: '/', channel: '01' },
   { label: 'Programação', href: '/programacao/', channel: '02' },
   { label: 'Mural', href: '/mural/', channel: '03' },
-  { label: 'Sobre', href: '/sobre/', channel: '04' },
+  { label: 'Ranking', href: '/ranking/', channel: '04' },
+  { label: 'Sobre', href: '/sobre/', channel: '05' },
 ] as const;
 
 /**

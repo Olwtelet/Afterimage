@@ -1,0 +1,373 @@
+---
+/**
+ * Ranking da comunidade.
+ *
+ * Existe para representar participação, e nada além disso. Não concede vantagem,
+ * permissão, desbloqueio ou benefício — e essa não é uma promessa da interface: a
+ * pontuação é uma view derivada que não aparece em nenhuma política de acesso do
+ * banco. Conta nova e primeiro lugar têm exatamente os mesmos direitos.
+ *
+ * O desenho evita a gramática de placar competitivo de propósito: sem pódio, sem
+ * medalha, sem troféu. É uma tabela de transmissão — quem apareceu, e quanto.
+ */
+import Base from '~/layouts/Base.astro';
+import Glitch from '~/components/signal/Glitch.astro';
+import { server } from '~/lib/db/server';
+import { avatarOf } from '~/lib/auth';
+import { BAR_ORDER, BARS } from '~/lib/smpte';
+import { SITE } from '~/lib/site';
+import type { RankingRow } from '~/lib/db/types';
+
+export const prerender = false;
+
+const db = server(Astro.cookies, Astro.request.headers);
+
+const { data } = await db
+  .from('community_ranking')
+  .select('*')
+  .order('score', { ascending: false })
+  .limit(100)
+  .returns<RankingRow[]>();
+
+/* Quem nunca interagiu não entra na lista. Zero não é uma posição na fila, e
+   engrossar o ranking com contas paradas só torna a leitura pior. */
+const rows = (data ?? []).filter((row) => row.score > 0);
+
+const me = Astro.locals.session?.userId ?? null;
+const myIndex = me ? rows.findIndex((row) => row.id === me) : -1;
+
+const totals = rows.reduce(
+  (sum, row) => ({
+    watched: sum.watched + row.watched_count,
+    comments: sum.comments + row.comment_count,
+    ratings: sum.ratings + row.rating_count,
+  }),
+  { watched: 0, comments: 0, ratings: 0 },
+);
+
+/* A barra de cada linha vem da posição, percorrendo as sete em laço — a lista
+   inteira remonta a carta de ajuste conforme desce. */
+const barAt = (index: number) => BAR_ORDER[index % BAR_ORDER.length]!;
+
+const columns = [
+  { key: 'watched_count', label: 'Sessões' },
+  { key: 'comment_count', label: 'Anotações' },
+  { key: 'rating_count', label: 'Notas' },
+  { key: 'favorite_count', label: 'Favoritos' },
+] as const;
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: 'Ranking da comunidade',
+  url: new URL('/ranking/', SITE.url).href,
+  isPartOf: { '@type': 'WebSite', name: SITE.name, url: SITE.url },
+};
+---
+
+<Base
+  title="Ranking"
+  description={`Quem participa da curadoria do ${SITE.name}, por sessões assistidas, anotações e avaliações.`}
+  accent={BARS.white}
+  schema={schema}
+>
+  <header class="head u-page">
+    <p class="u-label head__eyebrow m-enter" style="--m-step:0">Canal 04 · Audiência</p>
+
+    <Glitch
+      tag="h1"
+      text="Ranking"
+      trigger="reveal"
+      class="page-title u-slate u-bleed m-enter"
+    />
+
+    <div class="page-lede m-enter" style="--m-step:2">
+      <p>Quem apareceu, e quanto</p>
+      <p>Só isso — a posição não abre nada, não libera nada e não vale nada além dela mesma</p>
+    </div>
+
+    {
+      rows.length > 0 && (
+        <dl class="head__stats m-enter" style="--m-step:3">
+          <div>
+            <dt class="u-label">Na lista</dt>
+            <dd>{rows.length}</dd>
+          </div>
+          <div>
+            <dt class="u-label">Sessões marcadas</dt>
+            <dd>{totals.watched}</dd>
+          </div>
+          <div>
+            <dt class="u-label">Anotações</dt>
+            <dd>{totals.comments}</dd>
+          </div>
+          <div>
+            <dt class="u-label">Avaliações</dt>
+            <dd>{totals.ratings}</dd>
+          </div>
+        </dl>
+      )
+    }
+  </header>
+
+  {
+    rows.length === 0 ? (
+      <div class="u-page">
+        <p class="void u-label">
+          Ninguém marcou nada ainda — a lista começa com a primeira sessão assistida
+        </p>
+        <a class="btn btn--ghost void__cta" href="/programacao/">Ver a grade</a>
+      </div>
+    ) : (
+      <>
+        <div class="board u-page">
+          <div class="board__head u-label" aria-hidden="true">
+            <span>Pos</span>
+            <span>Quem</span>
+            {columns.map((column) => <span class="board__num">{column.label}</span>)}
+          </div>
+
+          <ol class="board__rows m-rows" role="list">
+            {rows.map((row, index) => {
+              const bar = barAt(index);
+              return (
+                <li
+                  class="rank"
+                  style={`--accent-bar:${bar.bar};--accent-ink:${bar.ink}`}
+                  data-me={row.id === me ? 'true' : undefined}
+                >
+                  <a class="rank__link" href={`/perfil/${row.username}/`}>
+                    <span class="rank__bar" aria-hidden="true" />
+
+                    <span class="rank__pos u-mono">
+                      {String(index + 1).padStart(2, '0')}
+                    </span>
+
+                    <span class="rank__who">
+                      <img
+                        class="rank__avatar"
+                        src={avatarOf({ avatar_url: row.avatar_url, discord_id: row.id })}
+                        alt=""
+                        width="28"
+                        height="28"
+                        loading="lazy"
+                      />
+                      <span class="rank__names">
+                        <span class="rank__name">{row.display_name}</span>
+                        <span class="rank__handle u-label">@{row.username}</span>
+                      </span>
+                    </span>
+
+                    {columns.map((column) => (
+                      <span class="rank__num u-mono">
+                        <span class="rank__num-label u-label">{column.label}</span>
+                        {row[column.key]}
+                      </span>
+                    ))}
+                  </a>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+
+        {/*
+          Nota de rodapé, e não letra miúda: a regra de que a posição não vale
+          nada é a coisa mais importante desta página.
+        */}
+        <p class="board__note u-page">
+          A pontuação pesa sessões assistidas, depois anotações, depois avaliações
+          e favoritos. Ela descreve presença e mais nada: não altera permissão, não
+          desbloqueia recurso e não muda o que qualquer pessoa pode fazer aqui.
+          {myIndex >= 0 && (
+            <span class="board__mine"> Você está em {myIndex + 1}º.</span>
+          )}
+        </p>
+      </>
+    )
+  }
+</Base>
+
+<style>
+  .head {
+    padding-block: var(--space-2xl) var(--space-lg);
+  }
+
+  .head__eyebrow {
+    color: var(--accent-ink);
+  }
+
+  .head__stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-lg);
+    margin-block-start: var(--space-lg);
+    padding-block-start: var(--space-sm);
+    border-block-start: 1px solid var(--line);
+  }
+
+  .head__stats dd {
+    margin: 0;
+    font-size: var(--text-2xl);
+    font-weight: 750;
+    font-variation-settings: 'wdth' 112;
+    letter-spacing: var(--track-tight);
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ===== Tabela =========================================================== */
+  .board {
+    padding-block-end: var(--space-lg);
+  }
+
+  /* O cabeçalho de colunas só existe onde há espaço para as colunas. Abaixo
+     disso os números viram pares rótulo/valor dentro da própria linha. */
+  .board__head {
+    display: none;
+  }
+
+  .board__rows {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .rank {
+    border-block-end: 1px solid var(--line);
+  }
+
+  .rank__link {
+    display: grid;
+    grid-template-columns: 3px auto minmax(0, 1fr);
+    align-items: center;
+    gap: var(--space-sm);
+    padding-block: var(--space-xs);
+    transition: background-color var(--dur-cut) var(--ease-signal);
+  }
+
+  .rank__link:hover {
+    background: var(--surface);
+  }
+
+  .rank__bar {
+    align-self: stretch;
+    background: var(--accent-bar);
+    transform: scaleY(0.3);
+    transition: transform var(--dur-wipe) var(--ease-out);
+  }
+
+  .rank__link:hover .rank__bar {
+    transform: scaleY(1);
+  }
+
+  .rank__pos {
+    font-size: var(--text-sm);
+    color: var(--ink-mute);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .rank__who {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2xs);
+    min-inline-size: 0;
+  }
+
+  .rank__avatar {
+    inline-size: 1.75rem;
+    block-size: 1.75rem;
+    object-fit: cover;
+    background: var(--raised);
+    border: 1px solid var(--line);
+    flex: none;
+  }
+
+  .rank__names {
+    display: grid;
+    min-inline-size: 0;
+  }
+
+  .rank__name {
+    color: var(--ink);
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .rank__num {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    font-size: var(--text-sm);
+    color: var(--ink-dim);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Linha de quem está lendo: filete de acento à esquerda em vez de destaque
+     colorido — marca sem premiar. */
+  .rank[data-me] {
+    background: color-mix(in srgb, var(--accent-bar) 7%, transparent);
+  }
+
+  .rank[data-me] .rank__pos {
+    color: var(--accent-ink);
+  }
+
+  @media (min-width: 52rem) {
+    .board__head,
+    .rank__link {
+      display: grid;
+      grid-template-columns: 3px 2.5rem minmax(0, 1fr) repeat(4, 4.5rem);
+      align-items: center;
+      gap: var(--space-sm);
+    }
+
+    .board__head {
+      padding-block-end: var(--space-2xs);
+      border-block-end: 1px solid var(--line-strong);
+    }
+
+    /* No modo tabela o rótulo é o cabeçalho da coluna, não da célula. */
+    .board__head > :first-child {
+      grid-column: 2;
+    }
+
+    .rank__num {
+      justify-content: flex-end;
+    }
+
+    .rank__num-label {
+      display: none;
+    }
+
+    .board__num {
+      text-align: end;
+    }
+  }
+
+  /* ===== Rodapé =========================================================== */
+  .board__note {
+    max-inline-size: var(--measure);
+    padding-block: var(--space-lg);
+    font-size: var(--text-sm);
+    line-height: var(--leading-relaxed);
+    color: var(--ink-mute);
+    border-block-start: 1px solid var(--line);
+  }
+
+  .board__mine {
+    color: var(--accent-ink);
+  }
+
+  .void {
+    padding: var(--space-lg);
+    border: 1px dashed var(--line);
+    text-align: center;
+  }
+
+  .void__cta {
+    margin-block-start: var(--space-md);
+  }
+</style>
