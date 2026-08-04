@@ -176,8 +176,9 @@ comentários vão por `fetch` direto no PostgREST.
 
 ## Banco de dados
 
-> **Primeira vez?** [`docs/CONFIGURACAO.md`](docs/CONFIGURACAO.md) leva do zero
-> ao ar: Discord, Supabase, migrações, administrador e deploy na Vercel.
+> **Primeira vez?** [`docs/CONFIGURACAO.md`](docs/CONFIGURACAO.md) cobre Discord,
+> Supabase, migrações e administrador. Depois, [`docs/DEPLOY.md`](docs/DEPLOY.md)
+> leva do repositório ao ar na Vercel.
 
 O mural, o contador e a plataforma falam com o Supabase pelo navegador, com a
 chave `publishable` — que é feita para isso. **Quem impõe as regras é o RLS**,
