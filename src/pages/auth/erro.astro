@@ -81,8 +81,10 @@ const action = known?.action ?? 'Tente novamente. Se persistir, avise pelo Disco
         )
       }
 
+      {/* O espaço é explícito: o compilador colapsa o whitespace na borda entre
+          texto e elemento, e as duas palavras saíam grudadas. */}
       <p class="fail__help u-label">
-        Ajuda no
+        <span>Ajuda no&#32;</span>
         <a
           class="m-underline"
           href={SITE.social.discord}

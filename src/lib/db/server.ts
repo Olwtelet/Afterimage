@@ -15,7 +15,11 @@
  *                sozinho: gravar no perfil o que veio do Discord, anunciar
  *                sessões. Nunca deriva permissão do que o cliente enviou.
  */
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import {
+  createServerClient,
+  parseCookieHeader,
+  type CookieOptions,
+} from '@supabase/ssr';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import {
   PUBLIC_SUPABASE_PUBLISHABLE_KEY,
@@ -32,32 +36,32 @@ interface AstroCookieLike {
 }
 
 /**
- * Nomes possíveis dos cookies de sessão.
+ * Cliente amarrado aos cookies da requisição. Respeita RLS.
  *
- * O @supabase/ssr fatia a sessão em cookies numerados quando ela passa do limite
- * de tamanho, e não expõe API para enumerar o que gravou. Cobrir o nome base e
- * alguns fragmentos basta: a sessão só se fragmenta com metadados grandes e
- * nunca chega perto de cinco.
+ * `getAll` devolve TODOS os cookies, lidos do cabeçalho bruto. A versão anterior
+ * tentava adivinhar os nomes numa lista fixa (`sb-<ref>-auth-token` e alguns
+ * fragmentos numerados) e quebrou o login inteiro: o PKCE grava o verificador em
+ * `...-auth-token-code-verifier`, `...-flows-code-verifier` e
+ * `...-flow-<hash>-code-verifier`, nenhum deles na lista. O callback não
+ * encontrava o verificador e a troca do código falhava com "PKCE code verifier
+ * not found in storage".
+ *
+ * A lição é geral: quando a biblioteca escolhe os nomes, enumerá-los é apostar
+ * contra uma implementação que pode mudar sem aviso. Entregar o conjunto
+ * completo e deixar a biblioteca filtrar não tem esse risco — e é para isso que
+ * ela exporta `parseCookieHeader`.
+ *
+ * Recebe `headers` porque a interface de cookies do Astro sabe buscar por nome,
+ * mas não sabe listar.
  */
-const COOKIE_BASE = (() => {
-  const ref = new URL(PUBLIC_SUPABASE_URL).hostname.split('.')[0] ?? 'local';
-  return `sb-${ref}-auth-token`;
-})();
-
-const COOKIE_NAMES = [
-  COOKIE_BASE,
-  ...Array.from({ length: 5 }, (_, i) => `${COOKIE_BASE}.${i}`),
-];
-
-/** Cliente amarrado aos cookies da requisição. Respeita RLS. */
-export function server(cookies: AstroCookieLike): Db {
+export function server(cookies: AstroCookieLike, headers: Headers): Db {
   return createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_PUBLISHABLE_KEY, {
     cookies: {
       getAll() {
-        return COOKIE_NAMES.flatMap((name) => {
-          const cookie = cookies.get(name);
-          return cookie ? [{ name, value: cookie.value }] : [];
-        });
+        return parseCookieHeader(headers.get('cookie') ?? '').map(({ name, value }) => ({
+          name,
+          value: value ?? '',
+        }));
       },
       setAll(list) {
         for (const { name, value, options } of list) {

@@ -14,7 +14,7 @@ export const prerender = false;
  * mesmo assim e o perfil fica com os dados da última vez. Login não deveria
  * depender da disponibilidade de um enfeite.
  */
-export const GET: APIRoute = async ({ cookies, url, redirect }) => {
+export const GET: APIRoute = async ({ cookies, url, redirect, request }) => {
   const code = url.searchParams.get('code');
   const oauthError = url.searchParams.get('error_description') ?? url.searchParams.get('error');
 
@@ -26,7 +26,7 @@ export const GET: APIRoute = async ({ cookies, url, redirect }) => {
     return redirect('/auth/erro/?motivo=sem-codigo', 302);
   }
 
-  const db = server(cookies);
+  const db = server(cookies, request.headers);
   const { data, error } = await db.auth.exchangeCodeForSession(code);
 
   if (error || !data.session) {

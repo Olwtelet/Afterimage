@@ -38,8 +38,11 @@ export interface Session {
  * sem validar a assinatura no servidor de autenticação, e cookie é território do
  * cliente. A diferença é uma ida à rede em troca de a sessão ser confiável.
  */
-export async function readSession(cookies: AstroCookies): Promise<Session | null> {
-  const db = server(cookies);
+export async function readSession(
+  cookies: AstroCookies,
+  headers: Headers,
+): Promise<Session | null> {
+  const db = server(cookies, headers);
 
   const {
     data: { user },

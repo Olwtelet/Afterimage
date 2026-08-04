@@ -24,6 +24,6 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // do código seria trabalho jogado fora.
   if (context.url.pathname.startsWith('/auth/')) return next();
 
-  context.locals.session = await readSession(context.cookies);
+  context.locals.session = await readSession(context.cookies, context.request.headers);
   return next();
 });

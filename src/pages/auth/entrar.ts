@@ -20,8 +20,8 @@ export const prerender = false;
  * páginas são estáticas. O que protege aqui é o PKCE — o `code_verifier` só
  * serve junto do `code` que o Discord devolve, e este chega uma vez só.
  */
-export const GET: APIRoute = async ({ cookies, url, redirect }) => {
-  const db = server(cookies);
+export const GET: APIRoute = async ({ cookies, url, redirect, request }) => {
+  const db = server(cookies, request.headers);
 
   /*
    * `next` vem da query, ou seja, do cliente. Só caminhos internos são aceitos:
