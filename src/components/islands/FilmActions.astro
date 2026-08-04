@@ -75,7 +75,7 @@ const { slug } = Astro.props;
 </section>
 
 <script>
-  import { browser } from '~/lib/db/browser';
+  import { hasSessionCookie, loadDb } from '~/lib/db/lazy';
 
   type Score = 1 | 2 | 3;
 
@@ -93,7 +93,7 @@ const { slug } = Astro.props;
     const slug = root.dataset.slug ?? '';
 
     if (controls && enter && absent && status && favButton && seenButton && clearButton) {
-      const db = browser();
+      let db: Awaited<ReturnType<typeof loadDb>>;
       let userId: string | null = null;
       let filmId: string | null = null;
       let favorite = false;
@@ -200,6 +200,15 @@ const { slug } = Astro.props;
       };
 
       void (async () => {
+        // Deslogado: mostra o convite sem baixar o SDK.
+        if (!hasSessionCookie()) {
+          enter.href = `/auth/entrar/?next=${encodeURIComponent(location.pathname)}`;
+          reveal('enter');
+          return;
+        }
+
+        db = await loadDb();
+
         const {
           data: { session },
         } = await db.auth.getSession();

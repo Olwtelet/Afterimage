@@ -55,7 +55,7 @@
 </div>
 
 <script>
-  import { browser } from '~/lib/db/browser';
+  import { hasSessionCookie, loadDb } from '~/lib/db/lazy';
 
   interface ProfileRow {
     username: string;
@@ -96,7 +96,11 @@
     };
 
     void (async () => {
-      const db = browser();
+      // Sem cookie de sessão não há o que mostrar além de "Entrar", e carregar
+      // 217 kB de SDK para descobrir isso seria pagar caro por um não.
+      if (!hasSessionCookie()) return;
+
+      const db = await loadDb();
 
       const {
         data: { session },

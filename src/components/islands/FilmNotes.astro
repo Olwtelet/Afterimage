@@ -68,7 +68,7 @@ const { slug } = Astro.props;
 </section>
 
 <script>
-  import { browser } from '~/lib/db/browser';
+  import { hasSessionCookie, loadDb, readRest } from '~/lib/db/lazy';
 
   interface NoteRow {
     id: string;
@@ -100,7 +100,7 @@ const { slug } = Astro.props;
     const slug = root.dataset.slug ?? '';
 
     if (form && field && submit && cancel && remaining && enter && status && list && empty && counter) {
-      const db = browser();
+      let db: Awaited<ReturnType<typeof loadDb>> | null = null;
       let userId: string | null = null;
       let isAdmin = false;
       let filmId: string | null = null;
@@ -219,14 +219,13 @@ const { slug } = Astro.props;
       const load = async (): Promise<void> => {
         if (!filmId) return;
 
-        const { data } = await db
-          .from('comments')
-          .select('id, user_id, body, edited, created_at, profiles!inner(username, display_name, avatar_url, discord_id)')
-          .eq('film_id', filmId)
-          .order('created_at', { ascending: false })
-          .returns<NoteRow[]>();
+        // Leitura anônima: RLS já limita ao que é público, e um GET dispensa o SDK.
+        const notes = await readRest<NoteRow>(
+          'comments?select=id,user_id,body,edited,created_at,' +
+            'profiles!inner(username,display_name,avatar_url,discord_id)' +
+            `&film_id=eq.${filmId}&order=created_at.desc`,
+        );
 
-        const notes = data ?? [];
         list.replaceChildren(...notes.map(render));
         paintCount(notes.length);
       };
@@ -250,6 +249,10 @@ const { slug } = Astro.props;
       };
 
       const destroy = async (id: string, node: HTMLElement): Promise<void> => {
+        // O cliente só existe depois do login. Escrever sem ele é estado
+        // impossível pela interface, mas sair calado é melhor que lançar.
+        if (!db) return;
+
         const { error } = await db.from('comments').delete().eq('id', id);
         if (error) {
           say('Não deu para apagar', 'erro');
@@ -265,7 +268,7 @@ const { slug } = Astro.props;
 
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
-        if (!userId || !filmId) return;
+        if (!db || !userId || !filmId) return;
 
         const body = field.value.trim();
         if (body.length === 0) return;
@@ -289,11 +292,9 @@ const { slug } = Astro.props;
       });
 
       void (async () => {
-        const { data: film } = await db
-          .from('films')
-          .select('id')
-          .eq('slug', slug)
-          .maybeSingle<{ id: string }>();
+        const [film] = await readRest<{ id: string }>(
+          `films?select=id&slug=eq.${encodeURIComponent(slug)}&limit=1`,
+        );
 
         // Sem linha no banco não há onde pendurar anotação: a seção some inteira,
         // em vez de oferecer um campo que não teria onde gravar.
@@ -304,6 +305,16 @@ const { slug } = Astro.props;
 
         filmId = film.id;
         await load();
+
+        // Deslogado: o convite aparece sem baixar o SDK. As anotações acima já
+        // foram carregadas por REST puro, então quem só lê não paga nada por isso.
+        if (!hasSessionCookie()) {
+          enter.href = `/auth/entrar/?next=${encodeURIComponent(location.pathname)}`;
+          enter.hidden = false;
+          return;
+        }
+
+        db = await loadDb();
 
         const {
           data: { session },
