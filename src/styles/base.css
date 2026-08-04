@@ -139,13 +139,8 @@
     );
   }
 
-  /* Aberração cromática sutil, no lugar do glitch infinito do site antigo.
-     É estática: dá densidade à tipografia sem custar um único frame. */
-  .u-bleed {
-    text-shadow:
-      -0.02em 0 0 color-mix(in srgb, var(--bar-red) 42%, transparent),
-      0.02em 0 0 color-mix(in srgb, var(--bar-cyan) 42%, transparent);
-  }
+  /* A aberração cromática (.u-bleed) vive em styles/glitch.css, junto do resto
+     da gramática de falha. */
 
   /* --- Conteúdo editorial --------------------------------------------------
      Estilos do Markdown renderizado das fichas.                              */

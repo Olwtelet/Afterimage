@@ -73,12 +73,21 @@
   .section__head {
     display: flex;
     flex-wrap: wrap;
-    align-items: baseline;
+    align-items: end;
     justify-content: space-between;
     gap: var(--space-sm);
     margin-block-end: var(--space-lg);
     padding-block-end: var(--space-xs);
     border-block-end: 1px solid var(--line);
+  }
+
+  /* Subtítulo de seção: uma linha que diz o que a seção é, quando o título
+     sozinho é técnico demais para carregar isso. */
+  .section__note {
+    margin-block-start: 0.2rem;
+    font-size: var(--text-sm);
+    color: var(--ink-mute);
+    letter-spacing: var(--track-tight);
   }
 
   .section__title {
@@ -105,6 +114,7 @@
   }
 
   .section__link {
+    flex: none;
     font-family: var(--font-mono);
     font-size: var(--text-xs);
     letter-spacing: var(--track-label);
@@ -113,8 +123,47 @@
     transition: color var(--dur-cut) var(--ease-signal);
   }
 
-  .section__link:hover {
+  .section__link:hover,
+  .section__link:focus-visible {
     color: var(--accent-ink);
+  }
+
+  /* A seta é do CSS, não do texto: assim ela pode se mover no hover sem
+     arrastar a linha de base do rótulo junto. */
+  .section__link::before {
+    content: '→';
+    display: inline-block;
+    margin-inline-end: 0.4rem;
+    transition: transform var(--dur-wipe) var(--ease-out);
+  }
+
+  .section__link:hover::before {
+    transform: translateX(0.25rem);
+  }
+
+  /* --- Cabeçalho de página --------------------------------------------------
+     Cada página abre com o mesmo compasso: rótulo de canal, título, e um lede
+     de duas linhas. As linhas são afirmações separadas, não um parágrafo
+     quebrado — o intervalo entre elas faz parte do que está sendo dito. */
+  .page-lede {
+    display: grid;
+    gap: 0.35rem;
+    max-inline-size: 46ch;
+    margin-block-start: var(--space-md);
+    padding-inline-start: var(--space-sm);
+    border-inline-start: 2px solid var(--accent-bar);
+  }
+
+  .page-lede p {
+    font-size: var(--text-lg);
+    line-height: var(--leading-snug);
+    letter-spacing: var(--track-tight);
+    color: var(--ink-dim);
+    text-wrap: balance;
+  }
+
+  .page-lede p:first-child {
+    color: var(--ink);
   }
 
   /* --- Grade do catálogo ---------------------------------------------------- */

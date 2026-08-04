@@ -1,0 +1,160 @@
+/* =============================================================================
+   Movimento
+   =============================================================================
+
+   Todas as revelações usam `animation-timeline: view()`, que liga a animação à
+   posição do elemento na viewport e roda na thread de composição. Não há
+   IntersectionObserver, não há listener de scroll, não há JavaScript: o
+   navegador resolve tudo fora da main thread, então nada aqui pode engasgar a
+   rolagem — que é exatamente o defeito das bibliotecas de scroll reveal.
+
+   Onde a API não existe, os elementos aparecem em seu estado final. O fallback
+   é ausência de animação, nunca ausência de conteúdo.
+   ========================================================================== */
+
+@layer components {
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      /* --- Revelação padrão -----------------------------------------------
+         Sobe um passo curto e ganha nitidez. O blur é pequeno de propósito:
+         acima de ~4px ele lê como desfoque de página, não como foco sendo
+         encontrado. */
+      .m-reveal {
+        animation: reveal linear both;
+        animation-timeline: view();
+        animation-range: entry 0% cover 26%;
+      }
+
+      @keyframes reveal {
+        from {
+          opacity: 0;
+          transform: translate3d(0, 1.75rem, 0);
+          filter: blur(3px);
+        }
+        to {
+          opacity: 1;
+          transform: translate3d(0, 0, 0);
+          filter: blur(0);
+        }
+      }
+
+      /* --- Revelação escalonada -------------------------------------------
+         Para grades. Cada filho entra um pouco depois do anterior, criando a
+         varredura da esquerda para a direita. O atraso vem de um deslocamento
+         no início do intervalo, não de `animation-delay` — em timeline de
+         scroll, delay é medido em distância, não em tempo. */
+      .m-stagger > * {
+        animation: reveal linear both;
+        animation-timeline: view();
+        animation-range: entry 0% cover 24%;
+      }
+
+      .m-stagger > *:nth-child(3n + 2) {
+        animation-range: entry 0% cover 30%;
+      }
+
+      .m-stagger > *:nth-child(3n) {
+        animation-range: entry 0% cover 36%;
+      }
+
+      /* --- Linhas de lista -------------------------------------------------
+         Entrada lateral curta: a grade de programação se lê como uma coluna
+         sendo preenchida. */
+      .m-rows > * {
+        animation: reveal-row linear both;
+        animation-timeline: view();
+        animation-range: entry 0% cover 18%;
+      }
+
+      @keyframes reveal-row {
+        from {
+          opacity: 0;
+          transform: translate3d(-0.75rem, 0, 0);
+        }
+        to {
+          opacity: 1;
+          transform: translate3d(0, 0, 0);
+        }
+      }
+
+      /* --- Paralaxe -------------------------------------------------------
+         Deslocamento total de 6% da altura do elemento ao longo de toda a
+         travessia. É pouco o bastante para o olho não flagrar o truque e
+         perceber só profundidade. */
+      .m-parallax {
+        animation: parallax linear both;
+        animation-timeline: view();
+        animation-range: cover;
+        will-change: transform;
+      }
+
+      @keyframes parallax {
+        from {
+          transform: translate3d(0, -3%, 0) scale(1.06);
+        }
+        to {
+          transform: translate3d(0, 3%, 0) scale(1.06);
+        }
+      }
+
+      /* O `scale` compensa o deslocamento: sem ele, a imagem descolaria da
+         moldura nas pontas do intervalo. */
+    }
+  }
+
+  /* --- Entrada de página ---------------------------------------------------
+     Sequência curta no topo da página, onde não há scroll para acionar a
+     timeline. Escalonada por variável, para o conjunto ler como um movimento
+     só em vez de quatro elementos independentes.
+
+     `backwards`, não `both`: o estado invisível vale apenas durante o atraso, e
+     ao terminar o elemento volta ao seu estilo natural — que já é visível.
+     Visualmente idêntico a `both`, mas com uma diferença que importa: se a
+     animação for cancelada ou nunca rodar, o conteúdo aparece em vez de ficar
+     preso em opacidade zero. Animação decorativa não pode esconder conteúdo. */
+  @media (prefers-reduced-motion: no-preference) {
+    .m-enter {
+      animation: enter var(--dur-lock) var(--ease-out) backwards;
+      animation-delay: calc(var(--m-step, 0) * 90ms);
+    }
+
+    @keyframes enter {
+      from {
+        opacity: 0;
+        transform: translate3d(0, 0.9rem, 0);
+        filter: blur(4px);
+      }
+      to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+        filter: blur(0);
+      }
+    }
+  }
+
+  /* --- Sublinhado de link --------------------------------------------------
+     Cresce da esquerda no hover e recolhe pela direita ao sair, em vez de
+     desfazer o próprio caminho. O gesto de saída fica distinto do de entrada,
+     que é o que dá sensação de acabamento. */
+  .m-underline {
+    position: relative;
+  }
+
+  .m-underline::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    inset-block-end: -0.15em;
+    block-size: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform var(--dur-wipe) var(--ease-signal);
+  }
+
+  .m-underline:hover::after,
+  .m-underline:focus-visible::after {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+}

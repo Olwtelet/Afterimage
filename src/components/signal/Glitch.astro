@@ -1,0 +1,42 @@
+---
+/**
+ * Texto sujeito a falha.
+ *
+ * Envolve um trecho de texto com a gramática de glitch definida em
+ * styles/glitch.css. Existe como componente por um motivo prático: o efeito
+ * depende de `data-text` espelhar exatamente o conteúdo, e deixar isso a cargo
+ * de quem escreve a página é garantia de os dois desandarem com o tempo.
+ *
+ * O elemento é escolhido por `tag`, então a mesma peça serve de h1 a span sem
+ * criar variantes. (O nome `as` seria mais natural, mas colide com o tipo
+ * polimórfico do próprio Astro e derruba a inferência de Props.)
+ */
+interface Props {
+  text: string;
+  tag?: 'span' | 'h1' | 'h2' | 'h3' | 'p';
+  class?: string;
+  /** `reveal` dispara uma vez na entrada; `hover` só reage ao ponteiro. */
+  trigger?: 'hover' | 'reveal';
+  id?: string;
+}
+
+const { text, tag: Tag = 'span', class: className, trigger = 'hover', id } = Astro.props;
+---
+
+<Tag
+  class:list={['glitch', trigger === 'reveal' && 'glitch--reveal', className]}
+  data-text={text}
+  id={id}
+>
+  <span class="glitch__body">{text}</span>
+</Tag>
+
+<style>
+  /* O corpo precisa de contexto próprio de empilhamento para ficar acima das
+     duas cópias coloridas, que vivem em z-index negativo. */
+  .glitch__body {
+    position: relative;
+    display: inline-block;
+    z-index: 1;
+  }
+</style>
