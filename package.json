@@ -16,7 +16,8 @@
     "check": "astro check",
     "typecheck": "tsc --noEmit",
     "verify": "npm run check && npm run build",
-    "assets:social": "node scripts/generate-social-images.mjs"
+    "assets:social": "node scripts/generate-social-images.mjs",
+    "seed:catalogo": "node scripts/gerar-seed-catalogo.mjs"
   },
   "dependencies": {
     "@astrojs/rss": "^4.0.14",
