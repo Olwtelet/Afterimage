@@ -1,0 +1,322 @@
+---
+/**
+ * Estado de sessão no cabeçalho.
+ *
+ * Precisa ser uma ilha porque o cabeçalho vive em páginas pré-renderizadas: elas
+ * são arquivos no CDN, iguais para todo mundo, e não têm como saber quem está
+ * lendo. Quem resolve isso é o navegador, lendo o cookie de sessão.
+ *
+ * O estado padrão do HTML é o de deslogado, que é o de quase toda visita. Se
+ * houver sessão, a troca é imediata — `getSession()` lê do armazenamento local,
+ * sem ida à rede — e o slot tem largura mínima reservada para a troca não
+ * empurrar o layout.
+ */
+---
+
+<div class="session" data-session>
+  {/* Deslogado — estado inicial do HTML */}
+  <a class="session__enter" href="/auth/entrar/" data-session-enter>
+    <span class="session__mark" aria-hidden="true">
+      <span></span><span></span><span></span>
+    </span>
+    <span>Entrar</span>
+  </a>
+
+  {/* Logado — preenchido pela ilha */}
+  <div class="session__user" data-session-user hidden>
+    <button
+      type="button"
+      class="session__trigger"
+      popovertarget="session-menu"
+      aria-label="Sua conta"
+    >
+      <img class="session__avatar" data-session-avatar alt="" width="26" height="26" />
+      <span class="session__name" data-session-name></span>
+    </button>
+
+    <div class="session__panel" id="session-menu" popover>
+      <p class="session__who">
+        <span class="session__display" data-session-display></span>
+        <span class="u-label" data-session-handle></span>
+      </p>
+
+      <nav class="session__links" aria-label="Sua conta">
+        <a data-session-profile href="/">Meu perfil</a>
+        <a href="/perfil/favoritos/">Favoritos</a>
+        <a href="/perfil/assistidos/">Assistidos</a>
+        <a class="session__admin" data-session-admin href="/admin/" hidden>Painel</a>
+      </nav>
+
+      <form method="POST" action="/auth/sair/" class="session__out">
+        <button type="submit">Encerrar sessão</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  import { browser } from '~/lib/db/browser';
+
+  interface ProfileRow {
+    username: string;
+    display_name: string;
+    avatar_url: string | null;
+    discord_id: string;
+  }
+
+  const root = document.querySelector<HTMLElement>('[data-session]');
+
+  if (root) {
+    const enter = root.querySelector<HTMLElement>('[data-session-enter]');
+    const user = root.querySelector<HTMLElement>('[data-session-user]');
+    const avatar = root.querySelector<HTMLImageElement>('[data-session-avatar]');
+    const name = root.querySelector<HTMLElement>('[data-session-name]');
+    const display = root.querySelector<HTMLElement>('[data-session-display]');
+    const handle = root.querySelector<HTMLElement>('[data-session-handle]');
+    const profile = root.querySelector<HTMLAnchorElement>('[data-session-profile]');
+    const admin = root.querySelector<HTMLElement>('[data-session-admin]');
+
+    /** Avatar padrão do Discord, derivado do ID, quando a pessoa não tem um. */
+    const fallbackAvatar = (discordId: string): string => {
+      const index = (BigInt(discordId || '0') >> 22n) % 6n;
+      return `https://cdn.discordapp.com/embed/avatars/${index}.png`;
+    };
+
+    const paint = (row: ProfileRow): void => {
+      if (!enter || !user || !avatar || !name || !display || !handle || !profile) return;
+
+      avatar.src = row.avatar_url ?? fallbackAvatar(row.discord_id);
+      name.textContent = row.display_name;
+      display.textContent = row.display_name;
+      handle.textContent = `@${row.username}`;
+      profile.href = `/perfil/${row.username}/`;
+
+      enter.hidden = true;
+      user.hidden = false;
+    };
+
+    void (async () => {
+      const db = browser();
+
+      const {
+        data: { session },
+      } = await db.auth.getSession();
+
+      if (!session) return;
+
+      const { data } = await db
+        .from('profiles')
+        .select('username, display_name, avatar_url, discord_id')
+        .eq('id', session.user.id)
+        .maybeSingle<ProfileRow>();
+
+      if (!data) return;
+      paint(data);
+
+      /*
+       * O link do painel aparecer não é o que autoriza nada: a rota /admin/
+       * confere no servidor, contra o banco, e responde 404 para quem não
+       * administra. Isto aqui é só para não mostrar um caminho sem saída.
+       */
+      const { data: isAdmin } = await db.rpc('is_admin');
+      if (isAdmin === true && admin) admin.hidden = false;
+
+      // Sessão expirada ou logout em outra aba: volta ao estado deslogado.
+      db.auth.onAuthStateChange((event) => {
+        if (event === 'SIGNED_OUT' && enter && user) {
+          user.hidden = true;
+          enter.hidden = false;
+        }
+      });
+    })();
+  }
+</script>
+
+<style>
+  /* Largura mínima reservada: a troca de deslogado para logado não empurra o
+     cabeçalho. */
+  .session {
+    display: flex;
+    align-items: center;
+    min-inline-size: 5.5rem;
+    justify-content: flex-end;
+  }
+
+  /* --- Entrar -------------------------------------------------------------- */
+  .session__enter {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.75rem;
+    border: 1px solid var(--line);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--ink-dim);
+    transition:
+      border-color var(--dur-cut) var(--ease-signal),
+      color var(--dur-cut) var(--ease-signal);
+  }
+
+  .session__enter:hover {
+    border-color: var(--accent-bar);
+    color: var(--ink);
+  }
+
+  /* Três barras: a marca do canal reduzida ao mínimo, para o botão pertencer ao
+     sistema em vez de parecer um botão de login genérico. */
+  .session__mark {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    inline-size: 0.75rem;
+    block-size: 0.75rem;
+    flex: none;
+  }
+
+  .session__mark span:nth-child(1) { background: var(--bar-cyan); }
+  .session__mark span:nth-child(2) { background: var(--bar-magenta); }
+  .session__mark span:nth-child(3) { background: var(--bar-yellow); }
+
+  .session__enter:hover .session__mark span {
+    animation: enter-flicker 400ms var(--ease-snap);
+  }
+
+  .session__mark span:nth-child(2) { animation-delay: 40ms; }
+  .session__mark span:nth-child(3) { animation-delay: 80ms; }
+
+  @keyframes enter-flicker {
+    50% {
+      transform: scaleY(0.5);
+      filter: brightness(1.6);
+    }
+  }
+
+  /* --- Logado -------------------------------------------------------------- */
+  .session__user[hidden],
+  .session__enter[hidden] {
+    display: none;
+  }
+
+  .session__trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.5rem 0.25rem 0.25rem;
+    border: 1px solid var(--line);
+    transition: border-color var(--dur-cut) var(--ease-signal);
+  }
+
+  .session__trigger:hover {
+    border-color: var(--line-strong);
+  }
+
+  .session__avatar {
+    inline-size: 1.625rem;
+    block-size: 1.625rem;
+    object-fit: cover;
+    background: var(--raised);
+    /* Quadrado, não círculo: o sistema inteiro é feito de retângulos. */
+    border: 1px solid var(--line);
+  }
+
+  .session__name {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--ink);
+    max-inline-size: 8rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 40rem) {
+    .session__name {
+      display: none;
+    }
+  }
+
+  /* --- Painel --------------------------------------------------------------
+     `popover` nativo: fechar ao clicar fora e com Esc vem da plataforma, sem
+     listener nenhum e sem armadilha de foco escrita à mão. */
+  .session__panel {
+    position: absolute;
+    inset: auto;
+    margin: 0;
+    inline-size: min(15rem, calc(100vw - 2rem));
+    padding: 0;
+    background: var(--black);
+    border: 1px solid var(--line-strong);
+    box-shadow: 0 1.5rem 3rem rgb(0 0 0 / 0.55);
+    color: var(--ink);
+  }
+
+  .session__panel:popover-open {
+    /* Ancorado abaixo do gatilho, alinhado à direita do cabeçalho. */
+    inset-block-start: 3.5rem;
+    inset-inline-end: var(--gutter);
+    inset-inline-start: auto;
+    animation: panel-in var(--dur-wipe) var(--ease-out);
+  }
+
+  @keyframes panel-in {
+    from {
+      opacity: 0;
+      transform: translateY(-0.4rem);
+    }
+  }
+
+  .session__who {
+    display: grid;
+    gap: 0.15rem;
+    padding: var(--space-xs) var(--space-sm);
+    border-block-end: 1px solid var(--line);
+  }
+
+  .session__display {
+    font-weight: 650;
+    letter-spacing: var(--track-tight);
+  }
+
+  .session__links {
+    display: grid;
+    padding-block: 0.25rem;
+  }
+
+  .session__links a {
+    padding: 0.5rem var(--space-sm);
+    font-size: var(--text-sm);
+    color: var(--ink-dim);
+    transition:
+      background-color var(--dur-cut) var(--ease-signal),
+      color var(--dur-cut) var(--ease-signal);
+  }
+
+  .session__links a:hover {
+    background: var(--surface);
+    color: var(--ink);
+  }
+
+  .session__admin {
+    color: var(--accent-ink) !important;
+  }
+
+  .session__admin[hidden] {
+    display: none;
+  }
+
+  .session__out {
+    border-block-start: 1px solid var(--line);
+  }
+
+  .session__out button {
+    inline-size: 100%;
+    padding: 0.5rem var(--space-sm);
+    text-align: start;
+    font-size: var(--text-sm);
+    color: var(--ink-mute);
+    transition: color var(--dur-cut) var(--ease-signal);
+  }
+
+  .session__out button:hover {
+    color: var(--ink-red);
+  }
+</style>

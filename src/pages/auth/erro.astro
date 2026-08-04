@@ -1,0 +1,164 @@
+---
+/**
+ * Falha de autenticação.
+ *
+ * As rotas de login redirecionam para cá quando algo dá errado, e sem esta
+ * página o erro virava um 404 — pior que o erro em si, porque não diz nada.
+ *
+ * A causa técnica aparece, mas em segundo plano: quem está tentando entrar
+ * precisa saber o que fazer, não decorar a mensagem do provedor. O texto cru só
+ * importa se a pessoa for reportar.
+ */
+import Base from '~/layouts/Base.astro';
+import TestCard from '~/components/signal/TestCard.astro';
+import Glitch from '~/components/signal/Glitch.astro';
+import { BARS } from '~/lib/smpte';
+import { SITE } from '~/lib/site';
+
+export const prerender = false;
+
+const raw = Astro.url.searchParams.get('motivo') ?? '';
+
+/** Traduz os motivos conhecidos para algo acionável. */
+const EXPLANATIONS: ReadonlyArray<{ match: RegExp; what: string; action: string }> = [
+  {
+    match: /access_denied|cancel/i,
+    what: 'A autorização foi recusada no Discord',
+    action: 'Se não foi intencional, tente de novo e aceite a permissão de identificação.',
+  },
+  {
+    match: /redirect|uri/i,
+    what: 'O endereço de retorno não confere',
+    action: 'É configuração do servidor, não sua. Avise pelo Discord da comunidade.',
+  },
+  {
+    match: /sem-codigo|troca-falhou|expired|invalid/i,
+    what: 'A sessão não pôde ser concluída',
+    action: 'Normalmente é o pedido expirando. Tente novamente.',
+  },
+];
+
+const known = EXPLANATIONS.find((entry) => entry.match.test(raw));
+const what = known?.what ?? 'A entrada não foi concluída';
+const action = known?.action ?? 'Tente novamente. Se persistir, avise pelo Discord da comunidade.';
+---
+
+<Base
+  title="Falha na entrada"
+  description="Não foi possível concluir a autenticação"
+  accent={BARS.red}
+  noindex
+>
+  <section class="fail">
+    <TestCard class="fail__card" variant="bars" ident="ERR · AUTH" />
+
+    <div class="fail__content u-page">
+      <p class="u-label fail__code m-enter" style="--m-step:0">Sinal interrompido</p>
+
+      <Glitch
+        tag="h1"
+        text="Não deu"
+        trigger="reveal"
+        class="page-title u-slate u-bleed m-enter"
+      />
+
+      <div class="page-lede m-enter" style="--m-step:2">
+        <p>{what}</p>
+        <p>{action}</p>
+      </div>
+
+      <div class="fail__actions m-enter" style="--m-step:3">
+        <a class="btn btn--solid" href="/auth/entrar/">Tentar de novo</a>
+        <a class="btn btn--ghost" href="/">Voltar ao início</a>
+      </div>
+
+      {
+        raw && (
+          <details class="fail__raw">
+            <summary class="u-label">Detalhe técnico</summary>
+            <p class="u-mono">{raw}</p>
+          </details>
+        )
+      }
+
+      <p class="fail__help u-label">
+        Ajuda no
+        <a
+          class="m-underline"
+          href={SITE.social.discord}
+          rel="noopener noreferrer"
+          target="_blank">servidor da comunidade</a>
+      </p>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .fail {
+    position: relative;
+    display: grid;
+    align-content: center;
+    min-block-size: clamp(28rem, 72svh, 44rem);
+    padding-block: var(--space-2xl);
+    overflow: clip;
+    isolation: isolate;
+  }
+
+  .fail__card {
+    position: absolute;
+    inset-inline: 0;
+    inset-block-start: 0;
+    block-size: 0.75rem;
+    z-index: -1;
+    opacity: 0.5;
+  }
+
+  .fail__code {
+    color: var(--accent-ink);
+    margin-block-end: var(--space-sm);
+  }
+
+  .fail__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2xs);
+    margin-block-start: var(--space-lg);
+  }
+
+  .fail__raw {
+    margin-block-start: var(--space-lg);
+    max-inline-size: 46ch;
+  }
+
+  .fail__raw summary {
+    cursor: pointer;
+    padding-block: var(--space-2xs);
+    color: var(--ink-mute);
+    transition: color var(--dur-cut) var(--ease-signal);
+  }
+
+  .fail__raw summary:hover {
+    color: var(--ink);
+  }
+
+  .fail__raw p {
+    margin-block-start: var(--space-2xs);
+    padding: var(--space-xs);
+    background: var(--surface);
+    border-inline-start: 2px solid var(--accent-bar);
+    font-size: var(--text-xs);
+    color: var(--ink-dim);
+    overflow-wrap: anywhere;
+  }
+
+  .fail__help {
+    margin-block-start: var(--space-xl);
+    padding-block-start: var(--space-sm);
+    border-block-start: 1px solid var(--line);
+    max-inline-size: 46ch;
+  }
+
+  .fail__help a {
+    color: var(--accent-ink);
+  }
+</style>

@@ -15,7 +15,13 @@
  */
 import type { Session } from '@supabase/supabase-js';
 
-import { elevated } from './db/client';
+import {
+  DISCORD_BOT_TOKEN,
+  DISCORD_GUILD_ID,
+  DISCORD_SESSION_WEBHOOK,
+} from 'astro:env/server';
+
+import { elevated } from './db/server';
 import type { DiscordRole } from './db/types';
 
 const API = 'https://discord.com/api/v10';
@@ -78,7 +84,7 @@ export async function syncDiscordProfile(session: Session): Promise<void> {
 
   const { guild_member, guild_roles, nickname } = await readGuildStanding(user.id);
 
-  const db = await elevated();
+  const db = elevated();
   await db
     .from('profiles')
     .update({
@@ -109,7 +115,6 @@ interface GuildStanding {
 async function readGuildStanding(discordId: string): Promise<GuildStanding> {
   const neutral: GuildStanding = { guild_member: false, guild_roles: [], nickname: null };
 
-  const { DISCORD_BOT_TOKEN, DISCORD_GUILD_ID } = await import('astro:env/server');
   if (!DISCORD_BOT_TOKEN || !DISCORD_GUILD_ID) return neutral;
 
   try {
@@ -160,7 +165,6 @@ export async function announceSession(payload: {
   posterUrl: string | null;
   tone: string;
 }): Promise<boolean> {
-  const { DISCORD_SESSION_WEBHOOK } = await import('astro:env/server');
   if (!DISCORD_SESSION_WEBHOOK) return false;
 
   const embed = {

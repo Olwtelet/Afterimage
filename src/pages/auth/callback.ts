@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 
-import { server } from '~/lib/db/client';
+import { server } from '~/lib/db/server';
 import { syncDiscordProfile } from '~/lib/discord';
 
 export const prerender = false;

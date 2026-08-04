@@ -8,6 +8,7 @@
  * de foco.
  */
 import Wordmark from './Wordmark.astro';
+import SessionMenu from '~/components/islands/SessionMenu.astro';
 import { NAVIGATION } from '~/lib/site';
 
 const path = Astro.url.pathname;
@@ -50,6 +51,8 @@ const isCurrent = (href: string): boolean =>
         <span class="search-trigger__text">Buscar</span>
         <kbd class="search-trigger__key u-mono">⌘K</kbd>
       </button>
+
+      <SessionMenu />
 
       <button
         type="button"

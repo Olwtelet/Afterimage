@@ -9,7 +9,7 @@
  */
 import type { AstroCookies } from 'astro';
 
-import { server } from './db/client';
+import { server } from './db/server';
 import type { Profile } from './db/types';
 
 /** Escopos pedidos ao Discord.

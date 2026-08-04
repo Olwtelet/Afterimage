@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 
-import { server } from '~/lib/db/client';
+import { server } from '~/lib/db/server';
 import { DISCORD_SCOPES } from '~/lib/auth';
 
 export const prerender = false;
@@ -9,9 +9,16 @@ export const prerender = false;
  * Início do fluxo OAuth.
  *
  * Existe como rota de servidor, e não como um botão que chama o SDK no
- * navegador, por dois motivos: o destino pós-login é decidido aqui (o cliente
- * não escolhe para onde volta) e o `code_verifier` do PKCE nasce num cookie
- * HttpOnly, fora do alcance de qualquer script da página.
+ * navegador, porque o destino pós-login é decidido AQUI: o cliente pede, o
+ * servidor valida e escolhe. É o que impede a rota de virar um redirecionador
+ * aberto (ver a checagem de `next` abaixo).
+ *
+ * Os cookies desta etapa não são HttpOnly, e isso é da arquitetura do
+ * @supabase/ssr, não um descuido: o cliente do navegador lê a sessão de
+ * `document.cookie` para saber quem está logado. Marcá-los HttpOnly quebraria o
+ * cabeçalho, que resolve o estado de login no cliente justamente porque as
+ * páginas são estáticas. O que protege aqui é o PKCE — o `code_verifier` só
+ * serve junto do `code` que o Discord devolve, e este chega uma vez só.
  */
 export const GET: APIRoute = async ({ cookies, url, redirect }) => {
   const db = server(cookies);
