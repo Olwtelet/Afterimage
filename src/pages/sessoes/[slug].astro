@@ -285,7 +285,9 @@ const schema = [
     color: var(--accent-ink);
   }
 
-  .page-title {
+  /* Ancorado no .film__head, que existe no template. Solta, esta regra não
+     alcançaria o título — ele vem do componente Glitch, com o escopo dele. */
+  .film__head :global(.page-title) {
     max-inline-size: 20ch;
   }
 

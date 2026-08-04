@@ -121,7 +121,10 @@ const schema = {
     color: var(--accent-ink);
   }
 
-  .page-title {
+  /* Ancorado no .head, que existe no template e carrega o atributo de escopo.
+     Escrita solta, esta regra não alcançaria o título — ele é emitido pelo
+     componente Glitch e leva o identificador DELE. */
+  .head :global(.page-title) {
     margin-block-end: 0;
     text-transform: capitalize;
   }

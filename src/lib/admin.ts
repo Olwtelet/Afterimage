@@ -165,16 +165,16 @@ export interface SaveResult {
 /** Mensagens do Postgres traduzidas para o que dá para fazer a respeito. */
 function explain(message: string): string {
   if (/films_slug_key|duplicate key/i.test(message)) {
-    return 'Já existe uma sessão com esse endereço. Escolha outro.';
+    return 'Já existe uma sessão com esse endereço — escolha outro';
   }
   if (/films_slug_format/i.test(message)) {
-    return 'O endereço aceita apenas letras minúsculas, números e hífen.';
+    return 'O endereço aceita apenas letras minúsculas, números e hífen';
   }
   if (/films_tone_format/i.test(message)) {
-    return 'A cor precisa ser hexadecimal de seis dígitos, como #C0C000.';
+    return 'A cor precisa ser hexadecimal de seis dígitos, como #C0C000';
   }
   if (/row-level security|permission denied/i.test(message)) {
-    return 'Sem permissão para esta operação.';
+    return 'Sem permissão para esta operação';
   }
   return message;
 }
@@ -185,16 +185,16 @@ export async function saveFilm(
   features: FeatureDraft[],
   id: string | null,
 ): Promise<SaveResult> {
-  if (!draft.slug) return { ok: false, error: 'O endereço é obrigatório.' };
-  if (!draft.headline) return { ok: false, error: 'A manchete é obrigatória.' };
-  if (!draft.summary) return { ok: false, error: 'O resumo é obrigatório.' };
+  if (!draft.slug) return { ok: false, error: 'O endereço é obrigatório' };
+  if (!draft.headline) return { ok: false, error: 'A manchete é obrigatória' };
+  if (!draft.summary) return { ok: false, error: 'O resumo é obrigatório' };
 
   const { data, error } = id
     ? await db.from('films').update(draft).eq('id', id).select('id').maybeSingle<{ id: string }>()
     : await db.from('films').insert(draft).select('id').maybeSingle<{ id: string }>();
 
   if (error) return { ok: false, error: explain(error.message) };
-  if (!data) return { ok: false, error: 'A gravação não retornou a sessão.' };
+  if (!data) return { ok: false, error: 'A gravação não retornou a sessão' };
 
   const filmId = data.id;
 

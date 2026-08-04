@@ -57,7 +57,7 @@ if (Astro.request.method === 'POST') {
   if (form.get('intent') === 'delete' && film) {
     const result = await deleteFilm(db, film.id);
     if (result.ok) return Astro.redirect('/admin/', 303);
-    error = result.error ?? 'Não foi possível excluir.';
+    error = result.error ?? 'Não foi possível excluir';
   } else {
     const result = await saveFilm(
       db,
@@ -68,7 +68,7 @@ if (Astro.request.method === 'POST') {
 
     // 303 depois de gravar: recarregar a página não reenvia o formulário.
     if (result.ok) return Astro.redirect(`/admin/sessao/${result.id}/?ok=1`, 303);
-    error = result.error ?? 'Não foi possível salvar.';
+    error = result.error ?? 'Não foi possível salvar';
   }
 }
 
@@ -207,7 +207,7 @@ const linksText = (film?.links ?? []).map((link) => `${link.label} | ${link.url}
     <fieldset class="block block--full">
       <legend class="u-label block__legend">Exibições</legend>
       <p class="block__hint u-label">
-        Uma por filme. Sessão dupla tem duas, na ordem de exibição.
+        Uma por filme — sessão dupla tem duas, na ordem de exibição
       </p>
 
       <div class="features" data-features>

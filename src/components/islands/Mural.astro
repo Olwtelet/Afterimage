@@ -470,7 +470,9 @@ const VIBES = [
     list-style: none;
   }
 
-  .entries__empty {
+  /* Também criado por JavaScript: sem o :global, o seletor exigiria o atributo
+     de escopo que createElement nunca põe. */
+  .entries__list :global(.entries__empty) {
     padding-block: var(--space-lg);
     text-align: center;
   }

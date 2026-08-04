@@ -24,23 +24,23 @@ const EXPLANATIONS: ReadonlyArray<{ match: RegExp; what: string; action: string 
   {
     match: /access_denied|cancel/i,
     what: 'A autorização foi recusada no Discord',
-    action: 'Se não foi intencional, tente de novo e aceite a permissão de identificação.',
+    action: 'Se não foi intencional, tente de novo e aceite a permissão de identificação',
   },
   {
     match: /redirect|uri/i,
     what: 'O endereço de retorno não confere',
-    action: 'É configuração do servidor, não sua. Avise pelo Discord da comunidade.',
+    action: 'É configuração do servidor, não sua — avise pelo Discord da comunidade',
   },
   {
     match: /sem-codigo|troca-falhou|expired|invalid/i,
     what: 'A sessão não pôde ser concluída',
-    action: 'Normalmente é o pedido expirando. Tente novamente.',
+    action: 'Normalmente é o pedido expirando — tente novamente',
   },
 ];
 
 const known = EXPLANATIONS.find((entry) => entry.match.test(raw));
 const what = known?.what ?? 'A entrada não foi concluída';
-const action = known?.action ?? 'Tente novamente. Se persistir, avise pelo Discord da comunidade.';
+const action = known?.action ?? 'Tente novamente; se persistir, avise pelo Discord da comunidade';
 ---
 
 <Base
