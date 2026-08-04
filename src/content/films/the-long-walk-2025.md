@@ -1,6 +1,6 @@
 ---
-headline: "Continue caminhando. Parar nunca foi uma opção."
-summary: "Cem jovens. Uma única regra. Continue andando. Quem parar, morre."
+headline: "Continue caminhando — parar nunca foi uma opção"
+summary: "Cem jovens. Uma única regra. Continue andando. Quem parar, morre"
 poster: "../../assets/films/the-long-walk-2025.jpg"
 posterAlt: "Cena de The Long Walk"
 tone: "#C93C3C"

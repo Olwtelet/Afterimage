@@ -1,6 +1,6 @@
 ---
-headline: "Sobreviva por 30 dias enquanto o mundo te caça."
-summary: "Quando sobreviver se torna entretenimento, cada segundo pode ser o último."
+headline: "Sobreviva por 30 dias enquanto o mundo te caça"
+summary: "Quando sobreviver se torna entretenimento, cada segundo pode ser o último"
 poster: "../../assets/films/the-running-man-2026.jpg"
 posterAlt: "Cena de The Running Man"
 tone: "#FF3B30"

@@ -65,9 +65,13 @@
     color: var(--ink);
   }
 
-  /* --- Cabeçalho de seção -------------------------------------------------- */
+  /* --- Cabeçalho de seção --------------------------------------------------
+     Respiro maior acima que abaixo. Com padding simétrico o título fica
+     equidistante da seção anterior e do próprio conteúdo, e o olho não sabe a
+     qual dos dois ele pertence — a assimetria resolve o agrupamento sem
+     precisar de mais nenhum recurso gráfico. */
   .section {
-    padding-block: var(--space-2xl);
+    padding-block: var(--space-2xl) var(--space-xl);
   }
 
   .section__head {

@@ -1,7 +1,7 @@
 ---
-headline: "A oportunidade perfeita pode esconder um preço impagável."
-kicker: "Um thriller elegante que transforma ambição, identidade e privilégio em um jogo mortal de consequências imprevisíveis."
-summary: "Um chef endividado encontra a chance de viver a vida que sempre sonhou. Mas alguns privilégios escondem segredos impossíveis de suportar."
+headline: "A oportunidade perfeita pode esconder um preço impagável"
+kicker: "Um thriller elegante que transforma ambição, identidade e privilégio em um jogo mortal de consequências imprevisíveis"
+summary: "Um chef endividado encontra a chance de viver a vida que sempre sonhou. Mas alguns privilégios escondem segredos impossíveis de suportar"
 poster: "../../assets/films/what-you-wish-for-2023.webp"
 posterAlt: "Cena de Aquilo que Você Deseja"
 tone: "#4B2E1F"

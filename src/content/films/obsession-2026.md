@@ -1,7 +1,7 @@
 ---
-headline: "Alguns desejos nunca deveriam ser realizados."
-kicker: "Um dos terrores mais comentados de 2026, transformando um simples desejo em uma espiral de horror psicológico."
-summary: "Um desejo realizado pode parecer um presente. Mas, às vezes, é apenas o começo do verdadeiro pesadelo."
+headline: "Alguns desejos nunca deveriam ser realizados"
+kicker: "Um dos terrores mais comentados de 2026, transformando um simples desejo em uma espiral de horror psicológico"
+summary: "Um desejo realizado pode parecer um presente. Mas, às vezes, é apenas o começo do verdadeiro pesadelo"
 poster: "../../assets/films/obsession-2026.jpg"
 posterAlt: "Cena de Obsessão"
 tone: "#5B0F18"

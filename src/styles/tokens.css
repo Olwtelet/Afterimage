@@ -49,10 +49,14 @@
     --line: #23262a;
     --line-strong: #33373c;
 
-    /* --- Texto ----------------------------------------------------------- */
-    --ink: #e8e9ea; /* 11.4:1 */
-    --ink-dim: #9ba0a6; /* 7.0:1  */
-    --ink-mute: #7a8087; /* 4.7:1  */
+    /* --- Texto -------------------------------------------------------------
+       As razões são medidas contra --raised, a superfície mais clara em que
+       cada tom aparece — não contra --void. Aferir pelo fundo mais escuro
+       infla o número e deixa passar o caso real: --ink-mute rendia 5.1:1 sobre
+       --void e apenas 4.42:1 sobre --raised, onde as etiquetas dos cards vivem. */
+    --ink: #e8e9ea; /* 14.5:1 */
+    --ink-dim: #9ba0a6; /*  6.7:1 */
+    --ink-mute: #868c93; /*  5.3:1 */
 
     /* --- Cor de acento corrente -------------------------------------------
        Cada filme reescreve estas duas variáveis com a sua barra. Todo componente

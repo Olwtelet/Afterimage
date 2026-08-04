@@ -1,7 +1,7 @@
 ---
-headline: "Nem toda casa é um lar."
-kicker: "Um dos conceitos mais perturbadores e originais do cinema moderno."
-summary: "Uma casa perfeita. Um bairro perfeito. Um pesadelo do qual simplesmente não existe saída."
+headline: "Nem toda casa é um lar"
+kicker: "Um dos conceitos mais perturbadores e originais do cinema moderno"
+summary: "Uma casa perfeita. Um bairro perfeito. Um pesadelo do qual simplesmente não existe saída"
 poster: "../../assets/films/vivarium-2019.jpg"
 posterAlt: "Cena de Vivarium"
 tone: "#7BAF7A"

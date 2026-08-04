@@ -1,7 +1,7 @@
 ---
-headline: "A guerra pode acabar. O comércio nunca."
-kicker: "Uma das críticas mais inteligentes e provocativas sobre o comércio internacional de armas já feitas no cinema."
-summary: "Enquanto guerras começam e terminam, um homem transforma o caos em um dos negócios mais lucrativos do planeta."
+headline: "A guerra pode acabar — o comércio nunca"
+kicker: "Uma das críticas mais inteligentes e provocativas sobre o comércio internacional de armas já feitas no cinema"
+summary: "Enquanto guerras começam e terminam, um homem transforma o caos em um dos negócios mais lucrativos do planeta"
 poster: "../../assets/films/lord-of-war-2005.jpg"
 posterAlt: "Cena de O Senhor das Armas"
 tone: "#6B4A2B"

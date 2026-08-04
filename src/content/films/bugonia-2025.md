@@ -1,7 +1,7 @@
 ---
 headline: "E se a conspiração fosse real?"
-kicker: "Uma sátira perturbadora sobre paranoia, poder e conspirações, dirigida por um dos cineastas mais originais da atualidade."
-summary: "Dois conspiracionistas sequestram uma poderosa CEO acreditando que ela é uma alienígena infiltrada. Mas a verdade pode ser ainda mais desconcertante."
+kicker: "Uma sátira perturbadora sobre paranoia, poder e conspirações, dirigida por um dos cineastas mais originais da atualidade"
+summary: "Dois conspiracionistas sequestram uma poderosa CEO acreditando que ela é uma alienígena infiltrada. Mas a verdade pode ser ainda mais desconcertante"
 poster: "../../assets/films/bugonia-2025.webp"
 posterAlt: "Cena de Bugonia"
 tone: "#556B2F"

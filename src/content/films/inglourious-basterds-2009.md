@@ -1,7 +1,7 @@
 ---
-headline: "A guerra será reescrita."
-kicker: "Um dos filmes mais marcantes de Quentin Tarantino, combinando diálogos memoráveis, tensão constante e uma releitura ousada da história."
-summary: "Quentin Tarantino transforma um dos períodos mais sombrios da história em uma releitura ousada, marcada por diálogos inesquecíveis, tensão e vingança."
+headline: "A guerra será reescrita"
+kicker: "Um dos filmes mais marcantes de Quentin Tarantino, combinando diálogos memoráveis, tensão constante e uma releitura ousada da história"
+summary: "Quentin Tarantino transforma um dos períodos mais sombrios da história em uma releitura ousada, marcada por diálogos inesquecíveis, tensão e vingança"
 poster: "../../assets/films/inglourious-basterds-2009.jpg"
 posterAlt: "Cena de Bastardos Inglórios"
 tone: "#8B1E1E"

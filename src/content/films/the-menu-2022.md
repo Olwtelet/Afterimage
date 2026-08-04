@@ -1,7 +1,7 @@
 ---
-headline: "Nada será servido por acaso."
-kicker: "Cardápio da noite: tensão, ironia e desconforto psicológico."
-summary: "Um jantar exclusivo. Um chef lendário. Um cardápio preparado para revelar muito mais do que sabores."
+headline: "Nada será servido por acaso"
+kicker: "Cardápio da noite: tensão, ironia e desconforto psicológico"
+summary: "Um jantar exclusivo. Um chef lendário. Um cardápio preparado para revelar muito mais do que sabores"
 poster: "../../assets/films/the-menu-2022.jpg"
 posterAlt: "Cena de The Menu"
 tone: "#C46B2A"

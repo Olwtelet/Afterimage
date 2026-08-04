@@ -1,7 +1,7 @@
 ---
 headline: "E se você pudesse desbloquear todo o potencial da sua mente?"
-kicker: "Um thriller inteligente que explora os limites da ambição, da inteligência e do preço do poder."
-summary: "Uma droga experimental promete liberar todo o potencial da mente humana. O problema é que nenhum poder vem sem consequências."
+kicker: "Um thriller inteligente que explora os limites da ambição, da inteligência e do preço do poder"
+summary: "Uma droga experimental promete liberar todo o potencial da mente humana. O problema é que nenhum poder vem sem consequências"
 poster: "../../assets/films/limitless-2011.jpg"
 posterAlt: "Cena de Sem Limites"
 tone: "#2E5FA8"

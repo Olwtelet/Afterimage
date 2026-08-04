@@ -1,7 +1,7 @@
 ---
-headline: "A fortuna da família está à venda. E ele pretende comprá-la com vingança."
-kicker: "Uma comédia de humor ácido onde vingança, ambição e herança se encontram em um plano tão inteligente quanto imprevisível."
-summary: "Deserdado desde o nascimento, um homem transforma a disputa por uma herança bilionária em um jogo mortal repleto de humor ácido e reviravoltas."
+headline: "A fortuna da família está à venda — e ele pretende comprá-la com vingança"
+kicker: "Uma comédia de humor ácido onde vingança, ambição e herança se encontram em um plano tão inteligente quanto imprevisível"
+summary: "Deserdado desde o nascimento, um homem transforma a disputa por uma herança bilionária em um jogo mortal repleto de humor ácido e reviravoltas"
 poster: "../../assets/films/the-inheritance-2025.webp"
 posterAlt: "Cena de Manual Prático da Vingança Lucrativa"
 tone: "#7A4B1F"

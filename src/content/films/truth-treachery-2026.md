@@ -1,7 +1,7 @@
 ---
-headline: "Quando a lealdade ao país entra em conflito com a consciência."
-kicker: "Uma emocionante história de coragem, consciência e resistência inspirada em fatos reais."
-summary: "Inspirado em uma história real, um jovem desafia um dos regimes mais cruéis da história ao escolher a verdade acima do medo."
+headline: "Quando a lealdade ao país entra em conflito com a consciência"
+kicker: "Uma emocionante história de coragem, consciência e resistência inspirada em fatos reais"
+summary: "Inspirado em uma história real, um jovem desafia um dos regimes mais cruéis da história ao escolher a verdade acima do medo"
 poster: "../../assets/films/truth-treachery-2026.webp"
 posterAlt: "Cena de Verdade e Traição"
 tone: "#4A4A4A"

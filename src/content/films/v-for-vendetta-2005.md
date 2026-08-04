@@ -1,7 +1,7 @@
 ---
-headline: "Ideias são à prova de balas."
-kicker: "Um clássico moderno sobre liberdade, resistência e o poder das ideias."
-summary: "Em um futuro dominado pelo medo, um homem mascarado desafia um regime totalitário e prova que nenhuma ideia pode ser executada."
+headline: "Ideias são à prova de balas"
+kicker: "Um clássico moderno sobre liberdade, resistência e o poder das ideias"
+summary: "Em um futuro dominado pelo medo, um homem mascarado desafia um regime totalitário e prova que nenhuma ideia pode ser executada"
 poster: "../../assets/films/v-for-vendetta-2005.jpg"
 posterAlt: "Cena de V de Vingança"
 tone: "#A31222"

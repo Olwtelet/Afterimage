@@ -1,7 +1,7 @@
 ---
-headline: "Duas histórias. Um único dia de sobrevivência."
-kicker: "Sessão Dupla Especial. Uma noite inteira dedicada ao horror."
-summary: "Uma noiva, dois jogos mortais e uma tradição capaz de transformar um casamento em uma luta desesperada pela sobrevivência."
+headline: "Duas histórias, um único dia de sobrevivência"
+kicker: "Sessão Dupla Especial — uma noite inteira dedicada ao horror"
+summary: "Uma noiva, dois jogos mortais e uma tradição capaz de transformar um casamento em uma luta desesperada pela sobrevivência"
 poster: "../../assets/films/ready-or-not-double-feature-2026.jpg"
 posterAlt: "Cena de Casamento Sangrento e Casamento Sangrento: A Viúva"
 tone: "#8B0000"
