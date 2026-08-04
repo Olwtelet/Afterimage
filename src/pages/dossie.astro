@@ -1,0 +1,852 @@
+---
+/**
+ * Dossiê de Classificação Cinematográfica.
+ *
+ * Página estática por inteiro: não consulta banco, não exige sessão e não grava
+ * nada. Nada aqui é salvo, versionado, compartilhável por link ou vinculado a
+ * perfil — o dossiê existe para ser montado e exportado, e isso é o recurso, não
+ * uma limitação. O que sai é um PNG.
+ *
+ * O catálogo é embutido no build a partir das próprias fichas, com os pôsteres
+ * já otimizados. Assim a busca responde no mesmo quadro em que se digita, e a
+ * exportação desenha a partir de imagens de mesma origem — o que importa, porque
+ * imagem de outro domínio contamina o canvas e faria `toBlob` lançar.
+ */
+import { getImage } from 'astro:assets';
+
+import Base from '~/layouts/Base.astro';
+import Glitch from '~/components/signal/Glitch.astro';
+import { getSessions } from '~/lib/catalog';
+import { BARS } from '~/lib/smpte';
+import { SITE } from '~/lib/site';
+
+const sessions = await getSessions();
+
+/* Duas larguras por filme: a pequena para a tela, a grande para o PNG — que sai
+   em alta resolução e ficaria borrado com a miniatura. */
+const films = await Promise.all(
+  sessions.map(async (session) => {
+    const { poster, headline, features } = session.entry.data;
+    const [small, large] = await Promise.all([
+      getImage({ src: poster, width: 220, height: 124, format: 'webp', fit: 'cover' }),
+      getImage({ src: poster, width: 660, height: 372, format: 'webp', fit: 'cover' }),
+    ]);
+
+    return {
+      slug: session.slug,
+      title: features.map((feature) => feature.title).join(' + '),
+      year: features[0]?.year ?? null,
+      headline,
+      src: small.src,
+      hi: large.src,
+      terms: `${features.map((f) => `${f.title} ${f.director ?? ''}`).join(' ')} ${headline}`
+        .normalize('NFD')
+        .replace(/[̀-ͯ]/g, '')
+        .toLowerCase(),
+    };
+  }),
+);
+
+/*
+ * As faixas percorrem as sete barras SMPTE na ordem da carta de ajuste. Não é
+ * decoração: a escala de classificação passa a ser a mesma escala de referência
+ * do resto do site, e um dossiê cheio remonta o padrão.
+ */
+const TIERS = [
+  { id: 'S', label: 'S', bar: BARS.yellow.bar, ink: BARS.yellow.ink },
+  { id: 'A', label: 'A', bar: BARS.cyan.bar, ink: BARS.cyan.ink },
+  { id: 'B', label: 'B', bar: BARS.green.bar, ink: BARS.green.ink },
+  { id: 'C', label: 'C', bar: BARS.magenta.bar, ink: BARS.magenta.ink },
+  { id: 'D', label: 'D', bar: BARS.red.bar, ink: BARS.red.ink },
+];
+
+/* Barras reservadas para faixas que a pessoa acrescentar. Vão no payload em vez
+   de repetidas no script: as cores da carta de ajuste têm uma origem só. */
+const EXTRA_BARS = [BARS.blue.bar, BARS.white.bar];
+---
+
+<Base
+  title="Dossiê de Classificação"
+  description="Monte a sua classificação do catálogo e exporte em alta resolução"
+  accent={BARS.yellow}
+>
+  <header class="head u-page">
+    <p class="u-label head__eyebrow m-enter" style="--m-step:0">Sinal aberto · Instrumento</p>
+
+    <Glitch
+      tag="h1"
+      text="Dossiê de Classificação"
+      trigger="reveal"
+      class="page-title u-slate u-bleed m-enter"
+    />
+
+    <div class="page-lede m-enter" style="--m-step:2">
+      <p>Ordene o catálogo como você o vê</p>
+      <p>Nada é salvo, publicado ou anexado ao seu perfil — o que sai daqui é uma imagem</p>
+    </div>
+  </header>
+
+  {/* ===== Cabeçalho do dossiê ========================================== */}
+  <section class="meta u-page" aria-label="Identificação do dossiê">
+    <label class="meta__field">
+      <span class="u-label">Título</span>
+      <input
+        id="dossie-title"
+        value="Dossiê de Classificação"
+        maxlength="60"
+        autocomplete="off"
+      />
+    </label>
+
+    <label class="meta__field">
+      <span class="u-label">Nota de abertura</span>
+      <input
+        id="dossie-note"
+        placeholder="Opcional"
+        maxlength="90"
+        autocomplete="off"
+      />
+    </label>
+  </section>
+
+  {/* ===== Faixas ======================================================= */}
+  <section class="board u-page" aria-label="Faixas de classificação">
+    <div class="tiers" data-tiers>
+      {
+        TIERS.map((tier) => (
+          <div class="tier" data-tier style={`--tier:${tier.bar};--tier-ink:${tier.ink}`}>
+            <div class="tier__label">
+              <input
+                class="tier__name"
+                value={tier.label}
+                maxlength="4"
+                aria-label={`Nome da faixa ${tier.label}`}
+                data-tier-name
+              />
+              <button type="button" class="tier__drop" data-tier-drop aria-label="Remover faixa">
+                ×
+              </button>
+            </div>
+            <div class="tier__slot" data-slot role="list" aria-label={`Faixa ${tier.label}`} />
+          </div>
+        ))
+      }
+    </div>
+
+    <button type="button" class="btn btn--ghost tiers__add" data-tier-add>
+      Acrescentar faixa
+    </button>
+  </section>
+
+  {/* ===== Reserva ====================================================== */}
+  <section class="bench u-page" aria-labelledby="bench-title">
+    <div class="section__head">
+      <div>
+        <h2 class="section__title" data-channel="//" id="bench-title">Reserva</h2>
+        <p class="section__note">Arraste daqui para as faixas</p>
+      </div>
+      <span class="section__link" data-bench-count></span>
+    </div>
+
+    <label class="bench__search">
+      <span class="u-sr-only">Buscar no catálogo</span>
+      <input
+        type="search"
+        placeholder="Buscar título ou direção"
+        autocomplete="off"
+        data-search
+      />
+    </label>
+
+    <div class="bench__slot" data-slot data-bench role="list" aria-label="Reserva">
+      {
+        films.map((film) => (
+          <div
+            class="chip"
+            data-chip
+            data-slug={film.slug}
+            data-terms={film.terms}
+            role="listitem"
+            tabindex="0"
+            title={film.title}
+          >
+            <img src={film.src} alt="" width="110" height="62" loading="lazy" draggable="false" />
+            <span class="chip__name">{film.title}</span>
+          </div>
+        ))
+      }
+    </div>
+
+    <p class="bench__none u-label" data-bench-none hidden>Nada com esse termo</p>
+  </section>
+
+  {/* ===== Exportar ===================================================== */}
+  <section class="export u-page">
+    <div>
+      <h2 class="u-label export__title">Exportar</h2>
+      <p class="export__text">
+        Gera um PNG em alta resolução com as faixas preenchidas. A reserva não
+        entra na imagem.
+      </p>
+    </div>
+    <button type="button" class="btn btn--solid" data-export>Exportar PNG</button>
+  </section>
+
+  <p class="foot u-page u-label" data-status role="status" aria-live="polite"></p>
+
+  <script is:inline  type="application/json" id="dossie-data" set:html={JSON.stringify({ films, brand: SITE.name, extraBars: EXTRA_BARS })} />
+</Base>
+
+<script>
+  interface FilmEntry {
+    slug: string;
+    title: string;
+    year: number | null;
+    headline: string;
+    src: string;
+    hi: string;
+    terms: string;
+  }
+
+  const dataNode = document.querySelector<HTMLScriptElement>('#dossie-data');
+  const payload = dataNode
+    ? (JSON.parse(dataNode.textContent ?? '{}') as {
+        films: FilmEntry[];
+        brand: string;
+        extraBars: string[];
+      })
+    : { films: [], brand: '', extraBars: [] };
+
+  const byId = new Map(payload.films.map((film) => [film.slug, film]));
+
+  /* ======================================================================
+     Arrastar
+     ======================================================================
+     Pointer Events, não a API de drag-and-drop do HTML5: aquela simplesmente
+     não dispara em toque, o que deixaria metade das pessoas sem o recurso. Um
+     caminho de código atende mouse, toque e caneta.
+     ================================================================== */
+  let dragging: HTMLElement | null = null;
+  let ghost: HTMLElement | null = null;
+  let offsetX = 0;
+  let offsetY = 0;
+
+  const slotsOf = (): HTMLElement[] => [...document.querySelectorAll<HTMLElement>('[data-slot]')];
+
+  /** Vizinho mais próximo pela posição horizontal, para inserir onde se soltou. */
+  const insertionPoint = (slot: HTMLElement, x: number): HTMLElement | null => {
+    const chips = [...slot.querySelectorAll<HTMLElement>('[data-chip]')].filter(
+      (chip) => chip !== dragging,
+    );
+
+    for (const chip of chips) {
+      const box = chip.getBoundingClientRect();
+      if (x < box.left + box.width / 2) return chip;
+    }
+    return null;
+  };
+
+  const startDrag = (chip: HTMLElement, event: PointerEvent): void => {
+    dragging = chip;
+    const box = chip.getBoundingClientRect();
+    offsetX = event.clientX - box.left;
+    offsetY = event.clientY - box.top;
+
+    ghost = chip.cloneNode(true) as HTMLElement;
+    ghost.classList.add('chip--ghost');
+    ghost.style.inlineSize = `${box.width}px`;
+    ghost.style.blockSize = `${box.height}px`;
+    document.body.append(ghost);
+
+    chip.classList.add('chip--source');
+    chip.setPointerCapture(event.pointerId);
+    moveGhost(event.clientX, event.clientY);
+  };
+
+  const moveGhost = (x: number, y: number): void => {
+    if (ghost) ghost.style.translate = `${x - offsetX}px ${y - offsetY}px`;
+  };
+
+  const endDrag = (x: number, y: number): void => {
+    if (!dragging) return;
+
+    // O fantasma segue o ponteiro e responderia no lugar do alvo.
+    ghost?.style.setProperty('display', 'none');
+    const under = document.elementFromPoint(x, y);
+    const slot = under?.closest<HTMLElement>('[data-slot]');
+
+    if (slot) {
+      const before = insertionPoint(slot, x);
+      slot.insertBefore(dragging, before);
+      dragging.animate(
+        [{ transform: 'scale(1.08)' }, { transform: 'scale(1)' }],
+        { duration: 180, easing: 'cubic-bezier(.2,.85,.25,1)' },
+      );
+    }
+
+    dragging.classList.remove('chip--source');
+    ghost?.remove();
+    ghost = null;
+    dragging = null;
+    refreshCounts();
+  };
+
+  document.addEventListener('pointerdown', (event) => {
+    const chip = (event.target as HTMLElement).closest<HTMLElement>('[data-chip]');
+    if (!chip || event.button !== 0) return;
+    event.preventDefault();
+    startDrag(chip, event);
+  });
+
+  document.addEventListener('pointermove', (event) => {
+    if (!dragging) return;
+    event.preventDefault();
+    moveGhost(event.clientX, event.clientY);
+
+    const under = document.elementFromPoint(event.clientX, event.clientY);
+    const slot = under?.closest<HTMLElement>('[data-slot]');
+    for (const candidate of slotsOf()) {
+      candidate.classList.toggle('slot--over', candidate === slot);
+    }
+  });
+
+  const finish = (event: PointerEvent): void => {
+    for (const slot of slotsOf()) slot.classList.remove('slot--over');
+    endDrag(event.clientX, event.clientY);
+  };
+
+  document.addEventListener('pointerup', finish);
+  document.addEventListener('pointercancel', finish);
+
+  /* Teclado: arrastar não pode ser o único caminho. Setas movem entre faixas. */
+  document.addEventListener('keydown', (event) => {
+    const chip = (event.target as HTMLElement).closest<HTMLElement>('[data-chip]');
+    if (!chip) return;
+    if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
+
+    event.preventDefault();
+    const slots = slotsOf();
+    const current = slots.indexOf(chip.closest<HTMLElement>('[data-slot]')!);
+    const next = slots[current + (event.key === 'ArrowDown' ? 1 : -1)];
+    if (next) {
+      next.append(chip);
+      chip.focus();
+      refreshCounts();
+    }
+  });
+
+  /* ======================================================================
+     Busca
+     ================================================================== */
+  const search = document.querySelector<HTMLInputElement>('[data-search]');
+  const bench = document.querySelector<HTMLElement>('[data-bench]');
+  const benchNone = document.querySelector<HTMLElement>('[data-bench-none]');
+  const benchCount = document.querySelector<HTMLElement>('[data-bench-count]');
+
+  const refreshCounts = (): void => {
+    if (!bench || !benchCount) return;
+    const total = bench.querySelectorAll('[data-chip]').length;
+    benchCount.textContent = `${total} na reserva`;
+  };
+
+  search?.addEventListener('input', () => {
+    if (!bench) return;
+    const needle = search.value
+      .trim()
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .toLowerCase();
+
+    let visible = 0;
+    for (const chip of bench.querySelectorAll<HTMLElement>('[data-chip]')) {
+      const match = needle === '' || (chip.dataset.terms ?? '').includes(needle);
+      chip.hidden = !match;
+      if (match) visible += 1;
+    }
+    if (benchNone) benchNone.hidden = visible > 0;
+  });
+
+  /* ======================================================================
+     Faixas
+     ================================================================== */
+  const tiers = document.querySelector<HTMLElement>('[data-tiers]');
+  const extraBars = payload.extraBars;
+  let extraUsed = 0;
+
+  document.querySelector('[data-tier-add]')?.addEventListener('click', () => {
+    if (!tiers) return;
+    const model = tiers.querySelector<HTMLElement>('[data-tier]');
+    if (!model) return;
+
+    const copy = model.cloneNode(true) as HTMLElement;
+    const bar = extraBars[extraUsed % extraBars.length]!;
+    extraUsed += 1;
+
+    copy.style.setProperty('--tier', bar);
+    copy.style.setProperty('--tier-ink', bar);
+    const name = copy.querySelector<HTMLInputElement>('[data-tier-name]');
+    if (name) name.value = '';
+    copy.querySelector<HTMLElement>('[data-slot]')!.replaceChildren();
+
+    tiers.append(copy);
+    name?.focus();
+  });
+
+  tiers?.addEventListener('click', (event) => {
+    const drop = (event.target as HTMLElement).closest('[data-tier-drop]');
+    if (!drop) return;
+
+    const tier = drop.closest<HTMLElement>('[data-tier]');
+    const slot = tier?.querySelector<HTMLElement>('[data-slot]');
+
+    // Os filmes voltam para a reserva; remover uma faixa não some com eles.
+    if (slot && bench) bench.append(...slot.querySelectorAll('[data-chip]'));
+    if ((tiers.querySelectorAll('[data-tier]').length ?? 0) > 1) tier?.remove();
+    refreshCounts();
+  });
+
+  /* ======================================================================
+     Exportar
+     ======================================================================
+     Desenhado à mão no canvas, sem biblioteca. É a única forma de controlar a
+     resolução de verdade e a única que não depende de baixar código de
+     terceiro — que a política de segurança do site bloqueia de todo jeito.
+     ================================================================== */
+  const status = document.querySelector<HTMLElement>('[data-status]');
+
+  const say = (text: string): void => {
+    if (status) status.textContent = text;
+  };
+
+  const loadImage = (src: string): Promise<HTMLImageElement> =>
+    new Promise((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new Error(src));
+      image.src = src;
+    });
+
+  document.querySelector('[data-export]')?.addEventListener('click', async () => {
+    const rows = [...document.querySelectorAll<HTMLElement>('[data-tier]')]
+      .map((tier) => ({
+        label: tier.querySelector<HTMLInputElement>('[data-tier-name]')?.value.trim() || '·',
+        bar: getComputedStyle(tier).getPropertyValue('--tier').trim(),
+        slugs: [...tier.querySelectorAll<HTMLElement>('[data-chip]')].map(
+          (chip) => chip.dataset.slug ?? '',
+        ),
+      }))
+      .filter((row) => row.slugs.length > 0);
+
+    if (rows.length === 0) {
+      say('Coloque ao menos um filme numa faixa antes de exportar');
+      return;
+    }
+
+    say('Compondo a imagem…');
+
+    /* Medidas em unidades lógicas; a escala multiplica tudo no fim. */
+    const S = 3;
+    const PAD = 40;
+    const LABEL = 96;
+    const CARD_W = 180;
+    const CARD_H = 101;
+    const GAP = 8;
+    const PER_ROW = 8;
+    const HEAD = 132;
+    const FOOT = 56;
+
+    const rowHeights = rows.map(
+      (row) => Math.ceil(row.slugs.length / PER_ROW) * (CARD_H + GAP) - GAP + GAP * 2,
+    );
+
+    const width = PAD * 2 + LABEL + GAP + PER_ROW * (CARD_W + GAP) - GAP;
+    const height =
+      HEAD + rowHeights.reduce((sum, value) => sum + value + GAP, 0) + FOOT + PAD;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width * S;
+    canvas.height = height * S;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      say('O navegador não permitiu compor a imagem');
+      return;
+    }
+    ctx.scale(S, S);
+
+    // Fundo: o mesmo preto abaixo do preto do site.
+    ctx.fillStyle = '#050506';
+    ctx.fillRect(0, 0, width, height);
+
+    // Filete de sete barras no topo — a assinatura da carta de ajuste.
+    const smpte = ['#C0C0C0', '#C0C000', '#00C0C0', '#00C000', '#C000C0', '#C00000', '#0000C0'];
+    const barWidth = width / smpte.length;
+    smpte.forEach((color, index) => {
+      ctx.fillStyle = color;
+      ctx.fillRect(index * barWidth, 0, barWidth + 1, 6);
+    });
+
+    const title =
+      (document.querySelector<HTMLInputElement>('#dossie-title')?.value.trim() ||
+        'Dossiê de Classificação');
+    const note = document.querySelector<HTMLInputElement>('#dossie-note')?.value.trim() ?? '';
+
+    ctx.fillStyle = '#E8E9EA';
+    ctx.font = '700 34px Archivo Variable, Archivo, system-ui, sans-serif';
+    ctx.fillText(title, PAD, 62);
+
+    if (note) {
+      ctx.fillStyle = '#9BA0A6';
+      ctx.font = '400 15px Archivo Variable, Archivo, system-ui, sans-serif';
+      ctx.fillText(note, PAD, 88);
+    }
+
+    ctx.fillStyle = '#7A8087';
+    ctx.font = '500 10px JetBrains Mono Variable, ui-monospace, monospace';
+    ctx.fillText(payload.brand.toUpperCase(), PAD, 110);
+
+    // Pré-carrega tudo antes de desenhar: imagem faltando deixaria buraco.
+    const needed = [...new Set(rows.flatMap((row) => row.slugs))];
+    const loaded = new Map<string, HTMLImageElement>();
+    await Promise.all(
+      needed.map(async (slug) => {
+        const film = byId.get(slug);
+        if (!film) return;
+        try {
+          loaded.set(slug, await loadImage(film.hi));
+        } catch {
+          /* sem a imagem, o card sai como bloco de cor */
+        }
+      }),
+    );
+
+    let y = HEAD;
+
+    rows.forEach((row, index) => {
+      const rowHeight = rowHeights[index]!;
+
+      ctx.fillStyle = row.bar;
+      ctx.fillRect(PAD, y, LABEL, rowHeight);
+
+      // Preto sobre barra SMPTE: as sete a 75% são claras o bastante para isso,
+      // e texto branco em cima de amarelo seria ilegível.
+      ctx.fillStyle = '#050506';
+      ctx.font = '800 30px Archivo Variable, Archivo, system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(row.label.slice(0, 4), PAD + LABEL / 2, y + rowHeight / 2, LABEL - 12);
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
+
+      ctx.fillStyle = '#101113';
+      ctx.fillRect(PAD + LABEL, y, width - PAD * 2 - LABEL, rowHeight);
+
+      row.slugs.forEach((slug, position) => {
+        const column = position % PER_ROW;
+        const line = Math.floor(position / PER_ROW);
+        const x = PAD + LABEL + GAP + column * (CARD_W + GAP);
+        const cardY = y + GAP + line * (CARD_H + GAP);
+
+        const image = loaded.get(slug);
+        if (image) {
+          ctx.drawImage(image, x, cardY, CARD_W, CARD_H);
+        } else {
+          ctx.fillStyle = '#17191B';
+          ctx.fillRect(x, cardY, CARD_W, CARD_H);
+        }
+
+        ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x + 0.5, cardY + 0.5, CARD_W - 1, CARD_H - 1);
+      });
+
+      y += rowHeight + GAP;
+    });
+
+    ctx.fillStyle = '#7A8087';
+    ctx.font = '500 10px JetBrains Mono Variable, ui-monospace, monospace';
+    ctx.fillText(`${payload.brand} · curadoria Olwtelet`, PAD, height - PAD + 10);
+
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        say('Não foi possível gerar o arquivo');
+        return;
+      }
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      /*
+       * Os acentos são transliterados, não removidos. Sem o NFD, "Dossiê de
+       * Classificação" viraria "dossi-de-classifica-o" — o mesmo defeito que os
+       * endereços de gênero tinham no início do projeto, quando "ação" virava
+       * "a-o". Trocar cada caractere acentuado por hífen destrói a palavra.
+       */
+      const filename =
+        title
+          .normalize('NFD')
+          .replace(/[̀-ͯ]/g, '')
+          .replace(/ç/gi, 'c')
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '') || 'dossie';
+
+      link.download = `${filename}.png`;
+      link.click();
+      URL.revokeObjectURL(url);
+      say(`Exportado em ${canvas.width}×${canvas.height}`);
+    }, 'image/png');
+  });
+
+  refreshCounts();
+</script>
+
+<style>
+  .head {
+    padding-block: var(--space-2xl) var(--space-lg);
+  }
+
+  .head__eyebrow {
+    color: var(--accent-ink);
+  }
+
+  /* ===== Identificação ==================================================== */
+  .meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    gap: var(--space-md);
+    padding-block: var(--space-md);
+    border-block: 1px solid var(--line);
+  }
+
+  .meta__field {
+    display: grid;
+    gap: 0.3rem;
+  }
+
+  .meta__field input {
+    padding: 0.5rem 0.6rem;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    font-size: var(--text-base);
+    transition: border-color var(--dur-cut) var(--ease-signal);
+  }
+
+  .meta__field input:focus {
+    border-color: var(--accent-bar);
+    outline: none;
+  }
+
+  /* ===== Faixas =========================================================== */
+  .board {
+    padding-block: var(--space-lg);
+  }
+
+  .tiers {
+    display: grid;
+    gap: 3px;
+    margin-block-end: var(--space-md);
+  }
+
+  .tier {
+    display: grid;
+    grid-template-columns: 5rem minmax(0, 1fr);
+    gap: 3px;
+    min-block-size: 5.25rem;
+  }
+
+  .tier__label {
+    position: relative;
+    display: grid;
+    place-items: center;
+    background: var(--tier);
+  }
+
+  /* A faixa é um bloco de cor SMPTE; o rótulo é preto porque as sete barras a
+     75% são claras o bastante e texto claro sobre amarelo some. */
+  .tier__name {
+    inline-size: 100%;
+    padding: 0.4rem;
+    background: none;
+    border: none;
+    text-align: center;
+    font-size: var(--text-2xl);
+    font-weight: 800;
+    font-variation-settings: 'wdth' 112;
+    color: #050506;
+  }
+
+  .tier__name:focus {
+    outline: 2px solid #050506;
+    outline-offset: -4px;
+  }
+
+  .tier__drop {
+    position: absolute;
+    inset-block-start: 2px;
+    inset-inline-end: 4px;
+    font-size: 0.875rem;
+    line-height: 1;
+    color: rgb(5 5 6 / 0.45);
+    opacity: 0;
+    transition: opacity var(--dur-cut) var(--ease-signal);
+  }
+
+  .tier:hover .tier__drop,
+  .tier:focus-within .tier__drop {
+    opacity: 1;
+  }
+
+  .tier__slot {
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    gap: 4px;
+    padding: 4px;
+    background: var(--surface);
+    transition: background-color var(--dur-cut) var(--ease-signal);
+  }
+
+  .slot--over {
+    background: color-mix(in srgb, var(--accent-bar) 14%, var(--surface));
+  }
+
+  .tiers__add {
+    margin-block-end: var(--space-lg);
+  }
+
+  /* ===== Fichas =========================================================== */
+  .chip {
+    position: relative;
+    inline-size: 6.875rem;
+    background: var(--black);
+    border: 1px solid var(--line);
+    cursor: grab;
+    /* Impede o navegador de sequestrar o gesto para rolar a página. */
+    touch-action: none;
+    user-select: none;
+    transition:
+      border-color var(--dur-cut) var(--ease-signal),
+      transform var(--dur-cut) var(--ease-snap);
+  }
+
+  .chip:hover {
+    border-color: var(--line-strong);
+    transform: translateY(-2px);
+  }
+
+  .chip:focus-visible {
+    outline: 2px solid var(--accent-ink);
+    outline-offset: 2px;
+  }
+
+  .chip[hidden] {
+    display: none;
+  }
+
+  .chip img {
+    inline-size: 100%;
+    block-size: auto;
+    display: block;
+    filter: saturate(0.55) contrast(1.05);
+    pointer-events: none;
+  }
+
+  .chip__name {
+    display: block;
+    padding: 0.2rem 0.3rem;
+    font-family: var(--font-mono);
+    font-size: 0.5rem;
+    letter-spacing: 0.04em;
+    color: var(--ink-mute);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* A original fica no lugar, apagada, para a lacuna não colapsar durante o
+     arrasto — é o que dá a sensação de a peça ter saído dali. */
+  .chip--source {
+    opacity: 0.25;
+    cursor: grabbing;
+  }
+
+  .chip--ghost {
+    position: fixed;
+    inset-block-start: 0;
+    inset-inline-start: 0;
+    z-index: var(--z-tune);
+    pointer-events: none;
+    rotate: -2deg;
+    border-color: var(--accent-bar);
+    box-shadow: 0 1rem 2rem rgb(0 0 0 / 0.5);
+  }
+
+  /* ===== Reserva ========================================================== */
+  .bench {
+    padding-block: var(--space-lg);
+  }
+
+  .bench__search {
+    display: block;
+    margin-block-end: var(--space-sm);
+  }
+
+  .bench__search input {
+    inline-size: min(22rem, 100%);
+    padding: 0.5rem 0.6rem;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    font-size: var(--text-sm);
+  }
+
+  .bench__search input:focus {
+    border-color: var(--accent-bar);
+    outline: none;
+  }
+
+  .bench__slot {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    min-block-size: 6rem;
+    padding: 4px;
+    background: var(--surface);
+    border: 1px dashed var(--line);
+  }
+
+  .bench__none {
+    padding-block: var(--space-sm);
+  }
+
+  /* ===== Exportar ========================================================= */
+  .export {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+    padding-block: var(--space-lg);
+    border-block-start: 1px solid var(--line);
+  }
+
+  .export__title {
+    color: var(--accent-ink);
+  }
+
+  .export__text {
+    max-inline-size: 46ch;
+    margin-block-start: 0.2rem;
+    font-size: var(--text-sm);
+    color: var(--ink-mute);
+  }
+
+  .foot {
+    padding-block-end: var(--space-2xl);
+    color: var(--accent-ink);
+  }
+
+  .foot:empty {
+    display: none;
+  }
+</style>
