@@ -1,0 +1,554 @@
+---
+/**
+ * Anotações da sessão.
+ *
+ * Deliberadamente não parece rede social: sem curtir, sem responder, sem
+ * contador de engajamento, sem ordenar por "relevância". O modelo mental é o de
+ * uma margem de caderno — quem assistiu escreve o que ficou, em ordem de
+ * chegada, e pronto.
+ *
+ * A escrita, a edição e a exclusão são autorizadas pelo RLS. As políticas dizem
+ * que se escreve apenas em nome próprio, que só o autor edita, e que apagar cabe
+ * ao autor ou à moderação. Este arquivo não decide nada disso — se ele fosse
+ * reescrito no navegador, o banco recusaria igual.
+ */
+interface Props {
+  slug: string;
+}
+
+const { slug } = Astro.props;
+---
+
+<section class="notes" data-notes data-slug={slug} aria-labelledby="notes-title">
+  <div class="section__head">
+    <div>
+      <h2 class="section__title" data-channel="//" id="notes-title">Anotações</h2>
+      <p class="section__note">O que ficou, escrito por quem assistiu</p>
+    </div>
+    <span class="section__link" data-notes-count hidden></span>
+  </div>
+
+  {/* Formulário — só para quem entrou */}
+  <form class="compose" data-notes-form hidden>
+    <label class="u-sr-only" for="note-body">Sua anotação</label>
+    <textarea
+      id="note-body"
+      class="compose__field"
+      data-notes-field
+      rows="3"
+      maxlength="2000"
+      placeholder="O que essa sessão deixou?"
+      required></textarea>
+
+    <div class="compose__foot">
+      <span class="u-label" data-notes-remaining></span>
+      <div class="compose__actions">
+        <button type="button" class="compose__cancel" data-notes-cancel hidden>
+          Cancelar
+        </button>
+        <button type="submit" class="btn btn--solid" data-notes-submit>Anotar</button>
+      </div>
+    </div>
+  </form>
+
+  <a class="notes__enter" data-notes-enter href="/auth/entrar/" hidden>
+    <span class="notes__mark" aria-hidden="true">
+      <span></span><span></span><span></span>
+    </span>
+    Entre para deixar a sua
+  </a>
+
+  <p class="notes__status u-label" data-notes-status role="status" aria-live="polite"></p>
+
+  <ol class="thread" data-notes-list role="list"></ol>
+
+  <p class="notes__empty u-label" data-notes-empty hidden>
+    Nenhuma anotação ainda — a primeira pode ser a sua
+  </p>
+</section>
+
+<script>
+  import { browser } from '~/lib/db/browser';
+
+  interface NoteRow {
+    id: string;
+    user_id: string;
+    body: string;
+    edited: boolean;
+    created_at: string;
+    profiles: {
+      username: string;
+      display_name: string;
+      avatar_url: string | null;
+      discord_id: string;
+    } | null;
+  }
+
+  const root = document.querySelector<HTMLElement>('[data-notes]');
+
+  if (root) {
+    const form = root.querySelector<HTMLFormElement>('[data-notes-form]');
+    const field = root.querySelector<HTMLTextAreaElement>('[data-notes-field]');
+    const submit = root.querySelector<HTMLButtonElement>('[data-notes-submit]');
+    const cancel = root.querySelector<HTMLButtonElement>('[data-notes-cancel]');
+    const remaining = root.querySelector<HTMLElement>('[data-notes-remaining]');
+    const enter = root.querySelector<HTMLAnchorElement>('[data-notes-enter]');
+    const status = root.querySelector<HTMLElement>('[data-notes-status]');
+    const list = root.querySelector<HTMLOListElement>('[data-notes-list]');
+    const empty = root.querySelector<HTMLElement>('[data-notes-empty]');
+    const counter = root.querySelector<HTMLElement>('[data-notes-count]');
+    const slug = root.dataset.slug ?? '';
+
+    if (form && field && submit && cancel && remaining && enter && status && list && empty && counter) {
+      const db = browser();
+      let userId: string | null = null;
+      let isAdmin = false;
+      let filmId: string | null = null;
+      /** Id da anotação em edição, ou `null` quando se está escrevendo uma nova. */
+      let editing: string | null = null;
+
+      const dateOf = (iso: string): string =>
+        new Intl.DateTimeFormat('pt-BR', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+          timeZone: 'America/Sao_Paulo',
+        })
+          .format(new Date(iso))
+          .replace('.', '');
+
+      const avatarOf = (row: NoteRow['profiles']): string => {
+        if (row?.avatar_url) return row.avatar_url;
+        const index = (BigInt(row?.discord_id || '0') >> 22n) % 6n;
+        return `https://cdn.discordapp.com/embed/avatars/${index}.png`;
+      };
+
+      const say = (text: string, tone: 'ok' | 'erro' = 'ok'): void => {
+        status.textContent = text;
+        status.dataset.tone = tone;
+        if (text) {
+          window.setTimeout(() => {
+            if (status.textContent === text) status.textContent = '';
+          }, 3000);
+        }
+      };
+
+      const countRemaining = (): void => {
+        const left = field.maxLength - field.value.length;
+        remaining.textContent = left < 300 ? `${left} restantes` : '';
+      };
+
+      /**
+       * Monta o nó por API do DOM, sem innerHTML.
+       *
+       * O corpo é texto de outra pessoa; concatená-lo numa string de HTML seria
+       * abrir injeção. `textContent` fecha essa porta por construção, em vez de
+       * depender de lembrar de escapar em cada ponto.
+       */
+      const render = (note: NoteRow): HTMLLIElement => {
+        const item = document.createElement('li');
+        item.className = 'note';
+        item.dataset.id = note.id;
+
+        const head = document.createElement('div');
+        head.className = 'note__head';
+
+        const avatar = document.createElement('img');
+        avatar.className = 'note__avatar';
+        avatar.src = avatarOf(note.profiles);
+        avatar.alt = '';
+        avatar.width = 28;
+        avatar.height = 28;
+        avatar.loading = 'lazy';
+
+        const who = document.createElement('div');
+        who.className = 'note__who';
+
+        const name = document.createElement('a');
+        name.className = 'note__name';
+        name.textContent = note.profiles?.display_name ?? 'Alguém';
+        if (note.profiles) name.href = `/perfil/${note.profiles.username}/`;
+
+        const when = document.createElement('p');
+        when.className = 'note__when u-label';
+        when.textContent = dateOf(note.created_at) + (note.edited ? ' · editada' : '');
+
+        who.append(name, when);
+        head.append(avatar, who);
+
+        // Editar é do autor; apagar é do autor ou da moderação — espelhando
+        // exatamente o que as políticas do banco permitem.
+        const mine = note.user_id === userId;
+        if (mine || isAdmin) {
+          const tools = document.createElement('div');
+          tools.className = 'note__tools';
+
+          if (mine) {
+            const edit = document.createElement('button');
+            edit.type = 'button';
+            edit.className = 'note__tool';
+            edit.textContent = 'editar';
+            edit.addEventListener('click', () => startEdit(note));
+            tools.append(edit);
+          }
+
+          const remove = document.createElement('button');
+          remove.type = 'button';
+          remove.className = 'note__tool note__tool--danger';
+          remove.textContent = 'apagar';
+          remove.addEventListener('click', () => void destroy(note.id, item));
+          tools.append(remove);
+
+          head.append(tools);
+        }
+
+        const body = document.createElement('p');
+        body.className = 'note__body';
+        body.textContent = note.body;
+
+        item.append(head, body);
+        return item;
+      };
+
+      const paintCount = (total: number): void => {
+        counter.hidden = total === 0;
+        counter.textContent = `${total} ${total === 1 ? 'anotação' : 'anotações'}`;
+        empty.hidden = total > 0;
+      };
+
+      const load = async (): Promise<void> => {
+        if (!filmId) return;
+
+        const { data } = await db
+          .from('comments')
+          .select('id, user_id, body, edited, created_at, profiles!inner(username, display_name, avatar_url, discord_id)')
+          .eq('film_id', filmId)
+          .order('created_at', { ascending: false })
+          .returns<NoteRow[]>();
+
+        const notes = data ?? [];
+        list.replaceChildren(...notes.map(render));
+        paintCount(notes.length);
+      };
+
+      const startEdit = (note: NoteRow): void => {
+        editing = note.id;
+        field.value = note.body;
+        cancel.hidden = false;
+        submit.textContent = 'Salvar';
+        countRemaining();
+        field.focus();
+        form.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      };
+
+      const stopEdit = (): void => {
+        editing = null;
+        field.value = '';
+        cancel.hidden = true;
+        submit.textContent = 'Anotar';
+        countRemaining();
+      };
+
+      const destroy = async (id: string, node: HTMLElement): Promise<void> => {
+        const { error } = await db.from('comments').delete().eq('id', id);
+        if (error) {
+          say('Não deu para apagar', 'erro');
+          return;
+        }
+        node.remove();
+        paintCount(list.children.length);
+        say('Anotação apagada');
+      };
+
+      cancel.addEventListener('click', stopEdit);
+      field.addEventListener('input', countRemaining);
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (!userId || !filmId) return;
+
+        const body = field.value.trim();
+        if (body.length === 0) return;
+
+        submit.disabled = true;
+
+        const { error } = editing
+          ? await db.from('comments').update({ body }).eq('id', editing)
+          : await db.from('comments').insert({ user_id: userId, film_id: filmId, body });
+
+        submit.disabled = false;
+
+        if (error) {
+          say('Não deu para salvar — tente de novo', 'erro');
+          return;
+        }
+
+        say(editing ? 'Anotação atualizada' : 'Anotada');
+        stopEdit();
+        await load();
+      });
+
+      void (async () => {
+        const { data: film } = await db
+          .from('films')
+          .select('id')
+          .eq('slug', slug)
+          .maybeSingle<{ id: string }>();
+
+        // Sem linha no banco não há onde pendurar anotação: a seção some inteira,
+        // em vez de oferecer um campo que não teria onde gravar.
+        if (!film) {
+          root.hidden = true;
+          return;
+        }
+
+        filmId = film.id;
+        await load();
+
+        const {
+          data: { session },
+        } = await db.auth.getSession();
+
+        if (!session) {
+          enter.href = `/auth/entrar/?next=${encodeURIComponent(location.pathname)}`;
+          enter.hidden = false;
+          return;
+        }
+
+        userId = session.user.id;
+        const { data: admin } = await db.rpc('is_admin');
+        isAdmin = admin === true;
+
+        form.hidden = false;
+        countRemaining();
+
+        // Recarrega para que os botões de editar/apagar apareçam nas próprias.
+        await load();
+      })();
+    }
+  }
+</script>
+
+<style>
+  .notes {
+    padding-block: var(--space-2xl) var(--space-xl);
+  }
+
+  .notes[hidden] {
+    display: none;
+  }
+
+  /* --- Escrita -------------------------------------------------------------- */
+  .compose {
+    display: grid;
+    gap: var(--space-2xs);
+    max-inline-size: var(--measure);
+    margin-block-end: var(--space-lg);
+  }
+
+  .compose[hidden] {
+    display: none;
+  }
+
+  .compose__field {
+    padding: var(--space-xs);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-inline-start: 2px solid var(--accent-bar);
+    color: var(--ink);
+    font-family: inherit;
+    font-size: var(--text-base);
+    line-height: var(--leading-relaxed);
+    resize: vertical;
+    transition: border-color var(--dur-cut) var(--ease-signal);
+  }
+
+  .compose__field:focus {
+    border-color: var(--line-strong);
+    border-inline-start-color: var(--accent-bar);
+    outline: none;
+  }
+
+  .compose__field::placeholder {
+    color: var(--ink-mute);
+  }
+
+  .compose__foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+  }
+
+  .compose__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-inline-start: auto;
+  }
+
+  .compose__cancel {
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    transition: color var(--dur-cut) var(--ease-signal);
+  }
+
+  .compose__cancel:hover {
+    color: var(--ink);
+  }
+
+  .compose__cancel[hidden] {
+    display: none;
+  }
+
+  /* --- Convite -------------------------------------------------------------- */
+  .notes__enter {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-block-end: var(--space-lg);
+    padding: 0.55rem 0.85rem;
+    border: 1px dashed var(--line-strong);
+    font-size: var(--text-sm);
+    color: var(--ink-dim);
+    transition:
+      border-color var(--dur-cut) var(--ease-signal),
+      color var(--dur-cut) var(--ease-signal);
+  }
+
+  .notes__enter:hover {
+    border-color: var(--accent-bar);
+    color: var(--ink);
+  }
+
+  .notes__enter[hidden] {
+    display: none;
+  }
+
+  .notes__mark {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    inline-size: 0.75rem;
+    block-size: 0.75rem;
+    flex: none;
+  }
+
+  .notes__mark span:nth-child(1) { background: var(--bar-cyan); }
+  .notes__mark span:nth-child(2) { background: var(--bar-magenta); }
+  .notes__mark span:nth-child(3) { background: var(--bar-yellow); }
+
+  /* --- Fio ------------------------------------------------------------------ */
+  .thread {
+    display: grid;
+    gap: var(--space-lg);
+    max-inline-size: var(--measure);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  /* Filete à esquerda em vez de caixa: anotação de margem, não card de rede
+     social. */
+  .note {
+    padding-inline-start: var(--space-sm);
+    border-inline-start: 1px solid var(--line-strong);
+  }
+
+  .note__head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2xs);
+    margin-block-end: var(--space-2xs);
+  }
+
+  .note__avatar {
+    inline-size: 1.75rem;
+    block-size: 1.75rem;
+    object-fit: cover;
+    background: var(--raised);
+    border: 1px solid var(--line);
+    flex: none;
+  }
+
+  .note__who {
+    display: grid;
+    min-inline-size: 0;
+  }
+
+  .note__name {
+    font-size: var(--text-sm);
+    font-weight: 650;
+    color: var(--ink);
+    transition: color var(--dur-cut) var(--ease-signal);
+  }
+
+  .note__name:hover {
+    color: var(--accent-ink);
+  }
+
+  .note__tools {
+    display: flex;
+    gap: var(--space-2xs);
+    margin-inline-start: auto;
+    /* Some até o cursor chegar: as ferramentas são do autor, não do texto. */
+    opacity: 0;
+    transition: opacity var(--dur-wipe) var(--ease-signal);
+  }
+
+  .note:hover .note__tools,
+  .note:focus-within .note__tools {
+    opacity: 1;
+  }
+
+  .note__tool {
+    font-family: var(--font-mono);
+    font-size: 0.5625rem;
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    transition: color var(--dur-cut) var(--ease-signal);
+  }
+
+  .note__tool:hover {
+    color: var(--ink);
+  }
+
+  .note__tool--danger:hover {
+    color: var(--ink-red);
+  }
+
+  .note__body {
+    color: var(--ink-dim);
+    line-height: var(--leading-relaxed);
+    /* Preserva as quebras de quem escreveu, sem interpretar marcação. */
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  /* --- Estados -------------------------------------------------------------- */
+  .notes__status:empty {
+    display: none;
+  }
+
+  .notes__status {
+    margin-block-end: var(--space-sm);
+    color: var(--accent-ink);
+  }
+
+  .notes__status[data-tone='erro'] {
+    color: var(--ink-red);
+  }
+
+  .notes__empty {
+    padding: var(--space-lg);
+    border: 1px dashed var(--line);
+    text-align: center;
+  }
+
+  .notes__empty[hidden] {
+    display: none;
+  }
+</style>
