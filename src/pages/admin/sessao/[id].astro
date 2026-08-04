@@ -1,0 +1,609 @@
+---
+/**
+ * Painel — editor de sessão.
+ *
+ * `id` é o identificador da sessão, ou `nova` para criar. A mesma página trata
+ * os dois casos porque o formulário é idêntico; separar em duas rotas duplicaria
+ * trinta campos para variar um verbo.
+ *
+ * Duas travas independentes, e é de propósito:
+ *
+ *   1. Esta rota responde 404 para quem não administra.
+ *   2. A escrita usa o cliente de SESSÃO, então o RLS pergunta de novo, no
+ *      Postgres, com `is_admin()`. Um furo na trava 1 não vira gravação.
+ *
+ * O formulário funciona sem JavaScript — é POST para a própria rota. O
+ * repetidor de exibições melhora a experiência, mas não é requisito.
+ */
+import Base from '~/layouts/Base.astro';
+import Glitch from '~/components/signal/Glitch.astro';
+import { server } from '~/lib/db/server';
+import { requireAdmin } from '~/lib/auth';
+import {
+  deleteFilm,
+  findFilm,
+  readFeatureForms,
+  readFilmForm,
+  saveFilm,
+  type AdminFilm,
+} from '~/lib/admin';
+import { barFor, BARS } from '~/lib/smpte';
+
+export const prerender = false;
+
+const denied = requireAdmin(Astro.locals.session);
+if (denied) return denied;
+
+const db = server(Astro.cookies, Astro.request.headers);
+const { id } = Astro.params;
+const isNew = id === 'nova';
+
+let film: AdminFilm | null = null;
+let error: string | null = null;
+
+if (!isNew && id) {
+  film = await findFilm(db, id);
+  if (!film) {
+    return new Response('Sessão não encontrada', {
+      status: 404,
+      headers: { 'content-type': 'text/plain; charset=utf-8' },
+    });
+  }
+}
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+
+  if (form.get('intent') === 'delete' && film) {
+    const result = await deleteFilm(db, film.id);
+    if (result.ok) return Astro.redirect('/admin/', 303);
+    error = result.error ?? 'Não foi possível excluir.';
+  } else {
+    const result = await saveFilm(
+      db,
+      readFilmForm(form),
+      readFeatureForms(form),
+      film?.id ?? null,
+    );
+
+    // 303 depois de gravar: recarregar a página não reenvia o formulário.
+    if (result.ok) return Astro.redirect(`/admin/sessao/${result.id}/?ok=1`, 303);
+    error = result.error ?? 'Não foi possível salvar.';
+  }
+}
+
+const saved = Astro.url.searchParams.get('ok') === '1';
+const bar = film ? barFor(film.tone) : BARS.white;
+
+/* O banco guarda um instante; o formulário separa data e hora. */
+const sessionDate = film?.session_at ? film.session_at.slice(0, 10) : '';
+const sessionTime = film?.session_at
+  ? new Intl.DateTimeFormat('pt-BR', {
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'America/Sao_Paulo',
+    }).format(new Date(film.session_at))
+  : '20:30';
+
+const features = film?.film_features.length
+  ? [...film.film_features].sort((a, b) => a.position - b.position)
+  : [null];
+
+const linksText = (film?.links ?? []).map((link) => `${link.label} | ${link.url}`).join('\n');
+---
+
+<Base
+  title={isNew ? 'Nova sessão' : 'Editar sessão'}
+  description="Administração do catálogo"
+  accent={bar}
+  noindex
+>
+  <header class="head u-page">
+    <nav class="crumbs u-label" aria-label="Trilha">
+      <a class="m-underline" href="/admin/">Painel</a>
+      <span aria-hidden="true">/</span>
+      <span aria-current="page">{isNew ? 'Nova' : film?.slug}</span>
+    </nav>
+
+    <Glitch
+      tag="h1"
+      text={isNew ? 'Nova sessão' : 'Editar'}
+      trigger="reveal"
+      class="page-title u-slate u-bleed"
+    />
+
+    {saved && <p class="flash flash--ok u-label">Gravado</p>}
+    {error && <p class="flash flash--erro u-label">{error}</p>}
+  </header>
+
+  <form class="form u-page" method="POST">
+    {/* ===== Identidade ================================================= */}
+    <fieldset class="block">
+      <legend class="u-label block__legend">Identidade</legend>
+
+      <label class="field field--wide">
+        <span class="u-label">Manchete</span>
+        <input name="headline" value={film?.headline ?? ''} required maxlength="200" />
+        <small>A provocação editorial, não o nome do filme</small>
+      </label>
+
+      <label class="field">
+        <span class="u-label">Endereço</span>
+        <input
+          name="slug"
+          value={film?.slug ?? ''}
+          required
+          pattern="[a-z0-9-]+"
+          placeholder="nome-do-filme-2026"
+        />
+        <small>Minúsculas, números e hífen</small>
+      </label>
+
+      <label class="field">
+        <span class="u-label">Cor da sessão</span>
+        <input name="tone" type="color" value={film?.tone ?? '#C0C0C0'} />
+        <small>Define a barra SMPTE da ficha</small>
+      </label>
+
+      <label class="field field--wide">
+        <span class="u-label">Resumo</span>
+        <textarea name="summary" rows="2" required maxlength="300">{film?.summary ?? ''}</textarea>
+        <small>Aparece nos cards e nos cartões sociais</small>
+      </label>
+
+      <label class="field field--wide">
+        <span class="u-label">Frase de fecho</span>
+        <input name="kicker" value={film?.kicker ?? ''} maxlength="300" />
+      </label>
+    </fieldset>
+
+    {/* ===== Sessão ===================================================== */}
+    <fieldset class="block">
+      <legend class="u-label block__legend">Sessão</legend>
+
+      <label class="field">
+        <span class="u-label">Data</span>
+        <input name="session_date" type="date" value={sessionDate} />
+      </label>
+
+      <label class="field">
+        <span class="u-label">Horário</span>
+        <input name="session_time" type="time" value={sessionTime} />
+        <small>Horário de Brasília</small>
+      </label>
+
+      <label class="field">
+        <span class="u-label">Sala</span>
+        <input name="room" value={film?.room ?? 'Sala 24'} />
+      </label>
+
+      <label class="field">
+        <span class="u-label">Link da sala</span>
+        <input name="room_url" type="url" value={film?.room_url ?? ''} />
+      </label>
+    </fieldset>
+
+    {/* ===== Imagens ==================================================== */}
+    <fieldset class="block">
+      <legend class="u-label block__legend">Imagens e vídeo</legend>
+
+      <label class="field">
+        <span class="u-label">Capa</span>
+        <input name="poster_url" value={film?.poster_url ?? ''} placeholder="/posters/nome.jpg" />
+      </label>
+
+      <label class="field">
+        <span class="u-label">Banner</span>
+        <input name="banner_url" value={film?.banner_url ?? ''} />
+      </label>
+
+      <label class="field field--wide">
+        <span class="u-label">Trailer</span>
+        <input name="trailer_url" type="url" value={film?.trailer_url ?? ''} />
+      </label>
+    </fieldset>
+
+    {/* ===== Exibições ================================================== */}
+    <fieldset class="block block--full">
+      <legend class="u-label block__legend">Exibições</legend>
+      <p class="block__hint u-label">
+        Uma por filme. Sessão dupla tem duas, na ordem de exibição.
+      </p>
+
+      <div class="features" data-features>
+        {
+          features.map((feature) => (
+            <div class="feature" data-feature>
+              <label class="field">
+                <span class="u-label">Título</span>
+                <input name="feature_title" value={feature?.title ?? ''} />
+              </label>
+
+              <label class="field field--tight">
+                <span class="u-label">Ano</span>
+                <input name="feature_year" type="number" min="1888" max="2100" value={feature?.year ?? ''} />
+              </label>
+
+              <label class="field field--tight">
+                <span class="u-label">Duração</span>
+                <input name="feature_runtime" type="number" min="1" value={feature?.runtime ?? ''} placeholder="min" />
+              </label>
+
+              <label class="field field--tight">
+                <span class="u-label">Classificação</span>
+                <input name="feature_rating" value={feature?.rating ?? ''} placeholder="16" />
+              </label>
+
+              <label class="field field--tight">
+                <span class="u-label">Início</span>
+                <input name="feature_time" type="time" value={feature?.starts_at?.slice(0, 5) ?? ''} />
+              </label>
+
+              <label class="field">
+                <span class="u-label">Direção</span>
+                <input name="feature_director" value={feature?.director ?? ''} />
+              </label>
+
+              <label class="field">
+                <span class="u-label">Gêneros</span>
+                <input name="feature_genres" value={(feature?.genres ?? []).join(', ')} />
+              </label>
+
+              <label class="field field--wide">
+                <span class="u-label">Elenco</span>
+                <input name="feature_cast" value={(feature?.cast_list ?? []).join(', ')} />
+              </label>
+
+              <button type="button" class="feature__drop" data-feature-drop>
+                Remover exibição
+              </button>
+            </div>
+          ))
+        }
+      </div>
+
+      <button type="button" class="btn btn--ghost" data-feature-add>
+        Adicionar exibição
+      </button>
+    </fieldset>
+
+    {/* ===== Classificação ============================================== */}
+    <fieldset class="block">
+      <legend class="u-label block__legend">Classificação</legend>
+
+      <label class="field field--wide">
+        <span class="u-label">Gêneros da sessão</span>
+        <input name="genres" value={(film?.genres ?? []).join(', ')} />
+      </label>
+
+      <label class="field field--wide">
+        <span class="u-label">Sinais</span>
+        <input name="tags" value={(film?.tags ?? []).join(', ')} />
+        <small>Alimentam as páginas de gênero</small>
+      </label>
+
+      <label class="field field--wide">
+        <span class="u-label">Links</span>
+        <textarea name="links" rows="3" placeholder="Letterboxd | https://...">{linksText}</textarea>
+        <small>Um por linha, no formato rótulo | endereço</small>
+      </label>
+    </fieldset>
+
+    {/* ===== Texto ====================================================== */}
+    <fieldset class="block block--full">
+      <legend class="u-label block__legend">Ficha</legend>
+
+      <label class="field field--wide">
+        <span class="u-label">Texto</span>
+        <textarea name="body" rows="16" class="field__body">{film?.body ?? ''}</textarea>
+        <small>Markdown</small>
+      </label>
+    </fieldset>
+
+    {/* ===== Publicação ================================================= */}
+    <div class="foot">
+      <label class="switch">
+        <input type="checkbox" name="published" checked={film?.published ?? false} />
+        <span class="u-label">No ar</span>
+      </label>
+
+      <div class="foot__actions">
+        <a class="btn btn--ghost" href="/admin/">Voltar</a>
+        <button type="submit" class="btn btn--solid">
+          {isNew ? 'Criar sessão' : 'Salvar'}
+        </button>
+      </div>
+    </div>
+  </form>
+
+  {
+    film && (
+      <form class="danger u-page" method="POST" data-danger>
+        <input type="hidden" name="intent" value="delete" />
+        <div>
+          <h2 class="u-label danger__title">Excluir</h2>
+          <p class="danger__text">
+            Apaga a sessão e as exibições. Favoritos, marcações, avaliações e
+            anotações vinculados a ela vão junto, por cascata. Não há desfazer.
+          </p>
+        </div>
+        <button type="submit" class="danger__button" data-danger-submit>
+          Excluir sessão
+        </button>
+      </form>
+    )
+  }
+</Base>
+
+<script>
+  /* --- Repetidor de exibições ---------------------------------------------
+     Clona o primeiro bloco e limpa os campos. Sem JavaScript o formulário
+     continua funcionando com as exibições que já existem — só não dá para
+     acrescentar outra pela tela. */
+  const container = document.querySelector<HTMLElement>('[data-features]');
+  const add = document.querySelector<HTMLButtonElement>('[data-feature-add]');
+
+  const wireDrop = (block: HTMLElement): void => {
+    const drop = block.querySelector<HTMLButtonElement>('[data-feature-drop]');
+    drop?.addEventListener('click', () => {
+      // Nunca remove a última: o formulário ficaria sem nenhuma exibição.
+      if ((container?.querySelectorAll('[data-feature]').length ?? 0) > 1) block.remove();
+      else block.querySelectorAll('input').forEach((input) => (input.value = ''));
+    });
+  };
+
+  if (container) {
+    container.querySelectorAll<HTMLElement>('[data-feature]').forEach(wireDrop);
+
+    add?.addEventListener('click', () => {
+      const first = container.querySelector<HTMLElement>('[data-feature]');
+      if (!first) return;
+
+      const copy = first.cloneNode(true) as HTMLElement;
+      copy.querySelectorAll('input').forEach((input) => {
+        input.value = '';
+      });
+
+      container.append(copy);
+      wireDrop(copy);
+      copy.querySelector('input')?.focus();
+    });
+  }
+
+  /* --- Confirmação de exclusão ---------------------------------------------
+     Exclusão apaga interações de outras pessoas por cascata. Um clique
+     acidental não deveria conseguir isso. */
+  const danger = document.querySelector<HTMLFormElement>('[data-danger]');
+  danger?.addEventListener('submit', (event) => {
+    const sure = window.confirm(
+      'Excluir esta sessão? Favoritos, marcações, avaliações e anotações ligados a ela também serão apagados.',
+    );
+    if (!sure) event.preventDefault();
+  });
+</script>
+
+<style>
+  .head {
+    padding-block: var(--space-2xl) var(--space-md);
+  }
+
+  .crumbs {
+    display: flex;
+    gap: 0.4rem;
+    margin-block-end: var(--space-2xs);
+  }
+
+  .crumbs a {
+    color: var(--accent-ink);
+  }
+
+  .flash {
+    display: inline-block;
+    margin-block-start: var(--space-md);
+    padding: 0.4rem 0.7rem;
+    border-inline-start: 2px solid;
+  }
+
+  .flash--ok {
+    border-color: var(--bar-green);
+    color: var(--ink-green);
+  }
+
+  .flash--erro {
+    border-color: var(--bar-red);
+    color: var(--ink-red);
+  }
+
+  /* ===== Formulário =======================================================
+     Deliberadamente não parece CMS: sem painéis com sombra, sem abas, sem
+     cabeçalhos coloridos. Os mesmos filetes, etiquetas em mono e superfícies do
+     resto do site. */
+  .form {
+    display: grid;
+    gap: var(--space-xl);
+    padding-block-end: var(--space-2xl);
+  }
+
+  .block {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: var(--space-md);
+    margin: 0;
+    padding: var(--space-md) 0 0;
+    border: 0;
+    border-block-start: 1px solid var(--line);
+  }
+
+  .block--full {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .block__legend {
+    padding-inline-end: var(--space-sm);
+    color: var(--accent-ink);
+  }
+
+  .block__hint {
+    grid-column: 1 / -1;
+    margin-block-end: var(--space-2xs);
+  }
+
+  .field {
+    display: grid;
+    gap: 0.3rem;
+    align-content: start;
+  }
+
+  .field--wide {
+    grid-column: 1 / -1;
+  }
+
+  .field input,
+  .field textarea {
+    padding: 0.5rem 0.6rem;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    font-family: inherit;
+    font-size: var(--text-sm);
+    transition: border-color var(--dur-cut) var(--ease-signal);
+  }
+
+  .field input:focus,
+  .field textarea:focus {
+    border-color: var(--accent-bar);
+    outline: none;
+  }
+
+  .field textarea {
+    resize: vertical;
+    line-height: var(--leading-relaxed);
+  }
+
+  .field__body {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+  }
+
+  .field input[type='color'] {
+    block-size: 2.25rem;
+    padding: 0.2rem;
+    cursor: pointer;
+  }
+
+  .field small {
+    font-family: var(--font-mono);
+    font-size: 0.5625rem;
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+
+  /* ===== Exibições ======================================================== */
+  .features {
+    display: grid;
+    gap: var(--space-md);
+    margin-block-end: var(--space-md);
+  }
+
+  .feature {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+    gap: var(--space-sm);
+    padding: var(--space-sm);
+    background: var(--surface);
+    border-inline-start: 2px solid var(--accent-bar);
+  }
+
+  .field--tight {
+    max-inline-size: 9rem;
+  }
+
+  .feature__drop {
+    grid-column: 1 / -1;
+    justify-self: start;
+    font-family: var(--font-mono);
+    font-size: 0.5625rem;
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    transition: color var(--dur-cut) var(--ease-signal);
+  }
+
+  .feature__drop:hover {
+    color: var(--ink-red);
+  }
+
+  /* ===== Rodapé =========================================================== */
+  .foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+    padding-block-start: var(--space-md);
+    border-block-start: 1px solid var(--line-strong);
+  }
+
+  .switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+  }
+
+  .switch input {
+    inline-size: 1rem;
+    block-size: 1rem;
+    accent-color: var(--accent-bar);
+  }
+
+  .foot__actions {
+    display: flex;
+    gap: var(--space-2xs);
+    margin-inline-start: auto;
+  }
+
+  /* ===== Exclusão =========================================================
+     Separada do formulário principal e no fim da página: destrutiva não divide
+     espaço com rotina. */
+  .danger {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+    margin-block-end: var(--space-2xl);
+    padding: var(--space-md);
+    border: 1px solid color-mix(in srgb, var(--bar-red) 35%, var(--line));
+  }
+
+  .danger__title {
+    color: var(--ink-red);
+  }
+
+  .danger__text {
+    max-inline-size: 52ch;
+    margin-block-start: 0.2rem;
+    font-size: var(--text-sm);
+    color: var(--ink-mute);
+  }
+
+  .danger__button {
+    padding: 0.6rem 1rem;
+    border: 1px solid var(--bar-red);
+    font-size: var(--text-sm);
+    font-weight: 650;
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--ink-red);
+    transition:
+      background-color var(--dur-cut) var(--ease-signal),
+      color var(--dur-cut) var(--ease-signal);
+  }
+
+  .danger__button:hover {
+    background: var(--bar-red);
+    color: var(--ink);
+  }
+</style>

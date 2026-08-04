@@ -1,0 +1,216 @@
+---
+/**
+ * Painel — lista do catálogo.
+ *
+ * Responde 404 para quem não administra, não 403: um 403 confirmaria que existe
+ * algo neste endereço. Para o resto do mundo, o painel simplesmente não existe.
+ *
+ * A verificação acontece no servidor, contra a tabela `admins` no Postgres, a
+ * cada requisição. O item "Painel" que aparece no menu da conta é conveniência
+ * de navegação e não autoriza coisa alguma.
+ */
+import Base from '~/layouts/Base.astro';
+import Glitch from '~/components/signal/Glitch.astro';
+import { server } from '~/lib/db/server';
+import { requireAdmin } from '~/lib/auth';
+import { listFilms } from '~/lib/admin';
+import { barFor, BARS } from '~/lib/smpte';
+
+export const prerender = false;
+
+const denied = requireAdmin(Astro.locals.session);
+if (denied) return denied;
+
+const db = server(Astro.cookies, Astro.request.headers);
+const films = await listFilms(db);
+
+const published = films.filter((film) => film.published).length;
+const drafts = films.length - published;
+
+const dateOf = (iso: string | null): string =>
+  iso
+    ? new Intl.DateTimeFormat('pt-BR', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        timeZone: 'America/Sao_Paulo',
+      })
+        .format(new Date(iso))
+        .replace('.', '')
+    : 'sem data';
+---
+
+<Base title="Painel" description="Administração do catálogo" accent={BARS.white} noindex>
+  <header class="head u-page">
+    <p class="u-label head__eyebrow m-enter" style="--m-step:0">Sinal interno · Operação</p>
+
+    <Glitch
+      tag="h1"
+      text="Painel"
+      trigger="reveal"
+      class="page-title u-slate u-bleed m-enter"
+    />
+
+    <div class="page-lede m-enter" style="--m-step:2">
+      <p>O catálogo, do lado de dentro</p>
+      <p>{films.length} sessões · {published} no ar · {drafts} em rascunho</p>
+    </div>
+
+    <div class="head__actions m-enter" style="--m-step:3">
+      <a class="btn btn--solid" href="/admin/sessao/nova/">Nova sessão</a>
+      <a class="btn btn--ghost" href="/programacao/">Ver a grade pública</a>
+    </div>
+  </header>
+
+  <section class="u-page" aria-label="Catálogo">
+    {
+      films.length === 0 ? (
+        <p class="void u-label">
+          Nenhuma sessão cadastrada — comece pela primeira
+        </p>
+      ) : (
+        <ol class="rows m-rows" role="list">
+          {films.map((film) => {
+            const bar = barFor(film.tone);
+            return (
+              <li
+                class="row"
+                style={`--accent-bar:${bar.bar};--accent-ink:${bar.ink}`}
+                data-draft={film.published ? undefined : 'true'}
+              >
+                <a class="row__link" href={`/admin/sessao/${film.id}/`}>
+                  <span class="row__bar" aria-hidden="true" />
+
+                  <span class="row__when u-label">{dateOf(film.session_at)}</span>
+
+                  <span class="row__main">
+                    <span class="row__title">{film.headline}</span>
+                    <span class="row__slug u-mono">/{film.slug}/</span>
+                  </span>
+
+                  <span class="row__meta u-label">
+                    <span>
+                      {film.film_features.length}{' '}
+                      {film.film_features.length === 1 ? 'exibição' : 'exibições'}
+                    </span>
+                    <span class="row__state">{film.published ? 'No ar' : 'Rascunho'}</span>
+                  </span>
+                </a>
+              </li>
+            );
+          })}
+        </ol>
+      )
+    }
+  </section>
+
+  <p class="note u-page u-label">
+    Editar aqui altera o que o banco guarda. As páginas públicas ainda são
+    renderizadas das fichas em Markdown — a troca completa é um passo à parte.
+  </p>
+</Base>
+
+<style>
+  .head {
+    padding-block: var(--space-2xl) var(--space-lg);
+  }
+
+  .head__eyebrow {
+    color: var(--accent-ink);
+  }
+
+  .head__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2xs);
+    margin-block-start: var(--space-lg);
+  }
+
+  .rows {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .row {
+    border-block-end: 1px solid var(--line);
+  }
+
+  .row__link {
+    display: grid;
+    grid-template-columns: 3px auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--space-sm);
+    padding-block: var(--space-xs);
+    transition: background-color var(--dur-cut) var(--ease-signal);
+  }
+
+  .row__link:hover {
+    background: var(--surface);
+  }
+
+  .row__bar {
+    align-self: stretch;
+    background: var(--accent-bar);
+    transform: scaleY(0.3);
+    transition: transform var(--dur-wipe) var(--ease-out);
+  }
+
+  .row__link:hover .row__bar {
+    transform: scaleY(1);
+  }
+
+  .row__when {
+    min-inline-size: 5.5rem;
+  }
+
+  .row__main {
+    display: grid;
+    gap: 0.1rem;
+    min-inline-size: 0;
+  }
+
+  .row__title {
+    color: var(--ink);
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .row__slug {
+    font-size: var(--text-xs);
+    color: var(--ink-mute);
+  }
+
+  .row__meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+
+  /* Rascunho tem a cor do estado, não do alarme: é uma etapa do trabalho, não
+     um erro. */
+  .row__state {
+    color: var(--accent-ink);
+  }
+
+  .row[data-draft] .row__state {
+    color: var(--ink-yellow);
+  }
+
+  .row[data-draft] .row__title {
+    color: var(--ink-dim);
+  }
+
+  .void {
+    padding: var(--space-lg);
+    border: 1px dashed var(--line);
+    text-align: center;
+  }
+
+  .note {
+    max-inline-size: var(--measure);
+    padding-block: var(--space-xl);
+  }
+</style>
