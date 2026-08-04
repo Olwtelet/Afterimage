@@ -8,7 +8,11 @@
  * navegador é barreira de segurança — o que existe aqui é atrito contra envio
  * automatizado, que a versão anterior não tinha nenhum.
  */
-import { SUPABASE } from '~/lib/site';
+/* Do ambiente, não de constante no código — ver a nota em Audience.astro. */
+import {
+  PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+  PUBLIC_SUPABASE_URL,
+} from 'astro:env/client';
 
 const MAX_MESSAGE = 500;
 const MAX_NAME = 40;
@@ -26,8 +30,8 @@ const VIBES = [
 <section
   class="mural"
   data-mural
-  data-endpoint={`${SUPABASE.url}/rest/v1/${SUPABASE.muralTable}`}
-  data-key={SUPABASE.publishableKey}
+  data-endpoint={`${PUBLIC_SUPABASE_URL}/rest/v1/mural_entries`}
+  data-key={PUBLIC_SUPABASE_PUBLISHABLE_KEY}
 >
   {/* ===== Formulário ==================================================== */}
   <form class="form" data-mural-form novalidate>
@@ -471,13 +475,13 @@ const VIBES = [
     text-align: center;
   }
 
-  .entry {
+  .entries__list :global(.entry) {
     position: relative;
     padding: var(--space-sm) var(--space-sm) var(--space-sm) 0;
     border-block-end: 1px solid var(--line);
   }
 
-  .entry__head {
+  .entries__list :global(.entry__head) {
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
@@ -486,19 +490,19 @@ const VIBES = [
     margin: 0 0 0.3rem;
   }
 
-  .entry__name {
+  .entries__list :global(.entry__name) {
     font-weight: 650;
     font-size: var(--text-sm);
     color: var(--ink);
   }
 
-  .entry__name a {
+  .entries__list :global(.entry__name a) {
     color: var(--accent-ink);
     text-decoration: underline;
     text-underline-offset: 0.2em;
   }
 
-  .entry__message {
+  .entries__list :global(.entry__message) {
     margin: 0;
     font-size: var(--text-sm);
     line-height: var(--leading-normal);
@@ -506,7 +510,7 @@ const VIBES = [
     overflow-wrap: anywhere;
   }
 
-  .entry__vibe {
+  .entries__list :global(.entry__vibe) {
     position: absolute;
     inset-block-start: var(--space-sm);
     inset-inline-end: 0;

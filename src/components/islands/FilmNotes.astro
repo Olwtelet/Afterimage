@@ -36,7 +36,7 @@ const { slug } = Astro.props;
       class="compose__field"
       data-notes-field
       rows="3"
-      maxlength="2000"
+      maxlength="500"
       placeholder="O que essa sessão deixou?"
       required></textarea>
 
@@ -135,7 +135,7 @@ const { slug } = Astro.props;
 
       const countRemaining = (): void => {
         const left = field.maxLength - field.value.length;
-        remaining.textContent = left < 300 ? `${left} restantes` : '';
+        remaining.textContent = left < 120 ? `${left} restantes` : '';
       };
 
       /**
@@ -341,11 +341,11 @@ const { slug } = Astro.props;
 </script>
 
 <style>
-  .notes {
+  .thread :global(.notes) {
     padding-block: var(--space-2xl) var(--space-xl);
   }
 
-  .notes[hidden] {
+  .thread :global(.notes[hidden]) {
     display: none;
   }
 
@@ -416,7 +416,7 @@ const { slug } = Astro.props;
   }
 
   /* --- Convite -------------------------------------------------------------- */
-  .notes__enter {
+  .thread :global(.notes__enter) {
     display: inline-flex;
     align-items: center;
     gap: 0.6rem;
@@ -430,16 +430,16 @@ const { slug } = Astro.props;
       color var(--dur-cut) var(--ease-signal);
   }
 
-  .notes__enter:hover {
+  .thread :global(.notes__enter:hover) {
     border-color: var(--accent-bar);
     color: var(--ink);
   }
 
-  .notes__enter[hidden] {
+  .thread :global(.notes__enter[hidden]) {
     display: none;
   }
 
-  .notes__mark {
+  .thread :global(.notes__mark) {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     inline-size: 0.75rem;
@@ -463,19 +463,19 @@ const { slug } = Astro.props;
 
   /* Filete à esquerda em vez de caixa: anotação de margem, não card de rede
      social. */
-  .note {
+  .thread :global(.note) {
     padding-inline-start: var(--space-sm);
     border-inline-start: 1px solid var(--line-strong);
   }
 
-  .note__head {
+  .thread :global(.note__head) {
     display: flex;
     align-items: center;
     gap: var(--space-2xs);
     margin-block-end: var(--space-2xs);
   }
 
-  .note__avatar {
+  .thread :global(.note__avatar) {
     inline-size: 1.75rem;
     block-size: 1.75rem;
     object-fit: cover;
@@ -484,23 +484,23 @@ const { slug } = Astro.props;
     flex: none;
   }
 
-  .note__who {
+  .thread :global(.note__who) {
     display: grid;
     min-inline-size: 0;
   }
 
-  .note__name {
+  .thread :global(.note__name) {
     font-size: var(--text-sm);
     font-weight: 650;
     color: var(--ink);
     transition: color var(--dur-cut) var(--ease-signal);
   }
 
-  .note__name:hover {
+  .thread :global(.note__name:hover) {
     color: var(--accent-ink);
   }
 
-  .note__tools {
+  .thread :global(.note__tools) {
     display: flex;
     gap: var(--space-2xs);
     margin-inline-start: auto;
@@ -510,11 +510,11 @@ const { slug } = Astro.props;
   }
 
   .note:hover .note__tools,
-  .note:focus-within .note__tools {
+  .thread :global(.note:focus-within .note__tools) {
     opacity: 1;
   }
 
-  .note__tool {
+  .thread :global(.note__tool) {
     font-family: var(--font-mono);
     font-size: 0.5625rem;
     letter-spacing: var(--track-label);
@@ -523,15 +523,15 @@ const { slug } = Astro.props;
     transition: color var(--dur-cut) var(--ease-signal);
   }
 
-  .note__tool:hover {
+  .thread :global(.note__tool:hover) {
     color: var(--ink);
   }
 
-  .note__tool--danger:hover {
+  .thread :global(.note__tool--danger:hover) {
     color: var(--ink-red);
   }
 
-  .note__body {
+  .thread :global(.note__body) {
     color: var(--ink-dim);
     line-height: var(--leading-relaxed);
     /* Preserva as quebras de quem escreveu, sem interpretar marcação. */
@@ -540,26 +540,26 @@ const { slug } = Astro.props;
   }
 
   /* --- Estados -------------------------------------------------------------- */
-  .notes__status:empty {
+  .thread :global(.notes__status:empty) {
     display: none;
   }
 
-  .notes__status {
+  .thread :global(.notes__status) {
     margin-block-end: var(--space-sm);
     color: var(--accent-ink);
   }
 
-  .notes__status[data-tone='erro'] {
+  .thread :global(.notes__status[data-tone='erro']) {
     color: var(--ink-red);
   }
 
-  .notes__empty {
+  .thread :global(.notes__empty) {
     padding: var(--space-lg);
     border: 1px dashed var(--line);
     text-align: center;
   }
 
-  .notes__empty[hidden] {
+  .thread :global(.notes__empty[hidden]) {
     display: none;
   }
 </style>

@@ -83,7 +83,11 @@ const MARK_LABEL: Record<LibraryKind, string> = {
         <p class="tools__count u-label" data-tools-count aria-live="polite" />
       </form>
 
-      <ol class="lib u-page m-rows" role="list" data-lib>
+      {/* O u-page fica no invólucro, nunca na própria lista: o reset de lista
+          (margin/padding zerados) anularia a centralização e a margem lateral
+          que ele aplica, e a lista escaparia para a borda da tela. */}
+      <div class="u-page">
+      <ol class="lib m-rows" role="list" data-lib>
         {items.map((item) => {
           const bar = barFor(item.tone);
           return (
@@ -131,6 +135,7 @@ const MARK_LABEL: Record<LibraryKind, string> = {
           );
         })}
       </ol>
+      </div>
 
       <p class="lib__none u-label u-page" data-lib-none hidden>
         Nada corresponde a esse filtro

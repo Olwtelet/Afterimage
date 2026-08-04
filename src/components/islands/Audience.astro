@@ -15,7 +15,21 @@
  * O visor tem seis dígitos e é puramente informativo, então nasce marcado como
  * aria-hidden e o número real é anunciado em texto ao lado.
  */
-import { SUPABASE } from '~/lib/site';
+/*
+ * Os valores vêm do ambiente, não de uma constante no código.
+ *
+ * Havia uma cópia fixa em site.ts, e ela apontava para o projeto Supabase
+ * ANTERIOR enquanto o resto da plataforma já usava o novo. O contador chamava
+ * uma função que não existia lá e respondia "indisponível" para sempre — sem
+ * erro visível, porque a ilha degrada em silêncio de propósito.
+ *
+ * Duas fontes para o mesmo endereço é uma delas ficar velha; a questão é
+ * quando.
+ */
+import {
+  PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+  PUBLIC_SUPABASE_URL,
+} from 'astro:env/client';
 
 const DIGITS = 6;
 ---
@@ -23,8 +37,8 @@ const DIGITS = 6;
 <div
   class="audience"
   data-audience
-  data-endpoint={`${SUPABASE.url}/rest/v1/rpc/bump_audience`}
-  data-key={SUPABASE.publishableKey}
+  data-endpoint={`${PUBLIC_SUPABASE_URL}/rest/v1/rpc/bump_audience`}
+  data-key={PUBLIC_SUPABASE_PUBLISHABLE_KEY}
 >
   <p class="u-label audience__label">Audiência</p>
 

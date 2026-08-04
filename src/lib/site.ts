@@ -67,19 +67,9 @@ export const NAVIGATION: readonly NavItem[] = [
   { label: 'Programação', href: '/programacao/', channel: '02' },
   { label: 'Mural', href: '/mural/', channel: '03' },
   { label: 'Ranking', href: '/ranking/', channel: '04' },
-  { label: 'Sobre', href: '/sobre/', channel: '05' },
+  { label: 'Dossiê', href: '/dossie/', channel: '05' },
+  { label: 'Sobre', href: '/sobre/', channel: '06' },
 ] as const;
-
-/**
- * Serviço de dados compartilhados (mural e contador de audiência).
- * A chave é `publishable` — feita para viver no cliente. As regras de escrita e o
- * gate de moderação são impostos por RLS no banco, nunca por este arquivo.
- */
-export const SUPABASE = {
-  url: 'https://ltdmndehucnjnhdohvrz.supabase.co',
-  publishableKey: 'sb_publishable_iVf5jl7Zzvaj_-ijfv6_PQ_q58Wzy4r',
-  muralTable: 'mural_entries',
-} as const;
 
 /** Playlist que toca na transmissão da sidebar. */
 export const RADIO_PLAYLIST_ID = '1UXKrx2Yq0VZoDrjOhoIQw';

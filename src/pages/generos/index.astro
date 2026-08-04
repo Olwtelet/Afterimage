@@ -45,7 +45,9 @@ const schema = {
     </div>
   </header>
 
-  <ul class="grid u-page m-stagger" role="list">
+  {/* O u-page fica no invólucro: o reset de lista anularia a centralização. */}
+  <div class="u-page">
+  <ul class="grid m-stagger" role="list">
     {
       withBars.map((genre) => (
         <li style={`--accent-bar:${genre.bar.bar};--accent-ink:${genre.bar.ink}`}>
@@ -60,6 +62,7 @@ const schema = {
       ))
     }
   </ul>
+  </div>
 </Base>
 
 <style>
@@ -72,13 +75,13 @@ const schema = {
   }
 
 
+  /* A margem lateral vem do u-page no invólucro; aqui só o respiro vertical. */
   .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(min(13rem, 100%), 1fr));
     gap: var(--gutter);
     margin: 0;
-    padding-block: var(--space-lg) var(--space-2xl);
-    padding-inline: var(--gutter);
+    padding: var(--space-lg) 0 var(--space-2xl);
     list-style: none;
   }
 
