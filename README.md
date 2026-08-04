@@ -133,8 +133,9 @@ independentemente de quantos seletores cada regra tenha.
 
 ### JavaScript
 
-Zero por padrão. As ilhas são cinco — busca, mural, transmissão, audiência,
-calibração — e somam **~5 KB embutidos** na home, sem nenhum bundle externo.
+Zero por padrão. As ilhas somam **~7 KB na home** e nenhuma rota passa de 13 KB.
+O SDK do Supabase, que é grande, fica atrás de import dinâmico — ver *Peso*, mais
+abaixo.
 A transição entre páginas usa `@view-transition` nativo do CSS; o progresso de
 leitura usa `animation-timeline: scroll()`. Nenhum dos dois custa um byte de JS.
 
@@ -147,11 +148,11 @@ ausência é deliberada — a identidade aqui é a do servidor.
 
 | Rota | O que é |
 |---|---|
-|  | Perfil público: participação, favoritos, assistidos, anotações |
-|  ·  | Suas listas, com busca, filtro e ordenação |
-|  | Participação da comunidade |
-|  | Monta uma classificação e exporta em PNG |
-|  | Painel do catálogo — responde 404 para quem não administra |
+| `/perfil/[username]/` | Perfil público: participação, favoritos, assistidos, anotações |
+| `/favoritos/` · `/assistidos/` | Suas listas, com busca, filtro e ordenação |
+| `/ranking/` | Participação da comunidade |
+| `/dossie/` | Monta uma classificação e exporta em PNG |
+| `/admin/` | Painel do catálogo — responde 404 para quem não administra |
 
 ### Duas regras que atravessam tudo
 
@@ -169,7 +170,7 @@ mesmos direitos, por construção e não por promessa.
 O SDK do Supabase tem 217 kB e só é carregado quando existe cookie de sessão.
 Quem chega deslogado — a maioria, e quem vem do buscador — não paga por ele:
 nenhuma das 43 rotas passa de 13 kB de JavaScript. As leituras públicas de
-comentários vão por  direto no PostgREST.
+comentários vão por `fetch` direto no PostgREST.
 
 ---
 
