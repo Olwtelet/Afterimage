@@ -144,18 +144,38 @@ leitura usa `animation-timeline: scroll()`. Nenhum dos dois custa um byte de JS.
 
 O mural e o contador falam direto com o Supabase pelo navegador, com a chave
 `publishable` — que é feita para isso. **Quem impõe as regras é o RLS**, não o
-JavaScript do cliente. Aplique a migração antes de esperar que funcionem:
+JavaScript do cliente.
 
-```bash
-supabase db push
-```
+### Colocar no ar
 
-Ou cole `supabase/migrations/0001_audience.sql` no SQL Editor do projeto. Sem
-ela, o mural mostra um aviso e o contador exibe traços — nenhum dos dois quebra
-a página.
+**1. Conferir o projeto.** `src/lib/site.ts` aponta para o Supabase herdado da
+versão anterior do site. Se o projeto for outro, troque `url` e
+`publishableKey` (painel → *Settings* → *API*) antes de seguir.
 
-Recados nascem com `approved = false`. Para publicar um, marque `approved` no
-painel do Supabase.
+**2. Aplicar a migração.** No SQL Editor do projeto, cole
+`supabase/migrations/0001_audience.sql` e execute. Com a CLI configurada,
+`supabase db push` faz o mesmo.
+
+A migração é segura de rodar mais de uma vez, e reconcilia a tabela que a versão
+anterior do site pode ter deixado no mesmo projeto: `create table if not exists`
+pularia a tabela inteira, então há um bloco que garante os defaults e as
+constraints mesmo quando ela já existe.
+
+**3. Verificar.** Cole `supabase/verificar.sql` no SQL Editor. São 14 checagens,
+cada uma respondendo `ok` ou `FALHOU` — cobrem existência, defaults, RLS e, o
+que mais importa, a ausência de policy de `UPDATE`/`DELETE` para o cliente.
+
+Sem a migração nada quebra: o mural mostra um aviso e o contador exibe traços.
+
+### Moderar
+
+Recados nascem com `approved = false` e não aparecem no site até serem
+liberados. A fila e o comando de aprovação estão comentados no fim de
+`supabase/verificar.sql`; pelo painel, basta marcar a coluna `approved` em
+*Table Editor* → `mural_entries`.
+
+O cliente não tem policy de `UPDATE` nem de `DELETE`: aprovar é uma ação que só
+existe com acesso ao painel ou à `service_role`.
 
 ---
 

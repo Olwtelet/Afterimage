@@ -79,6 +79,62 @@ create table if not exists public.mural_entries (
   constraint mural_website_scheme check (website is null or website ~* '^https?://')
 );
 
+-- Reconciliação com a tabela do site antigo.
+--
+-- `create table if not exists` pula a tabela INTEIRA quando ela já existe — e
+-- ela provavelmente existe, porque a versão anterior do site usava este mesmo
+-- projeto e este mesmo nome. Nesse caso os defaults e as constraints acima nunca
+-- seriam aplicados, e o mural passaria a aceitar recado sem limite de tamanho e,
+-- pior, com `approved` indefinido. O bloco abaixo garante o estado final
+-- independentemente de a tabela ter nascido aqui ou já estar lá.
+
+do $$
+begin
+  -- Colunas que podem faltar numa versão antiga da tabela.
+  alter table public.mural_entries add column if not exists vibe       text;
+  alter table public.mural_entries add column if not exists website    text;
+  alter table public.mural_entries add column if not exists approved   boolean;
+  alter table public.mural_entries add column if not exists created_at timestamptz;
+
+  -- Nada entra aprovado. Esta é a linha que sustenta a moderação inteira.
+  update public.mural_entries set approved   = false where approved   is null;
+  update public.mural_entries set created_at = now() where created_at is null;
+
+  alter table public.mural_entries alter column approved   set default false;
+  alter table public.mural_entries alter column approved   set not null;
+  alter table public.mural_entries alter column created_at set default now();
+  alter table public.mural_entries alter column created_at set not null;
+end
+$$;
+
+-- Constraints são adicionadas à parte: `add constraint` não aceita `if not
+-- exists`, então cada uma é criada só quando ausente.
+do $$
+declare
+  wanted record;
+begin
+  for wanted in
+    select *
+    from (values
+      ('mural_name_length',    'check (char_length(name) between 1 and 40)'),
+      ('mural_message_length', 'check (char_length(message) between 1 and 500)'),
+      ('mural_website_scheme', 'check (website is null or website ~* ''^https?://'')')
+    ) as t(name, definition)
+  loop
+    if not exists (
+      select 1 from pg_constraint
+      where conrelid = 'public.mural_entries'::regclass
+        and conname  = wanted.name
+    ) then
+      execute format(
+        'alter table public.mural_entries add constraint %I %s',
+        wanted.name, wanted.definition
+      );
+    end if;
+  end loop;
+end
+$$;
+
 create index if not exists mural_entries_approved_created_idx
   on public.mural_entries (created_at desc)
   where approved;
