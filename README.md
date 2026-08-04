@@ -186,17 +186,26 @@ não o JavaScript do cliente.
 
 ### Colocar no ar
 
-**1. Conferir o projeto.** `src/lib/site.ts` aponta para o Supabase herdado da
-versão anterior do site. Se o projeto for outro, troque `url` e
-`publishableKey` (painel → *Settings* → *API*) antes de seguir.
+**1. Apontar para o projeto.** Copie `.env.example` para `.env` e preencha com
+os valores de *Settings → API*. Não há endereço de Supabase escrito em código —
+o ambiente é a única fonte, justamente porque a cópia que existia em `site.ts`
+ficou apontando para o projeto antigo e derrubou o contador em silêncio.
 
-**2. Aplicar a migração.** No SQL Editor do projeto, cole
-`supabase/migrations/0001_audience.sql` e execute. Com a CLI configurada,
-`supabase db push` faz o mesmo.
+**2. Aplicar as migrações.** No SQL Editor, cole e execute **em ordem**:
 
-A migração é segura de rodar mais de uma vez, e reconcilia a tabela que a versão
-anterior do site pode ter deixado no mesmo projeto: `create table if not exists`
-pularia a tabela inteira, então há um bloco que garante os defaults e as
+| Arquivo | O que faz |
+|---|---|
+| `0001_audience.sql` | Mural e contador de audiência |
+| `0002_plataforma.sql` | Perfis, catálogo, interações, ranking, RLS |
+| `0003_catalogo.sql` | As 14 sessões e suas exibições |
+| `0004_sem_cargos.sql` | Remove a coluna de cargos (opcional) |
+| `0005_ajustes.sql` | Limite de 500 nas anotações |
+
+Com a CLI configurada, `supabase db push` faz o mesmo.
+
+Todas são seguras de rodar mais de uma vez. A 0001 ainda reconcilia a tabela que
+a versão anterior do site pode ter deixado no mesmo projeto: `create table if not
+exists` pularia a tabela inteira, então há um bloco que garante os defaults e as
 constraints mesmo quando ela já existe.
 
 **3. Verificar.** Cole `supabase/verificar.sql` no SQL Editor. São 14 checagens,
