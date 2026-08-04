@@ -1,150 +1,298 @@
 ---
 /**
- * Transmissão — a playlist da comunidade.
+ * Transmissão — a playlist da comunidade, persistente no site inteiro.
  *
- * O iframe do Spotify só entra no documento quando alguém pede. Antes ele era
- * montado em toda página, em toda navegação, custando conexão de terceiro e
- * peso de embed para a maioria que nunca clicava.
+ * Sobre tocar sozinho ao abrir o site: TODOS os navegadores bloqueiam áudio
+ * automático antes de o visitante ter interagido com a página. Não é uma
+ * limitação do Spotify nem uma configuração — é política de plataforma, e não
+ * existe forma de contorná-la (nem deveria: um site que grita sem ser chamado é
+ * hostil, e para quem usa leitor de tela chega a ser incapacitante).
+ *
+ * O que dá para fazer, e é o que este componente faz, é tornar o gesto uma única
+ * vez na vida em vez de uma vez por visita:
+ *
+ *   1. A escolha fica guardada em localStorage.
+ *   2. Nas visitas seguintes o iframe já nasce com `autoplay=1`.
+ *   3. O Chrome mantém um índice de engajamento por domínio (Media Engagement
+ *      Index) e libera o autoplay para quem costuma dar play no site — nesses
+ *      casos a música realmente começa sozinha.
+ *   4. Onde o navegador ainda barrar, o player aparece montado e pronto: sobra
+ *      um clique, não o fluxo inteiro.
+ *
+ * O iframe só entra no documento quando há intenção — por clique ou por
+ * preferência salva. Quem nunca ligou o rádio não paga nada por ele.
  */
 import { RADIO_PLAYLIST_ID } from '~/lib/site';
 
 const embedUrl = `https://open.spotify.com/embed/playlist/${RADIO_PLAYLIST_ID}?utm_source=generator&theme=0`;
 ---
 
-<section class="radio" data-radio data-embed={embedUrl} aria-labelledby="radio-title">
-  <div class="radio__head">
-    <h2 class="u-label radio__title" id="radio-title">
-      Transmissão
-      <span class="radio__freq u-mono">87.6 MHz</span>
-    </h2>
+<aside class="radio" data-radio data-embed={embedUrl} aria-label="Transmissão">
+  <div class="radio__dock">
+    <button
+      type="button"
+      class="radio__toggle"
+      data-radio-toggle
+      aria-pressed="false"
+      aria-controls="radio-panel"
+    >
+      <span class="radio__bars" aria-hidden="true">
+        {Array.from({ length: 5 }, (_, index) => <i style={`--i:${index}`} />)}
+      </span>
+      <span class="radio__label">
+        <span class="radio__name">Transmissão</span>
+        <span class="radio__freq u-mono">87.6 MHz</span>
+      </span>
+      <span class="radio__state u-label" data-radio-state>Ligar</span>
+    </button>
+
+    <button
+      type="button"
+      class="radio__expand"
+      data-radio-expand
+      aria-expanded="false"
+      aria-controls="radio-panel"
+      hidden
+    >
+      <span class="u-sr-only">Mostrar player</span>
+      <span aria-hidden="true">▾</span>
+    </button>
   </div>
 
-  <div class="radio__frame">
-    <div class="radio__standby" data-radio-standby>
-      <div class="radio__bars" aria-hidden="true">
-        {Array.from({ length: 7 }, (_, index) => <i style={`--i:${index}`} />)}
-      </div>
-      <button type="button" class="btn btn--ghost" data-radio-start>
-        Iniciar transmissão
-      </button>
-      <p class="u-label radio__hint">Playlist das sessões · abre no Spotify</p>
-    </div>
-    <div class="radio__slot" data-radio-slot></div>
-  </div>
-</section>
+  <div class="radio__panel" id="radio-panel" data-radio-panel hidden></div>
+</aside>
 
 <script>
-  function mount(root: HTMLElement, start: HTMLButtonElement): void {
-    const standby = root.querySelector<HTMLElement>('[data-radio-standby]');
-    const slot = root.querySelector<HTMLElement>('[data-radio-slot]');
-    const embed = root.dataset.embed;
-    if (!standby || !slot || !embed) return;
+  interface RadioParts {
+    root: HTMLElement;
+    toggle: HTMLButtonElement;
+    expand: HTMLButtonElement;
+    panel: HTMLElement;
+    state: HTMLElement;
+  }
 
-    start.addEventListener(
-      'click',
-      () => {
-        const frame = document.createElement('iframe');
-        frame.src = `${embed}&autoplay=1`;
-        frame.title = 'Playlist das sessões no Spotify';
-        frame.loading = 'lazy';
-        frame.allow =
-          'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture';
-        frame.width = '100%';
-        frame.height = '352';
-        frame.style.border = '0';
+  const STORAGE_KEY = 'fhdog:radio';
 
-        slot.append(frame);
-        standby.hidden = true;
-        frame.focus();
-      },
-      { once: true },
-    );
+  /** localStorage lança em modo restrito; a preferência nunca vale uma exceção. */
+  function readPreference(): boolean {
+    try {
+      return localStorage.getItem(STORAGE_KEY) === 'on';
+    } catch {
+      return false;
+    }
+  }
+
+  function writePreference(on: boolean): void {
+    try {
+      on ? localStorage.setItem(STORAGE_KEY, 'on') : localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      /* sem persistência: o rádio funciona, só não é lembrado */
+    }
+  }
+
+  function mount({ root, toggle, expand, panel, state }: RadioParts): void {
+    const source = root.dataset.embed;
+    if (!source) return;
+
+    // Cópia local com tipo já estreitado: dentro das closures abaixo o
+    // TypeScript não preserva o estreitamento feito pelo `if` acima.
+    const embed: string = source;
+    let frame: HTMLIFrameElement | null = null;
+
+    function open(autoplay: boolean): void {
+      if (frame) return;
+
+      frame = document.createElement('iframe');
+      // `autoplay=1` é um pedido, não uma garantia: o navegador decide.
+      frame.src = autoplay ? `${embed}&autoplay=1` : embed;
+      frame.title = 'Playlist das sessões no Spotify';
+      frame.allow = 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture';
+      frame.loading = 'lazy';
+      frame.width = '100%';
+      frame.height = '152';
+      frame.style.border = '0';
+      frame.style.display = 'block';
+
+      panel.append(frame);
+      panel.hidden = false;
+      expand.hidden = false;
+      expand.setAttribute('aria-expanded', 'true');
+      toggle.setAttribute('aria-pressed', 'true');
+      root.dataset.on = 'true';
+      state.textContent = 'No ar';
+    }
+
+    function close(): void {
+      frame?.remove();
+      frame = null;
+      panel.hidden = true;
+      expand.hidden = true;
+      expand.setAttribute('aria-expanded', 'false');
+      toggle.setAttribute('aria-pressed', 'false');
+      delete root.dataset.on;
+      state.textContent = 'Ligar';
+    }
+
+    toggle.addEventListener('click', () => {
+      const turningOn = !frame;
+      turningOn ? open(true) : close();
+      writePreference(turningOn);
+    });
+
+    expand.addEventListener('click', () => {
+      const collapsed = panel.hidden;
+      panel.hidden = !collapsed;
+      expand.setAttribute('aria-expanded', String(collapsed));
+    });
+
+    // Visita seguinte de quem já ligou o rádio: monta e pede o autoplay.
+    if (readPreference()) open(true);
   }
 
   const root = document.querySelector<HTMLElement>('[data-radio]');
-  const start = document.querySelector<HTMLButtonElement>('[data-radio-start]');
-  if (root && start) mount(root, start);
+  const toggle = document.querySelector<HTMLButtonElement>('[data-radio-toggle]');
+  const expand = document.querySelector<HTMLButtonElement>('[data-radio-expand]');
+  const panel = document.querySelector<HTMLElement>('[data-radio-panel]');
+  const state = document.querySelector<HTMLElement>('[data-radio-state]');
+
+  if (root && toggle && expand && panel && state) {
+    mount({ root, toggle, expand, panel, state });
+  }
 </script>
 
 <style>
-  .radio__head {
-    padding-block-end: var(--space-2xs);
-    border-block-end: 1px solid var(--line);
+  .radio {
+    position: fixed;
+    inset-block-end: var(--space-sm);
+    inset-inline-end: var(--space-sm);
+    z-index: var(--z-overlay);
+    inline-size: min(21rem, calc(100vw - var(--space-sm) * 2));
+    background: color-mix(in srgb, var(--black) 92%, transparent);
+    backdrop-filter: blur(14px) saturate(1.3);
+    border: 1px solid var(--line);
+    box-shadow: 0 1.5rem 3rem rgb(0 0 0 / 0.5);
   }
 
-  .radio__title {
+  .radio[data-on] {
+    border-color: color-mix(in srgb, var(--accent-bar) 45%, var(--line));
+  }
+
+  .radio__dock {
     display: flex;
-    align-items: baseline;
-    justify-content: space-between;
+    align-items: stretch;
+  }
+
+  .radio__toggle {
+    flex: 1;
+    display: flex;
+    align-items: center;
     gap: var(--space-2xs);
-    color: var(--accent-ink);
+    padding: 0.6rem 0.75rem;
+    text-align: start;
+    transition: background-color var(--dur-cut) var(--ease-signal);
+  }
+
+  .radio__toggle:hover {
+    background: var(--surface);
+  }
+
+  .radio__label {
+    flex: 1;
+    display: grid;
+    min-inline-size: 0;
+  }
+
+  .radio__name {
+    font-size: var(--text-sm);
+    font-weight: 650;
+    letter-spacing: var(--track-tight);
+    color: var(--ink);
   }
 
   .radio__freq {
-    font-size: 0.625rem;
+    font-size: 0.5625rem;
+    letter-spacing: var(--track-label);
     color: var(--ink-mute);
   }
 
-  .radio__frame {
-    position: relative;
-    min-block-size: 22rem;
-    background: var(--black);
-    border: 1px solid var(--line);
-    border-block-start: none;
+  .radio__state {
+    flex: none;
+    color: var(--accent-ink);
   }
 
-  .radio__standby {
-    display: grid;
-    place-items: center;
-    gap: var(--space-sm);
-    padding: var(--space-lg) var(--space-sm);
-    min-block-size: 22rem;
-    align-content: center;
-  }
-
-  .radio__standby[hidden] {
-    display: none;
-  }
-
-  /* Barras de nível em repouso: o equipamento ligado, aguardando sinal. */
+  /* Barras de nível: paradas em repouso, animadas quando o rádio está no ar. */
   .radio__bars {
     display: flex;
     align-items: flex-end;
-    gap: 3px;
-    block-size: 2.5rem;
+    gap: 2px;
+    block-size: 1.1rem;
+    flex: none;
   }
 
   .radio__bars i {
-    inline-size: 4px;
+    inline-size: 3px;
     block-size: 100%;
     background: var(--accent-bar);
-    opacity: 0.35;
+    opacity: 0.3;
     transform-origin: bottom;
-    animation: level 1.6s var(--ease-signal) infinite alternate;
-    animation-delay: calc(var(--i) * -180ms);
+    transform: scaleY(0.3);
+    transition: opacity var(--dur-wipe) var(--ease-signal);
+  }
+
+  .radio[data-on] .radio__bars i {
+    opacity: 1;
+    animation: level 1.1s var(--ease-signal) infinite alternate;
+    animation-delay: calc(var(--i) * -170ms);
   }
 
   @keyframes level {
     from {
-      transform: scaleY(0.18);
+      transform: scaleY(0.22);
     }
     to {
       transform: scaleY(1);
     }
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    .radio__bars i {
-      animation: none;
-      transform: scaleY(0.5);
+  .radio__expand {
+    flex: none;
+    padding-inline: 0.6rem;
+    border-inline-start: 1px solid var(--line);
+    color: var(--ink-mute);
+    font-size: 0.75rem;
+    transition: color var(--dur-cut) var(--ease-signal);
+  }
+
+  .radio__expand:hover {
+    color: var(--ink);
+  }
+
+  .radio__expand[aria-expanded='false'] span[aria-hidden] {
+    display: inline-block;
+    transform: rotate(-180deg);
+  }
+
+  .radio__panel {
+    border-block-start: 1px solid var(--line);
+  }
+
+  .radio__panel[hidden] {
+    display: none;
+  }
+
+  /* Em telas estreitas o dock ocupa a largura toda, colado na base. */
+  @media (max-width: 30rem) {
+    .radio {
+      inset-inline: var(--space-2xs);
+      inset-block-end: var(--space-2xs);
+      inline-size: auto;
     }
   }
 
-  .radio__hint {
-    text-align: center;
-  }
-
-  .radio__slot :global(iframe) {
-    display: block;
+  @media (prefers-reduced-motion: reduce) {
+    .radio[data-on] .radio__bars i {
+      animation: none;
+      transform: scaleY(0.6);
+    }
   }
 </style>

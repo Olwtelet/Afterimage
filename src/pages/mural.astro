@@ -2,7 +2,6 @@
 import Base from '~/layouts/Base.astro';
 import Glitch from '~/components/signal/Glitch.astro';
 import Mural from '~/components/islands/Mural.astro';
-import Radio from '~/components/islands/Radio.astro';
 import Audience from '~/components/islands/Audience.astro';
 import { BARS } from '~/lib/smpte';
 import { SITE } from '~/lib/site';
@@ -30,7 +29,7 @@ const schema = {
       tag="h1"
       text="Mural"
       trigger="reveal"
-      class="head__title u-slate u-bleed m-enter"
+      class="page-title u-slate u-bleed m-enter"
     />
 
     <div class="page-lede m-enter" style="--m-step:2">
@@ -43,25 +42,22 @@ const schema = {
     <Mural />
   </div>
 
-  <section class="extras u-page" aria-label="Transmissão e audiência">
-    <Radio />
-    <div class="extras__side">
-      <Audience />
-      <div class="extras__community">
-        <h2 class="u-label extras__title">Do outro lado da tela</h2>
-        <p class="extras__text">
-          A conversa depois do filme costuma valer tanto quanto o filme — e ela
-          acontece no servidor, todo sábado, assim que os créditos sobem.
-        </p>
-        <a
-          class="btn btn--ghost"
-          href={SITE.social.discord}
-          rel="noopener noreferrer"
-          target="_blank"
-        >
-          Entrar no servidor
-        </a>
-      </div>
+  <section class="extras u-page" aria-label="Audiência e comunidade">
+    <Audience />
+    <div class="extras__community">
+      <h2 class="u-label extras__title">Do outro lado da tela</h2>
+      <p class="extras__text">
+        A conversa depois do filme costuma valer tanto quanto o filme — e ela
+        acontece no servidor, todo sábado, assim que os créditos sobem.
+      </p>
+      <a
+        class="btn btn--ghost"
+        href={SITE.social.discord}
+        rel="noopener noreferrer"
+        target="_blank"
+      >
+        Entrar no servidor
+      </a>
     </div>
   </section>
 </Base>
@@ -75,31 +71,20 @@ const schema = {
     color: var(--accent-ink);
   }
 
-  .head__title {
-    margin-block: var(--space-2xs) var(--space-md);
-    font-size: var(--text-4xl);
-  }
 
   .extras {
     display: grid;
-    gap: var(--space-xl);
+    gap: var(--space-lg);
     padding-block: var(--space-2xl);
     margin-block-start: var(--space-xl);
     border-block-start: 1px solid var(--line);
   }
 
-  @media (min-width: 64rem) {
+  @media (min-width: 48rem) {
     .extras {
-      grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
-      gap: var(--space-2xl);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       align-items: start;
     }
-  }
-
-  .extras__side {
-    display: grid;
-    gap: var(--space-lg);
-    align-content: start;
   }
 
   .extras__title {

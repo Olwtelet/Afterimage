@@ -145,6 +145,37 @@
     transform: translateX(0.25rem);
   }
 
+  /* --- Títulos de página ----------------------------------------------------
+     Estas regras vivem AQUI, e não no <style> com escopo de cada página, por um
+     motivo concreto: os títulos são emitidos pelo componente Glitch, então
+     recebem o identificador de escopo DELE. Um seletor escrito no escopo da
+     página nunca casaria com o elemento, e o título cairia silenciosamente no
+     corpo cheio de .u-slate — foi exatamente o que aconteceu, e o resultado foi
+     uma manchete de 119px numa coluna de 630px, invadindo a imagem ao lado.
+
+     Cada tamanho é escolhido pela largura da coluna em que o título vive. */
+
+  /* Ocupa a página inteira: pode usar o corpo máximo. */
+  .page-title {
+    font-size: var(--text-4xl);
+    color: var(--ink);
+    margin-block: var(--space-2xs) var(--space-md);
+  }
+
+  /* Vive numa coluna de 4/7 ao lado do pôster: precisa caber nela. */
+  .slate-title {
+    font-size: var(--text-3xl);
+    color: var(--ink);
+  }
+
+  /* Manchete do hero: coluna inteira, medida curta para forçar a quebra em
+     três linhas em vez de uma faixa larga e rala. */
+  .hero-title {
+    display: block;
+    max-inline-size: 16ch;
+    color: var(--ink);
+  }
+
   /* --- Cabeçalho de página --------------------------------------------------
      Cada página abre com o mesmo compasso: rótulo de canal, título, e um lede
      de duas linhas. As linhas são afirmações separadas, não um parágrafo

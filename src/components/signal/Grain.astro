@@ -121,58 +121,71 @@
   }
 
   /* 2. Deriva: ruído mais grosso, contínuo e lento. Em contratempo com o grão,
-        é o que dá organicidade ao conjunto. */
+        é o que dá organicidade ao conjunto.
+
+        Só translação — sem `scale`. Escalar uma textura de ruído em tela cheia
+        faz o grão inteiro crescer e encolher junto, e o olho lê isso como a
+        página respirando: um movimento grande, central, impossível de ignorar.
+        Deslocar a mesma textura entrega a variação orgânica sem o efeito de
+        compressão. */
   .signal__drift {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='d'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.28' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23d)' opacity='0.4'/%3E%3C/svg%3E");
     background-size: 300px 300px;
-    opacity: 0.16;
-    animation: drift 19s linear infinite;
+    opacity: 0.1;
+    animation: drift 34s linear infinite;
   }
 
   @keyframes drift {
     0% {
-      transform: translate3d(0, 0, 0) scale(1.02);
+      transform: translate3d(0, 0, 0);
     }
     33% {
-      transform: translate3d(1.5%, -2%, 0) scale(1.05);
+      transform: translate3d(1.5%, -2%, 0);
     }
     66% {
-      transform: translate3d(-2%, 1.5%, 0) scale(1.03);
+      transform: translate3d(-2%, 1.5%, 0);
     }
     100% {
-      transform: translate3d(0, 0, 0) scale(1.02);
+      transform: translate3d(0, 0, 0);
     }
   }
 
   /* 3. Rolagem: o quadro perdendo sincronia vertical. Passa uma vez a cada
         ~14s e some — evento, não pulso. */
+  /* 3. Rolagem: o quadro perdendo sincronia vertical.
+
+        Passa uma vez a cada ~26s e some. O intervalo longo é o ponto: o efeito
+        precisa ser raro o bastante para o olho não começar a esperar por ele.
+        A faixa também é mais alta e mais fraca do que parece necessário — a
+        borda difusa é o que a faz ler como interferência em vez de uma barra
+        atravessando a tela. */
   .signal__roll {
     position: absolute;
     inset-inline: 0;
     inset-block-start: 0;
-    block-size: 28svh;
+    block-size: 44svh;
     will-change: transform, opacity;
     background: linear-gradient(
       to bottom,
       transparent,
-      rgb(255 255 255 / 0.012) 42%,
-      rgb(255 255 255 / 0.028) 50%,
-      rgb(255 255 255 / 0.012) 58%,
+      rgb(255 255 255 / 0.006) 44%,
+      rgb(255 255 255 / 0.014) 50%,
+      rgb(255 255 255 / 0.006) 56%,
       transparent
     );
-    animation: roll 14s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    animation: roll 26s cubic-bezier(0.45, 0, 0.55, 1) infinite;
   }
 
   @keyframes roll {
     0%,
-    62% {
-      transform: translate3d(0, -30svh, 0);
+    76% {
+      transform: translate3d(0, -46svh, 0);
       opacity: 0;
     }
-    66% {
+    80% {
       opacity: 1;
     }
-    94% {
+    96% {
       opacity: 1;
     }
     100% {

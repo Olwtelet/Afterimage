@@ -61,7 +61,7 @@ const isPast = state === 'exibida';
         tag="h2"
         id="slate-title"
         text={headline}
-        class="slate__title u-slate u-bleed"
+        class="slate-title u-slate u-bleed"
       />
 
       <p class="slate__film u-mono">{titles}</p>
@@ -254,10 +254,6 @@ const isPast = state === 'exibida';
     }
   }
 
-  .slate__title {
-    font-size: var(--text-4xl);
-    color: var(--ink);
-  }
 
   .slate__film {
     margin-block-start: var(--space-sm);

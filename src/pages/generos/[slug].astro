@@ -67,7 +67,7 @@ const schema = {
       <span aria-current="page">{genre.name}</span>
     </nav>
 
-    <Glitch tag="h1" text={genre.name} trigger="reveal" class="head__title u-slate u-bleed" />
+    <Glitch tag="h1" text={genre.name} trigger="reveal" class="page-title u-slate u-bleed" />
 
     <p class="head__count u-label">
       {matches.length} {matches.length > 1 ? 'sessões' : 'sessão'} · barra {bar.label}
@@ -121,9 +121,8 @@ const schema = {
     color: var(--accent-ink);
   }
 
-  .head__title {
-    margin-block: var(--space-2xs);
-    font-size: var(--text-4xl);
+  .page-title {
+    margin-block-end: 0;
     text-transform: capitalize;
   }
 

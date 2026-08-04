@@ -53,7 +53,7 @@ const schema = {
         id="hero-title"
         text={SITE.tagline}
         trigger="reveal"
-        class="hero__title u-slate u-bleed m-enter"
+        class="hero-title u-slate u-bleed m-enter"
       />
 
       <div class="hero__lede page-lede m-enter" style="--m-step:2">
@@ -164,11 +164,6 @@ const schema = {
     margin-block-end: var(--space-md);
   }
 
-  .hero__title {
-    display: block;
-    max-inline-size: 15ch;
-    color: var(--ink);
-  }
 
   /* Herda o compasso de .page-lede; aqui só o recuo maior do hero. */
   .hero__lede {

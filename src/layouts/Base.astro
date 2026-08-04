@@ -12,6 +12,7 @@ import SignalStrip from '~/components/signal/SignalStrip.astro';
 import Header from '~/components/ui/Header.astro';
 import Footer from '~/components/ui/Footer.astro';
 import SearchPalette from '~/components/islands/SearchPalette.astro';
+import Radio from '~/components/islands/Radio.astro';
 import Calibration from '~/components/islands/Calibration.astro';
 import { SITE } from '~/lib/site';
 import { BARS, type Bar } from '~/lib/smpte';
@@ -41,6 +42,21 @@ const { accent = BARS.cyan, bodyClass, ...seo } = Astro.props;
   <head>
     <Seo {...seo} />
     <style is:inline>
+      /*
+       * A ordem das camadas precisa ser declarada AQUI, antes de qualquer outra
+       * folha, porque a cascata registra cada camada na primeira vez que a vê.
+       *
+       * O Astro emite os estilos com escopo de componente em <style> separados, e
+       * alguns deles são analisados antes do bundle global. Bastava um desses
+       * conter `@layer components` para `components` ser registrada primeiro e
+       * `base` — declarada depois — passar a vencê-la. Foi o que aconteceu: as
+       * regras de tamanho de título em `components` perdiam para `.u-slate` em
+       * `base`, e as manchetes renderizavam com o corpo de 119px, transbordando a
+       * própria coluna. Declarar a ordem no <head> torna o resultado
+       * independente de como o bundler decide fatiar e ordenar o CSS.
+       */
+      @layer reset, tokens, base, components, utilities;
+
       /* Corte de canal entre páginas — nativo, zero JavaScript. */
       @view-transition {
         navigation: auto;
@@ -61,6 +77,7 @@ const { accent = BARS.cyan, bodyClass, ...seo } = Astro.props;
 
     <Footer />
     <SearchPalette />
+    <Radio />
     <Calibration />
 
     <script>
