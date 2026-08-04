@@ -1,30 +1,68 @@
 ---
 /**
- * Textura de sinal: ruído + linhas de varredura, sobrepostos à página inteira.
+ * O chiado.
  *
- * Tudo aqui é ESTÁTICO. O site anterior animava as scanlines infinitamente e
- * mantinha até oito loops de requestAnimationFrame vivos ao mesmo tempo — a
- * aba nunca ficava ociosa. A textura entrega a mesma sensação de tubo por dois
- * gradientes e um turbulence rasterizado uma vez, custando zero frame.
+ * Um sinal analógico nunca fica parado. Esta camada reproduz isso com três
+ * movimentos sobrepostos, cada um numa velocidade diferente:
+ *
+ *   1. GRÃO — ruído fino que salta de posição em `steps()`, o chiado propriamente
+ *      dito. É o movimento rápido e discreto, a alta frequência da imagem.
+ *   2. DERIVA — uma segunda camada de ruído mais grosso, deslizando devagar e de
+ *      forma contínua. É ela que impede o conjunto de parecer um loop mecânico:
+ *      as duas camadas nunca coincidem no mesmo ponto duas vezes.
+ *   3. ROLAGEM — a barra horizontal do vertical hold perdendo sincronia, que
+ *      atravessa a tela de tempos em tempos e desaparece.
+ *
+ * Custo: zero repaint. Tudo é `transform` e `opacity` em camadas promovidas ao
+ * compositor, com `contain: strict` isolando a subárvore. Os dois bitmaps de
+ * ruído são resolvidos uma única vez pelo navegador e reaproveitados em todos os
+ * frames — o desenho não é refeito, só reposicionado.
  */
 ---
 
-<div class="grain" aria-hidden="true"></div>
+<div class="signal" aria-hidden="true">
+  <div class="signal__scan"></div>
+  <div class="signal__grain"></div>
+  <div class="signal__drift"></div>
+  <div class="signal__roll"></div>
+  <div class="signal__vignette"></div>
+</div>
 
 <style>
-  .grain {
+  .signal {
     position: fixed;
     inset: 0;
     z-index: var(--z-grain);
     pointer-events: none;
-    /* O compositor trata a camada isoladamente e nunca repinta o conteúdo. */
+    /* Isola a subárvore: nada aqui dentro pode invalidar layout ou paint do
+       conteúdo da página. */
     contain: strict;
+    /* Flicker de tubo: quase imperceptível, longo o bastante para o olho ler
+       como instabilidade e não como pulso. */
+    animation: flicker 7s ease-in-out infinite;
   }
 
-  /* Linhas de varredura. 3px de período é o ponto em que a textura aparece sem
-     virar moiré em telas de alta densidade. */
-  .grain::before {
-    content: '';
+  @keyframes flicker {
+    0%,
+    96%,
+    100% {
+      opacity: 1;
+    }
+    97% {
+      opacity: 0.86;
+    }
+    98% {
+      opacity: 1;
+    }
+    99% {
+      opacity: 0.93;
+    }
+  }
+
+  /* --- Linhas de varredura ------------------------------------------------
+     Estáticas de propósito: varredura que anda vira moiré e cansa. O movimento
+     fica por conta do grão. */
+  .signal__scan {
     position: absolute;
     inset: 0;
     background: repeating-linear-gradient(
@@ -32,37 +70,158 @@
       rgb(0 0 0 / 0.22) 0 1px,
       transparent 1px 3px
     );
-    opacity: 0.55;
-  }
-
-  /* Grão de filme + vinheta. O turbulence é resolvido pelo navegador uma única
-     vez e vira bitmap; não há custo por frame. */
-  .grain::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-image:
-      radial-gradient(ellipse 120% 90% at 50% 50%, transparent 55%, rgb(0 0 0 / 0.55) 100%),
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.42'/%3E%3C/svg%3E");
-    background-size:
-      100% 100%,
-      140px 140px;
-    mix-blend-mode: overlay;
     opacity: 0.5;
   }
 
-  /* Em telas pequenas a varredura só suja a leitura: o pixel já é denso demais
-     para o padrão ler como textura. */
+  /* --- Camadas de ruído ----------------------------------------------------
+     Ambas são maiores que a viewport para que o deslocamento nunca revele
+     borda. `will-change` promove cada uma à sua própria camada de composição. */
+  .signal__grain,
+  .signal__drift {
+    position: absolute;
+    inset: -25%;
+    will-change: transform;
+    mix-blend-mode: overlay;
+  }
+
+  /* 1. Grão: salta em passos, como um quadro trocando. */
+  .signal__grain {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23g)' opacity='0.5'/%3E%3C/svg%3E");
+    background-size: 160px 160px;
+    opacity: 0.42;
+    animation: grain 0.5s steps(1, end) infinite;
+  }
+
+  /* Oito posições irregulares — quatro seriam lidas como padrão. */
+  @keyframes grain {
+    0% {
+      transform: translate3d(0, 0, 0);
+    }
+    12.5% {
+      transform: translate3d(-3%, 2%, 0);
+    }
+    25% {
+      transform: translate3d(2%, -4%, 0);
+    }
+    37.5% {
+      transform: translate3d(-5%, -1%, 0);
+    }
+    50% {
+      transform: translate3d(4%, 3%, 0);
+    }
+    62.5% {
+      transform: translate3d(-1%, -5%, 0);
+    }
+    75% {
+      transform: translate3d(5%, 1%, 0);
+    }
+    87.5% {
+      transform: translate3d(-4%, 4%, 0);
+    }
+  }
+
+  /* 2. Deriva: ruído mais grosso, contínuo e lento. Em contratempo com o grão,
+        é o que dá organicidade ao conjunto. */
+  .signal__drift {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='d'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.28' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23d)' opacity='0.4'/%3E%3C/svg%3E");
+    background-size: 300px 300px;
+    opacity: 0.16;
+    animation: drift 19s linear infinite;
+  }
+
+  @keyframes drift {
+    0% {
+      transform: translate3d(0, 0, 0) scale(1.02);
+    }
+    33% {
+      transform: translate3d(1.5%, -2%, 0) scale(1.05);
+    }
+    66% {
+      transform: translate3d(-2%, 1.5%, 0) scale(1.03);
+    }
+    100% {
+      transform: translate3d(0, 0, 0) scale(1.02);
+    }
+  }
+
+  /* 3. Rolagem: o quadro perdendo sincronia vertical. Passa uma vez a cada
+        ~14s e some — evento, não pulso. */
+  .signal__roll {
+    position: absolute;
+    inset-inline: 0;
+    inset-block-start: 0;
+    block-size: 28svh;
+    will-change: transform, opacity;
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(255 255 255 / 0.012) 42%,
+      rgb(255 255 255 / 0.028) 50%,
+      rgb(255 255 255 / 0.012) 58%,
+      transparent
+    );
+    animation: roll 14s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes roll {
+    0%,
+    62% {
+      transform: translate3d(0, -30svh, 0);
+      opacity: 0;
+    }
+    66% {
+      opacity: 1;
+    }
+    94% {
+      opacity: 1;
+    }
+    100% {
+      transform: translate3d(0, 130svh, 0);
+      opacity: 0;
+    }
+  }
+
+  /* --- Vinheta -------------------------------------------------------------
+     Curvatura implícita do tubo: escurece os cantos e puxa a leitura para o
+     centro. Sem movimento, sem custo. */
+  .signal__vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      ellipse 118% 88% at 50% 50%,
+      transparent 52%,
+      rgb(0 0 0 / 0.55) 100%
+    );
+  }
+
+  /* Em telas pequenas o pixel já é denso demais: a varredura vira sujeira e o
+     grão compete com o texto. Ambos recuam. */
   @media (max-width: 45rem) {
-    .grain::before {
+    .signal__scan {
+      opacity: 0.26;
+    }
+
+    .signal__grain {
       opacity: 0.3;
     }
   }
 
-  /* Quem pede menos movimento normalmente também pede menos ruído visual. */
+  /* Quem pede menos movimento fica com a textura, sem o movimento. O reset
+     global já zera as durações; aqui as camadas também são fixadas num estado
+     de repouso legível. */
   @media (prefers-reduced-motion: reduce) {
-    .grain::after {
-      opacity: 0.25;
+    .signal {
+      animation: none;
+    }
+
+    .signal__grain {
+      opacity: 0.24;
+      transform: none;
+    }
+
+    .signal__drift,
+    .signal__roll {
+      display: none;
     }
   }
 </style>
