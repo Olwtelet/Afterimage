@@ -1,0 +1,389 @@
+---
+/**
+ * Lista filtrável da biblioteca pessoal.
+ *
+ * Busca, gênero e ordenação acontecem no cliente sobre a lista inteira, que já
+ * veio renderizada no servidor. Uma pessoa não tem centenas de sessões — filtrar
+ * localmente devolve resultado no mesmo quadro, enquanto ida ao servidor a cada
+ * tecla custaria latência para reordenar algumas dezenas de itens.
+ *
+ * O HTML sai completo mesmo antes do JavaScript: quem tiver o script bloqueado
+ * vê a lista, só não filtra.
+ */
+import { barFor } from '~/lib/smpte';
+import { genresIn, type LibraryItem, type LibraryKind } from '~/lib/library';
+
+interface Props {
+  items: readonly LibraryItem[];
+  kind: LibraryKind;
+  owner: string;
+}
+
+const { items, kind, owner } = Astro.props;
+const genres = genresIn(items);
+
+const dateOf = (iso: string): string =>
+  new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  })
+    .format(new Date(iso))
+    .replace('.', '');
+
+const MARK_LABEL: Record<LibraryKind, string> = {
+  favorites: 'Guardada em',
+  watched: 'Assistida em',
+};
+---
+
+{
+  items.length === 0 ? (
+    <div class="u-page">
+      <p class="void u-label">
+        Nada por aqui ainda — as fichas têm os botões
+      </p>
+      <a class="btn btn--ghost void__cta" href="/programacao/">Ver a grade</a>
+    </div>
+  ) : (
+    <>
+      <form class="tools u-page" data-tools role="search" onsubmit="return false">
+        <div class="tools__field">
+          <label class="u-label" for="lib-q">Buscar</label>
+          <input
+            type="search"
+            id="lib-q"
+            data-tools-query
+            placeholder="Título ou frase"
+            autocomplete="off"
+          />
+        </div>
+
+        {genres.length > 1 && (
+          <div class="tools__field">
+            <label class="u-label" for="lib-genre">Gênero</label>
+            <select id="lib-genre" data-tools-genre>
+              <option value="">Todos</option>
+              {genres.map((genre) => <option value={genre}>{genre}</option>)}
+            </select>
+          </div>
+        )}
+
+        <div class="tools__field">
+          <label class="u-label" for="lib-sort">Ordem</label>
+          <select id="lib-sort" data-tools-sort>
+            <option value="recent">Mais recentes</option>
+            <option value="oldest">Mais antigas</option>
+            <option value="title">Título</option>
+            <option value="score">Nota</option>
+          </select>
+        </div>
+
+        <p class="tools__count u-label" data-tools-count aria-live="polite" />
+      </form>
+
+      <ol class="lib u-page m-rows" role="list" data-lib>
+        {items.map((item) => {
+          const bar = barFor(item.tone);
+          return (
+            <li
+              class="lib__row"
+              style={`--accent-bar:${bar.bar};--accent-ink:${bar.ink}`}
+              data-title={item.headline.toLowerCase()}
+              data-summary={item.summary.toLowerCase()}
+              data-genres={item.genres.join('|')}
+              data-marked={item.markedAt}
+              data-score={item.score ?? 0}
+            >
+              <a class="lib__link" href={`/sessoes/${item.slug}/`}>
+                <span class="lib__bar" aria-hidden="true" />
+
+                <span class="lib__thumb">
+                  {item.poster_url ? (
+                    <img src={item.poster_url} alt="" width="120" height="68" loading="lazy" />
+                  ) : (
+                    <span class="lib__blank" aria-hidden="true" />
+                  )}
+                </span>
+
+                <span class="lib__main">
+                  <span class="lib__title">{item.headline}</span>
+                  <span class="lib__meta u-label">
+                    <span>{MARK_LABEL[kind]} {dateOf(item.markedAt)}</span>
+                    {item.genres.length > 0 && (
+                      <>
+                        <span aria-hidden="true">·</span>
+                        <span>{item.genres.slice(0, 2).join(' · ')}</span>
+                      </>
+                    )}
+                  </span>
+                </span>
+
+                {item.score && (
+                  <span class="lib__score" aria-label={`Nota ${item.score} de 3`}>
+                    {'★'.repeat(item.score)}
+                    <span class="lib__score-off">{'☆'.repeat(3 - item.score)}</span>
+                  </span>
+                )}
+              </a>
+            </li>
+          );
+        })}
+      </ol>
+
+      <p class="lib__none u-label u-page" data-lib-none hidden>
+        Nada corresponde a esse filtro
+      </p>
+
+      <p class="lib__owner u-label u-page">
+        Estas listas são suas. O perfil público em
+        <a class="m-underline" href={`/perfil/${owner}/`}>@{owner}</a>
+        mostra uma seleção.
+      </p>
+    </>
+  )
+}
+
+<script>
+  const tools = document.querySelector<HTMLFormElement>('[data-tools]');
+  const list = document.querySelector<HTMLOListElement>('[data-lib]');
+  const none = document.querySelector<HTMLElement>('[data-lib-none]');
+  const count = document.querySelector<HTMLElement>('[data-tools-count]');
+
+  if (tools && list && none && count) {
+    const query = tools.querySelector<HTMLInputElement>('[data-tools-query]');
+    const genre = tools.querySelector<HTMLSelectElement>('[data-tools-genre]');
+    const sort = tools.querySelector<HTMLSelectElement>('[data-tools-sort]');
+    const rows = [...list.querySelectorAll<HTMLLIElement>('.lib__row')];
+
+    /** Remove acentos para que "acao" encontre "ação". */
+    const fold = (value: string): string =>
+      value.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+    const folded = rows.map((row) => ({
+      row,
+      haystack: fold(`${row.dataset.title ?? ''} ${row.dataset.summary ?? ''}`),
+      genres: (row.dataset.genres ?? '').split('|').filter(Boolean),
+      marked: row.dataset.marked ?? '',
+      title: row.dataset.title ?? '',
+      score: Number(row.dataset.score ?? 0),
+    }));
+
+    const apply = (): void => {
+      const needle = fold(query?.value.trim() ?? '');
+      const wanted = genre?.value ?? '';
+
+      let visible = 0;
+      for (const entry of folded) {
+        const matches =
+          (needle.length === 0 || entry.haystack.includes(needle)) &&
+          (wanted === '' || entry.genres.includes(wanted));
+        entry.row.hidden = !matches;
+        if (matches) visible += 1;
+      }
+
+      // Reordena movendo os nós: a ordem do DOM é a ordem lida por quem navega
+      // por teclado ou leitor de tela, então não pode divergir da visual.
+      const order = sort?.value ?? 'recent';
+      const sorted = [...folded].sort((a, b) => {
+        if (order === 'title') return a.title.localeCompare(b.title, 'pt-BR');
+        if (order === 'score') return b.score - a.score || b.marked.localeCompare(a.marked);
+        if (order === 'oldest') return a.marked.localeCompare(b.marked);
+        return b.marked.localeCompare(a.marked);
+      });
+      for (const entry of sorted) list.append(entry.row);
+
+      none.hidden = visible > 0;
+      count.textContent =
+        visible === folded.length
+          ? `${folded.length} ${folded.length === 1 ? 'sessão' : 'sessões'}`
+          : `${visible} de ${folded.length}`;
+    };
+
+    query?.addEventListener('input', apply);
+    genre?.addEventListener('change', apply);
+    sort?.addEventListener('change', apply);
+    apply();
+  }
+</script>
+
+<style>
+  /* ===== Ferramentas ====================================================== */
+  .tools {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: var(--space-sm);
+    padding-block: var(--space-md);
+    border-block: 1px solid var(--line);
+  }
+
+  .tools__field {
+    display: grid;
+    gap: 0.3rem;
+  }
+
+  .tools__field input,
+  .tools__field select {
+    padding: 0.45rem 0.6rem;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    font-size: var(--text-sm);
+    transition: border-color var(--dur-cut) var(--ease-signal);
+  }
+
+  .tools__field input:focus,
+  .tools__field select:focus {
+    border-color: var(--accent-bar);
+    outline: none;
+  }
+
+  .tools__field input {
+    min-inline-size: 12rem;
+  }
+
+  .tools__field input::-webkit-search-cancel-button {
+    display: none;
+  }
+
+  .tools__count {
+    margin-inline-start: auto;
+    padding-block-end: 0.5rem;
+  }
+
+  /* ===== Lista ============================================================ */
+  .lib {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .lib__row {
+    border-block-end: 1px solid var(--line);
+  }
+
+  .lib__row[hidden] {
+    display: none;
+  }
+
+  .lib__link {
+    display: grid;
+    grid-template-columns: 3px auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--space-sm);
+    padding-block: var(--space-xs);
+    transition: background-color var(--dur-cut) var(--ease-signal);
+  }
+
+  .lib__link:hover {
+    background: var(--surface);
+  }
+
+  .lib__bar {
+    align-self: stretch;
+    background: var(--accent-bar);
+    transform: scaleY(0.3);
+    transition: transform var(--dur-wipe) var(--ease-out);
+  }
+
+  .lib__link:hover .lib__bar {
+    transform: scaleY(1);
+  }
+
+  .lib__thumb {
+    inline-size: 4.5rem;
+    aspect-ratio: 16 / 9;
+    overflow: clip;
+    background: var(--black);
+    flex: none;
+  }
+
+  .lib__thumb img {
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+    filter: saturate(0.4) contrast(1.05);
+    transition: filter var(--dur-pan) var(--ease-signal);
+  }
+
+  .lib__link:hover .lib__thumb img {
+    filter: saturate(1);
+  }
+
+  .lib__blank {
+    display: block;
+    block-size: 100%;
+    background: repeating-linear-gradient(
+      90deg,
+      var(--accent-bar) 0 25%,
+      var(--black) 25% 50%
+    );
+    opacity: 0.25;
+  }
+
+  .lib__main {
+    display: grid;
+    gap: 0.15rem;
+    min-inline-size: 0;
+  }
+
+  .lib__title {
+    color: var(--ink);
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .lib__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
+  .lib__score {
+    color: var(--accent-ink);
+    letter-spacing: 0.1em;
+    flex: none;
+  }
+
+  .lib__score-off {
+    color: var(--ink-mute);
+  }
+
+  .lib__none,
+  .void {
+    padding: var(--space-lg);
+    border: 1px dashed var(--line);
+    text-align: center;
+  }
+
+  .lib__none[hidden] {
+    display: none;
+  }
+
+  .void__cta {
+    margin-block-start: var(--space-md);
+  }
+
+  .lib__owner {
+    padding-block: var(--space-lg);
+  }
+
+  .lib__owner a {
+    color: var(--accent-ink);
+    margin-inline: 0.35rem;
+  }
+
+  @media (max-width: 36rem) {
+    .lib__thumb {
+      display: none;
+    }
+
+    .lib__link {
+      grid-template-columns: 3px minmax(0, 1fr) auto;
+    }
+  }
+</style>

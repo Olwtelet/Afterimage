@@ -6,6 +6,7 @@ import Base from '~/layouts/Base.astro';
 import Glitch from '~/components/signal/Glitch.astro';
 import FeatureSheet from '~/components/ui/FeatureSheet.astro';
 import SessionRules from '~/components/ui/SessionRules.astro';
+import FilmActions from '~/components/islands/FilmActions.astro';
 import SessionCard from '~/components/ui/SessionCard.astro';
 import { getSessions, relatedTo, stateOf, type Session } from '~/lib/catalog';
 import {
@@ -165,6 +166,11 @@ const schema = [
         </div>
       </div>
     </header>
+
+    {/* ===== Marcações ================================================== */}
+    <div class="u-page">
+      <FilmActions slug={session.slug} />
+    </div>
 
     {/* ===== Corpo ====================================================== */}
     <div class="film__body u-page">

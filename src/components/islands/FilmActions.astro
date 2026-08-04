@@ -1,0 +1,404 @@
+---
+/**
+ * Favoritar, marcar como assistida e avaliar.
+ *
+ * Ilha porque a ficha é estática: o mesmo HTML é servido a todo mundo pelo CDN,
+ * e o que cada pessoa marcou só o navegador dela sabe.
+ *
+ * A ficha conhece o `slug`; o banco referencia por `id`. A tradução acontece
+ * aqui, numa consulta, em vez de embutir o id no build — assim o build não
+ * depende do banco estar de pé, e um filme recém-cadastrado passa a funcionar
+ * sem exigir novo deploy.
+ *
+ * Toda escrita é otimista: o estado vira na hora e volta atrás se o servidor
+ * recusar. Numa ação de um clique, esperar a rede para depois confirmar o óbvio
+ * é o que faz uma interface parecer lenta.
+ */
+interface Props {
+  slug: string;
+}
+
+const { slug } = Astro.props;
+---
+
+<section class="acts" data-acts data-slug={slug} aria-label="Suas marcações">
+  <div class="acts__row" data-acts-controls hidden>
+    <button type="button" class="act" data-act="favorite" aria-pressed="false">
+      <span class="act__mark act__mark--fav" aria-hidden="true"></span>
+      <span class="act__label">Favoritar</span>
+    </button>
+
+    <button type="button" class="act" data-act="watched" aria-pressed="false">
+      <span class="act__mark act__mark--seen" aria-hidden="true"></span>
+      <span class="act__label">Assisti</span>
+    </button>
+
+    <div class="act act--rate" role="radiogroup" aria-label="Sua avaliação">
+      <span class="act__label act__label--rate">Nota</span>
+      {
+        [1, 2, 3].map((score) => (
+          <button
+            type="button"
+            class="star"
+            data-score={score}
+            role="radio"
+            aria-checked="false"
+            aria-label={`${score} de 3`}
+          >
+            ★
+          </button>
+        ))
+      }
+      <button type="button" class="act__clear" data-act="clear-rating" hidden>
+        limpar
+      </button>
+    </div>
+  </div>
+
+  <a class="acts__enter" data-acts-enter href="/auth/entrar/" hidden>
+    <span class="acts__mark" aria-hidden="true">
+      <span></span><span></span><span></span>
+    </span>
+    Entre para marcar esta sessão
+  </a>
+
+  <p class="acts__status u-label" data-acts-status role="status" aria-live="polite"></p>
+</section>
+
+<script>
+  import { browser } from '~/lib/db/browser';
+
+  type Score = 1 | 2 | 3;
+
+  const root = document.querySelector<HTMLElement>('[data-acts]');
+
+  if (root) {
+    const controls = root.querySelector<HTMLElement>('[data-acts-controls]');
+    const enter = root.querySelector<HTMLAnchorElement>('[data-acts-enter]');
+    const status = root.querySelector<HTMLElement>('[data-acts-status]');
+    const favButton = root.querySelector<HTMLButtonElement>('[data-act="favorite"]');
+    const seenButton = root.querySelector<HTMLButtonElement>('[data-act="watched"]');
+    const clearButton = root.querySelector<HTMLButtonElement>('[data-act="clear-rating"]');
+    const stars = [...root.querySelectorAll<HTMLButtonElement>('.star')];
+    const slug = root.dataset.slug ?? '';
+
+    if (controls && enter && status && favButton && seenButton && clearButton) {
+      const db = browser();
+      let userId: string | null = null;
+      let filmId: string | null = null;
+      let favorite = false;
+      let watched = false;
+      let score: Score | null = null;
+
+      const say = (text: string, tone: 'ok' | 'erro' = 'ok'): void => {
+        status.textContent = text;
+        status.dataset.tone = tone;
+        if (text) window.setTimeout(() => { if (status.textContent === text) status.textContent = ''; }, 2600);
+      };
+
+      const paint = (): void => {
+        favButton.setAttribute('aria-pressed', String(favorite));
+        seenButton.setAttribute('aria-pressed', String(watched));
+        for (const star of stars) {
+          const value = Number(star.dataset.score);
+          star.setAttribute('aria-checked', String(score === value));
+          star.classList.toggle('star--on', score !== null && value <= score);
+        }
+        clearButton.hidden = score === null;
+      };
+
+      /** Reverte o estado otimista e avisa, quando o servidor recusa. */
+      const fail = (undo: () => void): void => {
+        undo();
+        paint();
+        say('Não deu para salvar — tente de novo', 'erro');
+      };
+
+      favButton.addEventListener('click', async () => {
+        if (!userId || !filmId) return;
+        const was = favorite;
+        favorite = !favorite;
+        paint();
+
+        const { error } = favorite
+          ? await db.from('favorites').insert({ user_id: userId, film_id: filmId })
+          : await db.from('favorites').delete().eq('user_id', userId).eq('film_id', filmId);
+
+        if (error) fail(() => { favorite = was; });
+        else say(favorite ? 'Guardada nas favoritas' : 'Removida das favoritas');
+      });
+
+      seenButton.addEventListener('click', async () => {
+        if (!userId || !filmId) return;
+        const was = watched;
+        watched = !watched;
+        paint();
+
+        const { error } = watched
+          ? await db.from('watched').insert({ user_id: userId, film_id: filmId })
+          : await db.from('watched').delete().eq('user_id', userId).eq('film_id', filmId);
+
+        if (error) fail(() => { watched = was; });
+        else say(watched ? 'Marcada como assistida' : 'Desmarcada');
+      });
+
+      for (const star of stars) {
+        star.addEventListener('click', async () => {
+          if (!userId || !filmId) return;
+          const was = score;
+          score = Number(star.dataset.score) as Score;
+          paint();
+
+          // upsert: avaliar de novo troca a nota em vez de acumular linhas.
+          const { error } = await db
+            .from('ratings')
+            .upsert({ user_id: userId, film_id: filmId, score }, { onConflict: 'user_id,film_id' });
+
+          if (error) fail(() => { score = was; });
+          else say(`Anotado: ${score} de 3`);
+        });
+      }
+
+      clearButton.addEventListener('click', async () => {
+        if (!userId || !filmId) return;
+        const was = score;
+        score = null;
+        paint();
+
+        const { error } = await db
+          .from('ratings')
+          .delete()
+          .eq('user_id', userId)
+          .eq('film_id', filmId);
+
+        if (error) fail(() => { score = was; });
+        else say('Avaliação removida');
+      });
+
+      void (async () => {
+        const {
+          data: { session },
+        } = await db.auth.getSession();
+
+        if (!session) {
+          enter.hidden = false;
+          // Volta para esta ficha depois de entrar.
+          enter.href = `/auth/entrar/?next=${encodeURIComponent(location.pathname)}`;
+          return;
+        }
+
+        userId = session.user.id;
+
+        const { data: film } = await db
+          .from('films')
+          .select('id')
+          .eq('slug', slug)
+          .maybeSingle<{ id: string }>();
+
+        // Sem linha no banco não há o que marcar: a ficha existe só no Markdown.
+        if (!film) return;
+        filmId = film.id;
+
+        const [fav, seen, rated] = await Promise.all([
+          db.from('favorites').select('film_id').eq('user_id', userId).eq('film_id', filmId).maybeSingle(),
+          db.from('watched').select('film_id').eq('user_id', userId).eq('film_id', filmId).maybeSingle(),
+          db.from('ratings').select('score').eq('user_id', userId).eq('film_id', filmId).maybeSingle<{ score: Score }>(),
+        ]);
+
+        favorite = fav.data !== null;
+        watched = seen.data !== null;
+        score = rated.data?.score ?? null;
+
+        paint();
+        controls.hidden = false;
+      })();
+    }
+  }
+</script>
+
+<style>
+  .acts {
+    display: grid;
+    gap: var(--space-2xs);
+    padding-block: var(--space-md);
+    border-block: 1px solid var(--line);
+    /* Altura mínima reservada: o bloco não pula quando a ilha resolve o estado. */
+    min-block-size: 5.5rem;
+    align-content: center;
+  }
+
+  .acts__row[hidden],
+  .acts__enter[hidden] {
+    display: none;
+  }
+
+  .acts__row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2xs);
+    align-items: stretch;
+  }
+
+  /* --- Botão ---------------------------------------------------------------- */
+  .act {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 0.85rem;
+    border: 1px solid var(--line);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--ink-dim);
+    transition:
+      border-color var(--dur-cut) var(--ease-signal),
+      color var(--dur-cut) var(--ease-signal),
+      background-color var(--dur-cut) var(--ease-signal);
+  }
+
+  .act:hover {
+    border-color: var(--line-strong);
+    color: var(--ink);
+  }
+
+  .act[aria-pressed='true'] {
+    border-color: var(--accent-bar);
+    color: var(--ink);
+    background: color-mix(in srgb, var(--accent-bar) 12%, transparent);
+  }
+
+  /* A marca é um quadrado que se preenche — sem ícone importado, sem fonte de
+     ícones, coerente com o resto do sistema. */
+  .act__mark {
+    inline-size: 0.75rem;
+    block-size: 0.75rem;
+    border: 1px solid currentColor;
+    flex: none;
+    transition:
+      background-color var(--dur-wipe) var(--ease-out),
+      transform var(--dur-wipe) var(--ease-snap);
+  }
+
+  .act[aria-pressed='true'] .act__mark {
+    background: var(--accent-bar);
+    border-color: var(--accent-bar);
+  }
+
+  /* Pulso curto no momento em que marca. */
+  .act[aria-pressed='true'] .act__mark--fav {
+    animation: mark-in 320ms var(--ease-snap);
+  }
+
+  .act[aria-pressed='true'] .act__mark--seen {
+    animation: mark-in 320ms var(--ease-snap) 40ms;
+  }
+
+  @keyframes mark-in {
+    40% {
+      transform: scale(1.45);
+    }
+  }
+
+  /* --- Avaliação ------------------------------------------------------------ */
+  .act--rate {
+    gap: 0.15rem;
+    cursor: default;
+  }
+
+  .act--rate:hover {
+    border-color: var(--line);
+    color: var(--ink-dim);
+  }
+
+  .act__label--rate {
+    margin-inline-end: 0.35rem;
+  }
+
+  .star {
+    padding: 0 0.1rem;
+    font-size: 1.05rem;
+    line-height: 1;
+    color: var(--ink-mute);
+    transition:
+      color var(--dur-cut) var(--ease-signal),
+      transform var(--dur-cut) var(--ease-snap);
+  }
+
+  .star:hover {
+    color: var(--accent-ink);
+    transform: translateY(-1px);
+  }
+
+  .star--on {
+    color: var(--accent-ink);
+    animation: star-in 280ms var(--ease-snap);
+  }
+
+  @keyframes star-in {
+    45% {
+      transform: scale(1.3) rotate(-8deg);
+    }
+  }
+
+  .act__clear {
+    margin-inline-start: 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.5625rem;
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    transition: color var(--dur-cut) var(--ease-signal);
+  }
+
+  .act__clear:hover {
+    color: var(--ink-red);
+  }
+
+  .act__clear[hidden] {
+    display: none;
+  }
+
+  /* --- Convite a entrar ----------------------------------------------------- */
+  .acts__enter {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.55rem 0.85rem;
+    border: 1px dashed var(--line-strong);
+    justify-self: start;
+    font-size: var(--text-sm);
+    color: var(--ink-dim);
+    transition:
+      border-color var(--dur-cut) var(--ease-signal),
+      color var(--dur-cut) var(--ease-signal);
+  }
+
+  .acts__enter:hover {
+    border-color: var(--accent-bar);
+    color: var(--ink);
+  }
+
+  .acts__mark {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    inline-size: 0.75rem;
+    block-size: 0.75rem;
+    flex: none;
+  }
+
+  .acts__mark span:nth-child(1) { background: var(--bar-cyan); }
+  .acts__mark span:nth-child(2) { background: var(--bar-magenta); }
+  .acts__mark span:nth-child(3) { background: var(--bar-yellow); }
+
+  /* --- Retorno -------------------------------------------------------------- */
+  .acts__status:empty {
+    display: none;
+  }
+
+  .acts__status {
+    color: var(--accent-ink);
+  }
+
+  .acts__status[data-tone='erro'] {
+    color: var(--ink-red);
+  }
+</style>

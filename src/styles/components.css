@@ -176,6 +176,22 @@
     color: var(--ink);
   }
 
+  /* Nome no perfil. Convive com um avatar à esquerda e precisa caber ao lado
+     dele — no corpo cheio de .u-slate um nome médio já transborda a página. */
+  .profile-title {
+    display: block;
+    font-size: var(--text-2xl);
+    max-inline-size: 18ch;
+    color: var(--ink);
+    overflow-wrap: anywhere;
+  }
+
+  @media (min-width: 48rem) {
+    .profile-title {
+      font-size: var(--text-3xl);
+    }
+  }
+
   /* --- Cabeçalho de página --------------------------------------------------
      Cada página abre com o mesmo compasso: rótulo de canal, título, e um lede
      de duas linhas. As linhas são afirmações separadas, não um parágrafo

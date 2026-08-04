@@ -1,0 +1,64 @@
+---
+/**
+ * Suas favoritas.
+ *
+ * Rota privada: exige sessão e redireciona quem não tem, preservando o destino.
+ * Diferente da lista que aparece no perfil público, aqui vem tudo — com busca,
+ * ordenação e a data em que cada uma foi guardada.
+ */
+import Base from '~/layouts/Base.astro';
+import Glitch from '~/components/signal/Glitch.astro';
+import LibraryList from '~/components/ui/LibraryList.astro';
+import { server } from '~/lib/db/server';
+import { requireSession } from '~/lib/auth';
+import { loadLibrary } from '~/lib/library';
+import { BARS } from '~/lib/smpte';
+
+export const prerender = false;
+
+const guard = requireSession(Astro.locals.session, Astro.url);
+if (guard) return guard;
+
+const session = Astro.locals.session!;
+const db = server(Astro.cookies, Astro.request.headers);
+const items = await loadLibrary(db, session.userId, 'favorites');
+---
+
+<Base
+  title="Suas favoritas"
+  description="As sessões que você guardou"
+  accent={BARS.magenta}
+  noindex
+>
+  <header class="head u-page">
+    <p class="u-label head__eyebrow m-enter" style="--m-step:0">Sua conta · Favoritas</p>
+
+    <Glitch
+      tag="h1"
+      text="Favoritas"
+      trigger="reveal"
+      class="page-title u-slate u-bleed m-enter"
+    />
+
+    <div class="page-lede m-enter" style="--m-step:2">
+      <p>O que você quis guardar</p>
+      <p>
+        {items.length === 0
+          ? 'Nenhuma ainda — marque a estrela em qualquer ficha'
+          : `${items.length} ${items.length === 1 ? 'sessão guardada' : 'sessões guardadas'}`}
+      </p>
+    </div>
+  </header>
+
+  <LibraryList items={items} kind="favorites" owner={session.profile.username} />
+</Base>
+
+<style>
+  .head {
+    padding-block: var(--space-2xl) var(--space-lg);
+  }
+
+  .head__eyebrow {
+    color: var(--accent-ink);
+  }
+</style>

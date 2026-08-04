@@ -1,0 +1,71 @@
+---
+/**
+ * Suas assistidas.
+ *
+ * Gêmea de /favoritos/: mesma estrutura, outra tabela. A diferença de conteúdo
+ * fica toda em `loadLibrary`, que trata as duas com uma função só.
+ */
+import Base from '~/layouts/Base.astro';
+import Glitch from '~/components/signal/Glitch.astro';
+import LibraryList from '~/components/ui/LibraryList.astro';
+import { server } from '~/lib/db/server';
+import { requireSession } from '~/lib/auth';
+import { loadLibrary } from '~/lib/library';
+import { BARS } from '~/lib/smpte';
+
+export const prerender = false;
+
+const guard = requireSession(Astro.locals.session, Astro.url);
+if (guard) return guard;
+
+const session = Astro.locals.session!;
+const db = server(Astro.cookies, Astro.request.headers);
+const items = await loadLibrary(db, session.userId, 'watched');
+
+const rated = items.filter((item) => item.score !== null);
+const average =
+  rated.length > 0
+    ? (rated.reduce((sum, item) => sum + (item.score ?? 0), 0) / rated.length).toFixed(1)
+    : null;
+---
+
+<Base
+  title="Suas assistidas"
+  description="As sessões que você marcou"
+  accent={BARS.green}
+  noindex
+>
+  <header class="head u-page">
+    <p class="u-label head__eyebrow m-enter" style="--m-step:0">Sua conta · Assistidas</p>
+
+    <Glitch
+      tag="h1"
+      text="Assistidas"
+      trigger="reveal"
+      class="page-title u-slate u-bleed m-enter"
+    />
+
+    <div class="page-lede m-enter" style="--m-step:2">
+      <p>Tudo que passou por você</p>
+      <p>
+        {items.length === 0
+          ? 'Nenhuma ainda — marque "Assisti" em qualquer ficha'
+          : `${items.length} ${items.length === 1 ? 'sessão' : 'sessões'}${
+              average ? `, nota média ${average} de 3` : ''
+            }`}
+      </p>
+    </div>
+  </header>
+
+  <LibraryList items={items} kind="watched" owner={session.profile.username} />
+</Base>
+
+<style>
+  .head {
+    padding-block: var(--space-2xl) var(--space-lg);
+  }
+
+  .head__eyebrow {
+    color: var(--accent-ink);
+  }
+</style>
