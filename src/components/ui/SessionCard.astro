@@ -37,14 +37,18 @@ const titles = features.map((feature) => feature.title).join(' + ');
 const rating = primary.rating;
 
 const STATE_LABEL: Record<SessionState, string> = {
-  'no-ar': 'No ar agora',
+  'no-ar': 'No ar',
   proxima: 'A seguir',
-  agendada: 'Agendada',
+  agendada: 'Ainda vai ao ar',
   exibida: 'Exibida',
 };
 ---
 
-<article class="card" style={accentStyle(session.bar)} data-state={state}>
+<article
+  class="card glitch-sweep"
+  style={accentStyle(session.bar)}
+  data-state={state}
+>
   <a class="card__link" href={session.href}>
     <div class="card__frame">
       <Image

@@ -3,6 +3,7 @@ import { Image } from 'astro:assets';
 import { render } from 'astro:content';
 
 import Base from '~/layouts/Base.astro';
+import Glitch from '~/components/signal/Glitch.astro';
 import FeatureSheet from '~/components/ui/FeatureSheet.astro';
 import SessionRules from '~/components/ui/SessionRules.astro';
 import SessionCard from '~/components/ui/SessionCard.astro';
@@ -129,7 +130,7 @@ const schema = [
           sizes="100vw"
           loading="eager"
           fetchpriority="high"
-          class="film__poster"
+          class="film__poster m-parallax"
         />
         <div class="film__veil" aria-hidden="true"></div>
       </div>
@@ -142,7 +143,7 @@ const schema = [
           {isDouble && <><span aria-hidden="true">·</span><span>Sessão dupla</span></>}
         </p>
 
-        <h1 class="film__title u-slate u-bleed">{headline}</h1>
+        <Glitch tag="h1" text={headline} trigger="reveal" class="film__title u-slate u-bleed" />
 
         <p class="film__films u-mono">
           {features.map((feature) => `${feature.title} (${feature.year})`).join('  +  ')}
@@ -167,7 +168,7 @@ const schema = [
 
     {/* ===== Corpo ====================================================== */}
     <div class="film__body u-page">
-      <div class="film__content prose">
+      <div class="film__content prose m-reveal">
         <Content />
         {kicker && <p class="film__kicker">{kicker}</p>}
       </div>
@@ -212,9 +213,9 @@ const schema = [
             <h2 class="section__title" data-channel="//" id="related-title">
               Na mesma frequência
             </h2>
-            <a class="section__link" href="/programacao/">Grade completa →</a>
+            <a class="section__link m-underline" href="/programacao/">Grade completa</a>
           </div>
-          <div class="catalog">
+          <div class="catalog m-stagger">
             {related.map((item) => (
               <SessionCard session={item} state={stateOf(item, now)} />
             ))}

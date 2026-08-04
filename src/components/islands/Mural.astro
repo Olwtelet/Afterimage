@@ -86,7 +86,7 @@ const VIBES = [
 
     <div class="form__foot">
       <button type="submit" class="btn btn--solid" data-mural-submit>Assinar o mural</button>
-      <p class="form__note u-label">Todo recado passa por moderação antes de aparecer.</p>
+      <p class="form__note u-label">Todo recado passa por moderação antes de aparecer</p>
     </div>
 
     <p class="form__status" data-mural-status role="status" aria-live="polite"></p>
@@ -161,7 +161,7 @@ const VIBES = [
         if (entries.length === 0) {
           const empty = document.createElement('li');
           empty.className = 'entries__empty u-label';
-          empty.textContent = 'Nenhum recado ainda. O primeiro pode ser o seu.';
+          empty.textContent = 'Nenhum recado ainda — o primeiro pode ser o seu';
           list.append(empty);
           return;
         }
@@ -171,7 +171,7 @@ const VIBES = [
         list.replaceChildren();
         const failed = document.createElement('li');
         failed.className = 'entries__empty u-label';
-        failed.textContent = 'Não foi possível carregar o mural agora.';
+        failed.textContent = 'Não foi possível carregar o mural agora';
         list.append(failed);
       }
     };
@@ -246,7 +246,7 @@ const VIBES = [
 
       // Formulário respondido rápido demais para ter sido lido.
       if (Date.now() - openedAt < MIN_FILL_MS) {
-        say('Calma. Leia, escreva, e tente de novo em alguns segundos.', 'erro');
+        say('Leia, escreva, e tente de novo em alguns segundos', 'erro');
         return;
       }
 
@@ -287,9 +287,9 @@ const VIBES = [
         localStorage.setItem(COOLDOWN_KEY, String(Date.now()));
         form.reset();
         counter.textContent = `0/${message.maxLength}`;
-        say('Recebido. Aparece assim que passar pela moderação.', 'ok');
+        say('Recebido — aparece assim que passar pela moderação', 'ok');
       } catch {
-        say('Algo deu errado no envio. Tente de novo daqui a pouco.', 'erro');
+        say('Algo deu errado no envio — tente de novo daqui a pouco', 'erro');
       } finally {
         submit.disabled = false;
       }

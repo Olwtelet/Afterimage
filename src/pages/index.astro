@@ -1,6 +1,7 @@
 ---
 import Base from '~/layouts/Base.astro';
 import TestCard from '~/components/signal/TestCard.astro';
+import Glitch from '~/components/signal/Glitch.astro';
 import SessionSlate from '~/components/ui/SessionSlate.astro';
 import SessionCard from '~/components/ui/SessionCard.astro';
 import { featuredSession, genresOf, getSessions, stateOf } from '~/lib/catalog';
@@ -43,22 +44,34 @@ const schema = {
     <TestCard class="hero__card" ident={`FHDOG · ${sessionCodeOf(now)} · 87.6 MHz`} />
 
     <div class="hero__content u-page">
-      <p class="hero__eyebrow u-label">Carta de ajuste · Canal 01</p>
-      <h1 class="hero__title u-slate u-bleed" id="hero-title">{SITE.tagline}</h1>
-      <p class="hero__lede">{SITE.description}</p>
+      <p class="hero__eyebrow u-label m-enter" style="--m-step:0">
+        Carta de ajuste · Canal 01
+      </p>
 
-      <p class="hero__meta u-label">
+      <Glitch
+        tag="h1"
+        id="hero-title"
+        text={SITE.tagline}
+        trigger="reveal"
+        class="hero__title u-slate u-bleed m-enter"
+      />
+
+      <div class="hero__lede page-lede m-enter" style="--m-step:2">
+        {SITE.lede.map((line) => <p>{line}</p>)}
+      </div>
+
+      <p class="hero__meta u-label m-enter" style="--m-step:3">
         <span>{sessions.length} sessões no arquivo</span>
         <span aria-hidden="true">·</span>
-        <span>Sábados, 20:30</span>
+        <span>Sábados às 20:30</span>
         <span aria-hidden="true">·</span>
-        <span>Sem paywall</span>
+        <span>Nada cobrado, nada exigido</span>
       </p>
     </div>
 
-    <a class="hero__scroll u-label" href="#programacao" aria-label="Ir para a programação">
-      Sintonizar
-      <span aria-hidden="true">↓</span>
+    <a class="hero__scroll u-label" href="#arquivo">
+      <span>Sintonizar</span>
+      <span class="hero__scroll-line" aria-hidden="true"></span>
     </a>
   </section>
 
@@ -66,13 +79,16 @@ const schema = {
   {featured && <SessionSlate session={featured} state={stateOf(featured, now)} />}
 
   {/* ===== Catálogo ======================================================== */}
-  <section class="section u-page" id="programacao" aria-labelledby="catalog-title">
-    <div class="section__head">
-      <h2 class="section__title" data-channel="02" id="catalog-title">No arquivo</h2>
-      <a class="section__link" href="/programacao/">Grade completa →</a>
+  <section class="section u-page" id="arquivo" aria-labelledby="catalog-title">
+    <div class="section__head m-reveal">
+      <div>
+        <h2 class="section__title" data-channel="02" id="catalog-title">No arquivo</h2>
+        <p class="section__note">Tudo que já atravessou esta tela</p>
+      </div>
+      <a class="section__link m-underline" href="/programacao/">Grade completa</a>
     </div>
 
-    <div class="catalog">
+    <div class="catalog m-stagger">
       {
         catalog.map((session, index) => (
           <SessionCard
@@ -87,12 +103,15 @@ const schema = {
 
   {/* ===== Gêneros ========================================================= */}
   <section class="section u-page" aria-labelledby="genres-title">
-    <div class="section__head">
-      <h2 class="section__title" data-channel="03" id="genres-title">Sinais</h2>
-      <a class="section__link" href="/generos/">Todos os gêneros →</a>
+    <div class="section__head m-reveal">
+      <div>
+        <h2 class="section__title" data-channel="03" id="genres-title">Sinais</h2>
+        <p class="section__note">As frequências que atravessam o catálogo</p>
+      </div>
+      <a class="section__link m-underline" href="/generos/">Todos os gêneros</a>
     </div>
 
-    <ul class="genres" role="list">
+    <ul class="genres m-reveal" role="list">
       {
         genres.map((genre) => (
           <li>
@@ -116,7 +135,7 @@ const schema = {
     position: relative;
     display: grid;
     align-content: center;
-    min-block-size: clamp(30rem, 82svh, 52rem);
+    min-block-size: clamp(30rem, 86svh, 54rem);
     padding-block: var(--space-2xl);
     overflow: clip;
     isolation: isolate;
@@ -136,89 +155,81 @@ const schema = {
     inset: 0;
     z-index: -1;
     background:
-      linear-gradient(to right, var(--void) 8%, rgb(5 5 6 / 0.62) 62%, rgb(5 5 6 / 0.25)),
-      linear-gradient(to bottom, rgb(5 5 6 / 0.5), transparent 30% 70%, var(--void));
+      linear-gradient(to right, var(--void) 6%, rgb(5 5 6 / 0.66) 58%, rgb(5 5 6 / 0.28)),
+      linear-gradient(to bottom, rgb(5 5 6 / 0.55), transparent 28% 68%, var(--void));
   }
 
   .hero__eyebrow {
     color: var(--ink-white);
-    margin-block-end: var(--space-sm);
+    margin-block-end: var(--space-md);
   }
 
   .hero__title {
-    max-inline-size: 16ch;
+    display: block;
+    max-inline-size: 15ch;
     color: var(--ink);
   }
 
+  /* Herda o compasso de .page-lede; aqui só o recuo maior do hero. */
   .hero__lede {
-    max-inline-size: 46ch;
-    margin-block-start: var(--space-md);
-    font-size: var(--text-lg);
-    line-height: var(--leading-relaxed);
-    color: var(--ink-dim);
+    margin-block-start: var(--space-lg);
+    max-inline-size: 44ch;
   }
 
   .hero__meta {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
-    margin-block-start: var(--space-lg);
+    margin-block-start: var(--space-xl);
     padding-block-start: var(--space-sm);
     border-block-start: 1px solid var(--line);
-    max-inline-size: 34rem;
+    max-inline-size: 40rem;
   }
 
-  /* Entrada da tipografia: sobe junto com a sintonia das barras, meio passo
-     atrás, para o conjunto ler como um único movimento. */
-  @media (prefers-reduced-motion: no-preference) {
-    .hero__eyebrow,
-    .hero__title,
-    .hero__lede,
-    .hero__meta {
-      animation: rise var(--dur-lock) var(--ease-out) both;
-    }
-    .hero__title {
-      animation-delay: 80ms;
-    }
-    .hero__lede {
-      animation-delay: 160ms;
-    }
-    .hero__meta {
-      animation-delay: 240ms;
-    }
-
-    @keyframes rise {
-      from {
-        opacity: 0;
-        transform: translateY(0.75rem);
-      }
-    }
-  }
-
+  /* --- Chamada para descer ------------------------------------------------
+     Uma linha que se estende e recolhe, como um cursor procurando o próximo
+     bloco. Substitui a seta, que é literal demais para o resto do sistema. */
   .hero__scroll {
     position: absolute;
-    inset-block-end: var(--space-md);
-    inset-inline-start: 50%;
-    translate: -50% 0;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 0.75rem;
-    color: var(--ink-dim);
-    transition: color var(--dur-cut) var(--ease-signal);
+    inset-block-end: var(--space-lg);
+    inset-inline-start: var(--gutter);
+    display: inline-grid;
+    gap: 0.6rem;
+    justify-items: start;
+    padding-block: 0.5rem;
+    color: var(--ink-mute);
+    transition: color var(--dur-wipe) var(--ease-signal);
   }
 
   .hero__scroll:hover {
     color: var(--ink);
   }
 
-  .hero__scroll span {
-    animation: nudge 2.4s var(--ease-signal) infinite;
+  .hero__scroll-line {
+    inline-size: 1px;
+    block-size: 2.5rem;
+    background: linear-gradient(to bottom, var(--accent-bar), transparent);
+    transform-origin: top;
+    animation: probe 2.8s var(--ease-signal) infinite;
   }
 
-  @keyframes nudge {
-    50% {
-      transform: translateY(0.25rem);
+  @keyframes probe {
+    0%,
+    100% {
+      transform: scaleY(0.35);
+      opacity: 0.5;
+    }
+    45% {
+      transform: scaleY(1);
+      opacity: 1;
+    }
+  }
+
+  @media (min-width: 64rem) {
+    .hero__scroll {
+      inset-inline-start: 50%;
+      translate: -50% 0;
+      justify-items: center;
     }
   }
 

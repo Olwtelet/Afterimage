@@ -29,7 +29,7 @@ const resources = [
 
   <div class="footer__inner u-page">
     <div class="footer__brand">
-      <p class="footer__signoff u-slate">Fim da transmissão</p>
+      <p class="footer__signoff u-slate u-bleed">Fim da transmissão</p>
       <p class="footer__tagline">{SITE.tagline}</p>
     </div>
 
@@ -37,7 +37,7 @@ const resources = [
       <div>
         <h2 class="u-label">Navegar</h2>
         <ul role="list">
-          {NAVIGATION.map((item) => <li><a href={item.href}>{item.label}</a></li>)}
+          {NAVIGATION.map((item) => <li><a class="m-underline" href={item.href}>{item.label}</a></li>)}
         </ul>
       </div>
 
@@ -47,7 +47,7 @@ const resources = [
           {
             connect.map((item) => (
               <li>
-                <a href={item.href} rel="noopener noreferrer" target="_blank">
+                <a class="m-underline" href={item.href} rel="noopener noreferrer" target="_blank">
                   {item.label}
                 </a>
               </li>

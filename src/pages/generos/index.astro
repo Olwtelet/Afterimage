@@ -1,5 +1,6 @@
 ---
 import Base from '~/layouts/Base.astro';
+import Glitch from '~/components/signal/Glitch.astro';
 import { genresOf, getSessions } from '~/lib/catalog';
 import { BAR_ORDER } from '~/lib/smpte';
 import { SITE } from '~/lib/site';
@@ -29,19 +30,26 @@ const schema = {
   schema={schema}
 >
   <header class="head u-page">
-    <p class="u-label head__eyebrow">Canal 03 · Índice</p>
-    <h1 class="head__title u-slate u-bleed">Sinais</h1>
-    <p class="head__lede u-prose">
-      Cada sessão carrega os seus. Juntos, os {genres.length} sinais desenham o
-      que esta curadoria acha que vale a pena assistir com atenção.
-    </p>
+    <p class="u-label head__eyebrow m-enter" style="--m-step:0">Canal 03 · Índice</p>
+
+    <Glitch
+      tag="h1"
+      text="Sinais"
+      trigger="reveal"
+      class="head__title u-slate u-bleed m-enter"
+    />
+
+    <div class="page-lede m-enter" style="--m-step:2">
+      <p>Toda sessão carrega os seus</p>
+      <p>Juntos, os {genres.length} sinais desenham o que esta curadoria acha que merece atenção</p>
+    </div>
   </header>
 
-  <ul class="grid u-page" role="list">
+  <ul class="grid u-page m-stagger" role="list">
     {
       withBars.map((genre) => (
         <li style={`--accent-bar:${genre.bar.bar};--accent-ink:${genre.bar.ink}`}>
-          <a class="tile" href={`/generos/${genre.slug}/`}>
+          <a class="tile glitch-sweep" href={`/generos/${genre.slug}/`}>
             <span class="tile__bar" aria-hidden="true" />
             <span class="tile__name">{genre.name}</span>
             <span class="tile__count u-mono">

@@ -1,5 +1,6 @@
 ---
 import Base from '~/layouts/Base.astro';
+import Glitch from '~/components/signal/Glitch.astro';
 import SessionCard from '~/components/ui/SessionCard.astro';
 import {
   genresOf,
@@ -61,12 +62,12 @@ const schema = {
 >
   <header class="head u-page">
     <nav class="head__crumbs u-label" aria-label="Trilha">
-      <a href="/generos/">Sinais</a>
+      <a class="m-underline" href="/generos/">Sinais</a>
       <span aria-hidden="true">/</span>
       <span aria-current="page">{genre.name}</span>
     </nav>
 
-    <h1 class="head__title u-slate u-bleed">{genre.name}</h1>
+    <Glitch tag="h1" text={genre.name} trigger="reveal" class="head__title u-slate u-bleed" />
 
     <p class="head__count u-label">
       {matches.length} {matches.length > 1 ? 'sessões' : 'sessão'} · barra {bar.label}
@@ -75,7 +76,7 @@ const schema = {
 
   <section class="section u-page" aria-labelledby="matches-title">
     <h2 class="u-sr-only" id="matches-title">Sessões de {genre.name}</h2>
-    <div class="catalog">
+    <div class="catalog m-stagger">
       {
         matches.map((session, index) => (
           <SessionCard
@@ -90,7 +91,7 @@ const schema = {
   </section>
 
   <nav class="others u-page" aria-label="Outros gêneros">
-    <h2 class="u-label others__title">Outros sinais</h2>
+    <h2 class="u-label others__title">Sintonize outro</h2>
     <ul class="others__list" role="list">
       {
         others.map((item) => (

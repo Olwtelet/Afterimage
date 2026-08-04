@@ -1,5 +1,6 @@
 ---
 import Base from '~/layouts/Base.astro';
+import Glitch from '~/components/signal/Glitch.astro';
 import Mural from '~/components/islands/Mural.astro';
 import Radio from '~/components/islands/Radio.astro';
 import Audience from '~/components/islands/Audience.astro';
@@ -23,13 +24,19 @@ const schema = {
   schema={schema}
 >
   <header class="head u-page">
-    <p class="u-label head__eyebrow">Canal 03 · Recados</p>
-    <h1 class="head__title u-slate u-bleed">Mural</h1>
-    <p class="head__lede u-prose">
-      A parede da sala. Quem passa por aqui deixa um recado — sobre a sessão da
-      semana, sobre um filme que ficou, ou só para marcar presença. Não precisa
-      estar no Discord para assinar.
-    </p>
+    <p class="u-label head__eyebrow m-enter" style="--m-step:0">Canal 03 · Recados</p>
+
+    <Glitch
+      tag="h1"
+      text="Mural"
+      trigger="reveal"
+      class="head__title u-slate u-bleed m-enter"
+    />
+
+    <div class="page-lede m-enter" style="--m-step:2">
+      <p>A parede da sala, onde fica o que sobrou da sessão</p>
+      <p>Não é preciso estar no servidor para assinar</p>
+    </div>
   </header>
 
   <div class="u-page">
@@ -41,10 +48,10 @@ const schema = {
     <div class="extras__side">
       <Audience />
       <div class="extras__community">
-        <h2 class="u-label extras__title">Comunidade</h2>
+        <h2 class="u-label extras__title">Do outro lado da tela</h2>
         <p class="extras__text">
-          A conversa depois do filme costuma ser tão boa quanto o filme. Ela
-          acontece no Discord, todo sábado.
+          A conversa depois do filme costuma valer tanto quanto o filme — e ela
+          acontece no servidor, todo sábado, assim que os créditos sobem.
         </p>
         <a
           class="btn btn--ghost"

@@ -1,5 +1,6 @@
 ---
 import Base from '~/layouts/Base.astro';
+import Glitch from '~/components/signal/Glitch.astro';
 import { genresOf, getSessions, groupByMonth, stateOf } from '~/lib/catalog';
 import { isoInstantOf, ratingLabelOf, runtimeOf, weekdayOf } from '~/lib/format';
 import { accentStyle } from '~/lib/smpte';
@@ -20,7 +21,7 @@ const upcoming = chronological.filter((session) => session.startsAt > now).lengt
 const STATE_LABEL = {
   'no-ar': 'No ar',
   proxima: 'A seguir',
-  agendada: 'Agendada',
+  agendada: 'Ainda vai ao ar',
   exibida: 'Exibida',
 } as const;
 
@@ -40,24 +41,31 @@ const schema = {
   schema={schema}
 >
   <header class="head u-page">
-    <p class="u-label head__eyebrow">Canal 02 · Grade</p>
-    <h1 class="head__title u-slate u-bleed">Programação</h1>
-    <p class="head__lede u-prose">
-      Toda a transmissão, do arquivo ao que ainda vai ao ar. Sessões aos sábados,
-      20:30 no horário de Brasília, sem paywall e sem cadastro.
-    </p>
+    <p class="u-label head__eyebrow m-enter" style="--m-step:0">Canal 02 · Grade</p>
 
-    <dl class="head__stats">
+    <Glitch
+      tag="h1"
+      text="Programação"
+      trigger="reveal"
+      class="head__title u-slate u-bleed m-enter"
+    />
+
+    <div class="head__lede page-lede m-enter" style="--m-step:2">
+      <p>Tudo que já passou e tudo que ainda vai passar</p>
+      <p>Sábados às 20:30, horário de Brasília</p>
+    </div>
+
+    <dl class="head__stats m-enter" style="--m-step:3">
       <div>
         <dt class="u-label">No arquivo</dt>
         <dd>{sessions.length}</dd>
       </div>
       <div>
-        <dt class="u-label">A exibir</dt>
+        <dt class="u-label">Ainda vão ao ar</dt>
         <dd>{upcoming}</dd>
       </div>
       <div>
-        <dt class="u-label">Gêneros</dt>
+        <dt class="u-label">Sinais</dt>
         <dd>{genres.length}</dd>
       </div>
     </dl>
@@ -65,7 +73,7 @@ const schema = {
 
   {/* ===== Filtro por gênero ============================================= */}
   <nav class="filters u-page" aria-label="Filtrar por gênero">
-    <h2 class="u-label filters__title">Sinais</h2>
+    <h2 class="u-label filters__title">Filtrar por sinal</h2>
     <ul class="filters__list" role="list">
       {
         genres.map((genre) => (
@@ -92,14 +100,14 @@ const schema = {
             </span>
           </h2>
 
-          <ol class="month__rows" role="list">
+          <ol class="month__rows m-rows" role="list">
             {month.sessions.map((session) => {
               const { headline, features, session: slot, tags } = session.entry.data;
               const state = stateOf(session, now);
               const primary = features[0]!;
 
               return (
-                <li class="row" style={accentStyle(session.bar)} data-state={state}>
+                <li class="row glitch-sweep" style={accentStyle(session.bar)} data-state={state}>
                   <a class="row__link" href={session.href}>
                     <span class="row__bar" aria-hidden="true" />
 

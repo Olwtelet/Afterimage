@@ -1,6 +1,7 @@
 ---
 import Base from '~/layouts/Base.astro';
 import TestCard from '~/components/signal/TestCard.astro';
+import Glitch from '~/components/signal/Glitch.astro';
 import { getSessions } from '~/lib/catalog';
 import { BAR_ORDER, BARS } from '~/lib/smpte';
 import { SITE } from '~/lib/site';
@@ -32,72 +33,80 @@ const contacts = [
 
 <Base
   title="Sobre"
-  description="Como este catálogo é escolhido, de onde ele veio, e por que a carta de ajuste."
+  description="Como este catálogo é escolhido, de onde ele veio, e por que uma carta de ajuste"
   accent={BARS.yellow}
   schema={schema}
 >
   <header class="head u-page">
-    <p class="u-label head__eyebrow">Canal 04 · Identificação</p>
-    <h1 class="head__title u-slate u-bleed">Sobre</h1>
-    <p class="head__lede u-prose">
-      Um servidor pequeno de Discord, criado em 29 de novembro de 2024, sem
-      grandes planos. Uma sessão por sábado. O resto veio depois.
-    </p>
+    <p class="u-label head__eyebrow m-enter" style="--m-step:0">Canal 04 · Identificação</p>
+
+    <Glitch
+      tag="h1"
+      text="Sobre"
+      trigger="reveal"
+      class="head__title u-slate u-bleed m-enter"
+    />
+
+    <div class="page-lede m-enter" style="--m-step:2">
+      <p>Um servidor pequeno, aberto em 29 de novembro de 2024, sem plano nenhum</p>
+      <p>Uma sessão por sábado — o resto veio sozinho</p>
+    </div>
   </header>
 
   <div class="body u-page">
-    <div class="body__prose prose">
-      <h2>Não é streaming</h2>
+    <div class="body__prose prose m-reveal">
+      <h2>Isto não é streaming</h2>
       <p>
-        Este site não hospeda nem distribui filme nenhum. Ele registra escolhas.
-        Cada sessão que passou fica catalogada aqui com o motivo de ter sido
-        escolhida — e a exibição em si acontece junto, ao vivo, na sala do
-        Discord, com todo mundo assistindo ao mesmo tempo.
+        Nenhum filme é hospedado ou distribuído aqui. O que este site guarda são
+        escolhas: cada sessão fica catalogada com o motivo de ter sido escolhida.
+        A exibição acontece em outro lugar, ao vivo, na sala do Discord, com todo
+        mundo assistindo ao mesmo tempo — que é a única forma de assistir junto
+        que ainda existe.
       </p>
       <p>
-        A diferença importa. Um catálogo de streaming quer que você assista a
-        mais. Uma curadoria quer que você assista <em>àquilo</em>, e que a
-        escolha tenha um porquê que alguém esteja disposto a defender.
+        A distinção não é detalhe. Um catálogo de streaming quer que você assista
+        a mais alguma coisa. Uma curadoria quer que você assista <em>àquilo</em>,
+        e que a escolha tenha um porquê que alguém esteja disposto a defender em
+        voz alta.
       </p>
 
       <h2>Como um filme entra</h2>
       <p>
-        Não existe fórmula, e é de propósito. Um filme entra porque incomodou
-        alguém, porque gerou discussão, porque ficou na cabeça depois dos
-        créditos. Nunca porque bateu recorde de bilheteria ou porque um algoritmo
-        calculou que “pessoas como você” iam gostar.
+        Não há fórmula, e a ausência dela é deliberada. Um filme entra porque
+        incomodou alguém, porque rendeu discussão até tarde, porque não saiu da
+        cabeça depois dos créditos. Nunca porque quebrou bilheteria, e nunca
+        porque um sistema calculou que “pessoas como você” iam gostar.
       </p>
       <p>
-        Tem clássico consagrado ao lado de obscuridade que quase ninguém
-        assistiu. Tem filme desconfortável de propósito ao lado de outro
-        puramente divertido. A única regra não escrita: se vale a pena assistir
-        com atenção, cabe aqui.
+        O resultado é irregular de propósito: clássico consagrado ao lado de
+        obscuridade que quase ninguém viu, filme desconfortável ao lado de
+        entretenimento puro. Existe uma única regra, e ela não está escrita em
+        lugar nenhum — se pede atenção de verdade, cabe aqui.
       </p>
 
-      <h2>A carta de ajuste</h2>
+      <h2>Por que uma carta de ajuste</h2>
       <p>
-        A identidade visual daqui vem das barras de teste SMPTE — o padrão que a
-        televisão exibia quando não havia programa no ar. Ele existia para
-        calibrar o equipamento: as sete barras são cores de referência, e a faixa
-        escura embaixo delas, o PLUGE, marca os pretos contra os quais tudo o
+        A identidade vem das barras de teste SMPTE, o padrão que a televisão
+        exibia quando não havia nada no ar. Ele nunca foi decoração: existia para
+        calibrar o equipamento. As sete barras são cores de referência, e a faixa
+        escura embaixo delas — o PLUGE — marca os pretos contra os quais tudo o
         mais é medido.
       </p>
       <p>
-        Não é nostalgia de enfeite. As sete barras são a grade deste site. Os
-        cinzas de todas as superfícies saem do PLUGE. E cada filme recebe uma
-        barra, escolhida pela cor que a sessão carrega — de modo que o catálogo
-        inteiro, lido de uma vez, remonta a carta.
+        Aqui ele continua fazendo o mesmo trabalho. As sete barras são a grade
+        deste site. Os cinzas de todas as superfícies saem do PLUGE. E cada filme
+        recebe uma barra, definida pela cor que a sessão carrega, de modo que o
+        catálogo lido de uma vez remonta a carta inteira.
       </p>
       <p>
-        A ideia por trás disso: um sinal instável, que pisca e às vezes perde o
-        foco, ainda está tentando dizer alguma coisa. Vale mais prestar atenção
-        nisso do que numa transmissão perfeita e sem alma.
+        No fundo é uma ideia simples: um sinal instável, que pisca e às vezes
+        perde o foco, ainda está tentando dizer alguma coisa. Vale mais prestar
+        atenção nele do que numa transmissão impecável que não diz nada.
       </p>
 
       <h2>As sete barras</h2>
       <p>
-        Estas são as cores oficiais, nos valores reais do padrão a 75% de
-        amplitude:
+        As cores oficiais, nos valores reais do padrão a 75% de amplitude:
       </p>
     </div>
 
@@ -127,7 +136,7 @@ const contacts = [
 
   {/* ===== As sete barras ================================================ */}
   <section class="bars u-page" aria-label="As sete barras SMPTE">
-    <ul class="bars__list" role="list">
+    <ul class="bars__list m-reveal" role="list">
       {
         BAR_ORDER.map((bar) => (
           <li class="bars__item">
@@ -145,20 +154,20 @@ const contacts = [
     <div class="section__head">
       <h2 class="section__title" data-channel="//" id="contact-title">Contato</h2>
     </div>
-    <dl class="contact__list">
+    <dl class="contact__list m-reveal">
       {
         contacts.map((item) => (
           <div class="contact__row">
             <dt class="u-label">{item.label}</dt>
             <dd>
-              <a href={item.href} rel="noopener noreferrer">{item.value}</a>
+              <a class="m-underline" href={item.href} rel="noopener noreferrer">{item.value}</a>
             </dd>
           </div>
         ))
       }
     </dl>
     <p class="contact__sign u-label">
-      Toda transmissão sai do ar. O que a gente escolhe mostrar antes disso é que fica.
+      Toda transmissão sai do ar — o que a gente escolhe mostrar antes disso é o que fica
     </p>
   </section>
 </Base>

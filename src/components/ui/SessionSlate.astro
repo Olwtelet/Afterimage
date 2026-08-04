@@ -12,6 +12,7 @@
  */
 import { Image } from 'astro:assets';
 
+import Glitch from '~/components/signal/Glitch.astro';
 import { accentStyle } from '~/lib/smpte';
 import {
   isoInstantOf,
@@ -47,22 +48,27 @@ const isPast = state === 'exibida';
         <span class="slate__dot" data-live={state === 'no-ar'} aria-hidden="true"></span>
         {
           state === 'no-ar'
-            ? 'No ar agora'
+            ? 'No ar neste instante'
             : isPast
-              ? 'Última sessão'
-              : 'Próxima sessão'
+              ? 'A última que passou'
+              : 'A próxima que passa'
         }
         <span aria-hidden="true">·</span>
         <span>{sessionCodeOf(slot.date)}</span>
       </p>
 
-      <h2 class="slate__title u-slate u-bleed" id="slate-title">{headline}</h2>
+      <Glitch
+        tag="h2"
+        id="slate-title"
+        text={headline}
+        class="slate__title u-slate u-bleed"
+      />
 
       <p class="slate__film u-mono">{titles}</p>
       <p class="slate__summary">{summary}</p>
 
       <div class="slate__actions">
-        <a class="btn btn--solid" href={session.href}>Ver a ficha</a>
+        <a class="btn btn--solid" href={session.href}>Abrir a ficha</a>
         <a
           class="btn btn--ghost"
           href={slot.roomUrl}
@@ -75,7 +81,12 @@ const isPast = state === 'exibida';
     </div>
 
     <div class="slate__aside">
-      <a class="slate__poster" href={session.href} tabindex="-1" aria-hidden="true">
+      <a
+        class="slate__poster glitch-sweep"
+        href={session.href}
+        tabindex="-1"
+        aria-hidden="true"
+      >
         <Image
           src={poster}
           alt=""
@@ -83,7 +94,7 @@ const isPast = state === 'exibida';
           sizes="(min-width: 64rem) 28rem, 92vw"
           loading="eager"
           fetchpriority="high"
-          class="slate__image"
+          class="slate__image m-parallax"
         />
       </a>
 
@@ -284,13 +295,25 @@ const isPast = state === 'exibida';
     overflow: clip;
     border: 1px solid var(--line);
     background: var(--black);
+    transition: border-color var(--dur-pan) var(--ease-signal);
+  }
+
+  .slate__poster:hover {
+    border-color: color-mix(in srgb, var(--accent-bar) 55%, var(--line));
   }
 
   .slate__image {
     inline-size: 100%;
     block-size: 100%;
     object-fit: cover;
-    filter: saturate(0.55) contrast(1.05);
+    /* Dessaturado em repouso; a cor volta quando o ponteiro pousa, como um
+       sinal ganhando ganho. */
+    filter: saturate(0.4) contrast(1.06);
+    transition: filter var(--dur-pan) var(--ease-signal);
+  }
+
+  .slate__poster:hover .slate__image {
+    filter: saturate(1) contrast(1.02);
   }
 
   .slate__specs {

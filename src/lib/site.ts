@@ -19,6 +19,8 @@ export interface SiteIdentity {
   readonly name: string;
   readonly shortName: string;
   readonly tagline: string;
+  /** Uma linha por parágrafo. Frase isolada não leva ponto final. */
+  readonly lede: readonly string[];
   readonly description: string;
   readonly url: string;
   readonly locale: string;
@@ -32,9 +34,13 @@ export interface SiteIdentity {
 export const SITE: SiteIdentity = {
   name: 'Filmes HD Online Grátis',
   shortName: 'FHDOG',
-  tagline: 'As ideias são à prova de balas.',
+  tagline: 'As ideias são à prova de balas',
+  lede: [
+    'Uma sessão por sábado, escolhida por alguém que assistiu',
+    'Nunca pelo que fez sucesso — sempre pelo que ficou',
+  ],
   description:
-    'Curadoria semanal de cinema. Um catálogo escolhido a dedo, com sessões de sábado de obras selecionadas não pelo sucesso, mas pela marca que deixam.',
+    'Curadoria semanal de cinema. Uma sessão por sábado, escolhida por quem assistiu, com o motivo da escolha registrado.',
   url: SITE_URL,
   locale: 'pt_BR',
   lang: 'pt-BR',

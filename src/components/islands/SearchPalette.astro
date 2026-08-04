@@ -79,7 +79,7 @@
         index = (await response.json()) as SearchDoc[];
       } catch {
         index = [];
-        status.textContent = 'Índice indisponível. Tente recarregar a página.';
+        status.textContent = 'Índice indisponível — tente recarregar a página';
       }
     }
 
@@ -159,7 +159,7 @@
 
       status.textContent =
         matches.length === 0
-          ? 'Nenhuma sessão encontrada.'
+          ? 'Nenhuma sessão encontrada'
           : `${matches.length} ${matches.length > 1 ? 'sessões' : 'sessão'}`;
       render();
     }

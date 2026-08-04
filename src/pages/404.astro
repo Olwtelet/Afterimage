@@ -8,13 +8,14 @@
  */
 import Base from '~/layouts/Base.astro';
 import TestCard from '~/components/signal/TestCard.astro';
+import Glitch from '~/components/signal/Glitch.astro';
 import { NAVIGATION } from '~/lib/site';
 import { BARS } from '~/lib/smpte';
 ---
 
 <Base
   title="Sem sinal"
-  description="A página que você procurou não está no ar."
+  description="Nada está sendo transmitido neste endereço"
   accent={BARS.red}
   noindex
 >
@@ -22,14 +23,21 @@ import { BARS } from '~/lib/smpte';
     <TestCard class="lost__card" ident="SEM SINAL · ERR 404" />
 
     <div class="lost__content u-page">
-      <p class="lost__code u-mono">404</p>
-      <h1 class="lost__title u-slate u-bleed">Sem sinal</h1>
-      <p class="lost__text">
-        Esta página não está no ar. Pode ter mudado de endereço, pode nunca ter
-        existido, ou a transmissão terminou antes de você chegar.
-      </p>
+      <p class="lost__code u-mono m-enter" style="--m-step:0">ERR 404 · Sem portadora</p>
 
-      <nav class="lost__nav" aria-label="Sintonize outro canal">
+      <Glitch
+        tag="h1"
+        text="Sem sinal"
+        trigger="reveal"
+        class="lost__title u-slate u-bleed m-enter"
+      />
+
+      <div class="page-lede m-enter" style="--m-step:2">
+        <p>Nada está sendo transmitido neste endereço</p>
+        <p>Pode ter mudado de canal, pode nunca ter existido, ou você chegou depois que a transmissão acabou</p>
+      </div>
+
+      <nav class="lost__nav m-enter" style="--m-step:3" aria-label="Sintonize outro canal">
         <p class="u-label lost__nav-title">Sintonize</p>
         <ul role="list">
           {
@@ -85,13 +93,6 @@ import { BARS } from '~/lib/smpte';
     margin-block: var(--space-2xs) var(--space-md);
     font-size: var(--text-4xl);
     color: var(--ink);
-  }
-
-  .lost__text {
-    max-inline-size: 42ch;
-    font-size: var(--text-lg);
-    line-height: var(--leading-relaxed);
-    color: var(--ink-dim);
   }
 
   .lost__nav {
