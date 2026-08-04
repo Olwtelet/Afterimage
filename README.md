@@ -140,6 +140,39 @@ leitura usa `animation-timeline: scroll()`. Nenhum dos dois custa um byte de JS.
 
 ---
 
+## A plataforma
+
+Entrar é só pelo Discord. Não há login por e-mail, senha, Google ou GitHub, e a
+ausência é deliberada — a identidade aqui é a do servidor.
+
+| Rota | O que é |
+|---|---|
+|  | Perfil público: participação, favoritos, assistidos, anotações |
+|  ·  | Suas listas, com busca, filtro e ordenação |
+|  | Participação da comunidade |
+|  | Monta uma classificação e exporta em PNG |
+|  | Painel do catálogo — responde 404 para quem não administra |
+
+### Duas regras que atravessam tudo
+
+**Permissão nunca vem do cliente.** Toda pergunta de autorização é respondida no
+servidor, contra o banco, a cada requisição. O painel confere na rota E a escrita
+usa o cliente de sessão, então o RLS pergunta de novo no Postgres — um furo na
+primeira não vira gravação.
+
+**O ranking não vale nada além dele mesmo.** A pontuação é uma view derivada que
+não aparece em nenhuma política de acesso. Conta nova e primeiro lugar têm os
+mesmos direitos, por construção e não por promessa.
+
+### Peso
+
+O SDK do Supabase tem 217 kB e só é carregado quando existe cookie de sessão.
+Quem chega deslogado — a maioria, e quem vem do buscador — não paga por ele:
+nenhuma das 43 rotas passa de 13 kB de JavaScript. As leituras públicas de
+comentários vão por  direto no PostgREST.
+
+---
+
 ## Banco de dados
 
 > **Primeira vez?** [`docs/CONFIGURACAO.md`](docs/CONFIGURACAO.md) leva do zero
