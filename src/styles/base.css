@@ -40,6 +40,19 @@
     letter-spacing: var(--track-slate);
     text-transform: uppercase;
     text-wrap: balance;
+    /* Rede de segurança para telas de 320px — Fold fechado, webview estreita,
+       zoom de texto alto — onde "Programação" e "Classificação" ainda não cabem
+       nem no menor corpo da escala.
+
+       Tem que ser `anywhere`, e não `break-word`: os títulos saem do componente
+       Glitch dentro de um `.glitch__body` inline-block, e um inline-block se
+       dimensiona pela própria largura mínima intrínseca. `break-word` é
+       ignorado nesse cálculo — a caixa nascia do tamanho da palavra inteira e
+       nada quebrava. `anywhere` entra na conta, então a caixa encolhe e a
+       palavra parte. É o mesmo motivo pelo qual .profile-title já usa `anywhere`.
+
+       Só dispara quando a palavra sozinha não cabe: acima de 320px nada muda. */
+    overflow-wrap: anywhere;
   }
 
   .u-title {

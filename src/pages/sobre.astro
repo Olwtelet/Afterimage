@@ -286,17 +286,29 @@ const contacts = [
     margin: 0;
   }
 
+  /* Empilhado por padrão. Ao lado do rótulo de 7rem sobravam 207px para o
+     valor, e o e-mail — 32 caracteres que não têm onde quebrar — media 232px:
+     era ele que estourava a página no celular. Empilhado ganha a linha inteira
+     e, de quebra, vira um alvo de toque de largura cheia. */
   .contact__row {
     display: grid;
-    grid-template-columns: 7rem 1fr;
-    gap: var(--space-sm);
-    align-items: baseline;
+    gap: 0.15rem;
     padding-block: var(--space-xs);
     border-block-end: 1px solid var(--line);
   }
 
+  @media (min-width: 30rem) {
+    .contact__row {
+      grid-template-columns: 7rem 1fr;
+      gap: var(--space-sm);
+      align-items: baseline;
+    }
+  }
+
   .contact__row dd {
     margin: 0;
+    /* Endereço longo quebra em vez de empurrar a coluna. */
+    overflow-wrap: anywhere;
   }
 
   .contact__row a {

@@ -83,7 +83,12 @@
     --text-xl: clamp(1.25rem, 1.1rem + 0.66vw, 1.75rem);
     --text-2xl: clamp(1.5rem, 1.24rem + 1.15vw, 2.5rem);
     --text-3xl: clamp(1.875rem, 1.4rem + 2.1vw, 3.5rem);
-    --text-4xl: clamp(2.375rem, 1.42rem + 4.2vw, 5.5rem);
+    /* O piso desta linha é ditado pelo português, não pelo gosto: "Programação"
+       e "Classificação" são títulos de página, e a 38px eles mediam 365px numa
+       coluna de 328px no Galaxy S — a manchete empurrava a viewport e a página
+       rolava de lado. A 33px cabem com folga. O teto e a ancoragem 360–1600
+       continuam os mesmos. */
+    --text-4xl: clamp(2.0625rem, 1.064rem + 4.44vw, 5.5rem);
     --text-slate: clamp(2.75rem, 0.9rem + 8.2vw, 9rem);
 
     --leading-tight: 0.94;

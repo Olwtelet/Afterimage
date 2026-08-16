@@ -18,9 +18,21 @@ const { variant = 'full' } = Astro.props;
   <span class="mark__bars" aria-hidden="true">
     {BAR_ORDER.map((bar) => <i style={`background:${bar.bar}`} />)}
   </span>
-  <span class="mark__name">
-    {variant === 'compact' ? SITE.shortName : SITE.name}
-  </span>
+
+  {
+    variant === 'compact' ? (
+      <span class="mark__name">{SITE.shortName}</span>
+    ) : (
+      <>
+        {/* As duas formas do nome saem no HTML e quem escolhe é o CSS, porque a
+            escolha depende da largura da viewport — coisa que o servidor não
+            sabe. O <a> que envolve a marca tem aria-label próprio, então
+            nenhuma das duas é lida em voz alta e a duplicata não custa nada. */}
+        <span class="mark__name mark__name--short">{SITE.shortName}</span>
+        <span class="mark__name mark__name--full">{SITE.name}</span>
+      </>
+    )
+  }
 </span>
 
 <style>
@@ -28,6 +40,7 @@ const { variant = 'full' } = Astro.props;
     display: inline-flex;
     align-items: center;
     gap: 0.625rem;
+    min-inline-size: 0;
   }
 
   .mark__bars {
@@ -50,6 +63,30 @@ const { variant = 'full' } = Astro.props;
     text-transform: uppercase;
     white-space: nowrap;
     color: var(--ink);
+    /* Rede de segurança: um nome mais longo encolhe com reticências em vez de
+       empurrar a largura do documento. */
+    min-inline-size: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* O nome por extenso mede 222px. Somado às ações do cabeçalho (132px) e ao
+     intervalo entre os dois, dá 378px numa caixa de 343px no iPhone SE — era
+     isso que estourava a viewport e fazia o site INTEIRO rolar de lado, em
+     todas as rotas. Abaixo de 30rem entra a sigla, que o projeto já usa no
+     dock do rádio e no ident do cartão. */
+  .mark__name--full {
+    display: none;
+  }
+
+  @media (min-width: 30rem) {
+    .mark__name--short {
+      display: none;
+    }
+
+    .mark__name--full {
+      display: inline;
+    }
   }
 
   /* O grupo inteiro reage ao hover do link que o envolve. */
