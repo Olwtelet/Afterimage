@@ -114,6 +114,17 @@ const { accent = BARS.cyan, bodyClass, ...seo } = Astro.props;
       inset-block-start: 0.5rem;
     }
 
+    /* O dock do rádio é fixo na base e, abaixo de 30rem, ocupa a largura
+       inteira. Sem esta reserva a última linha do rodapé — o ident da emissora,
+       onde a assinatura da curadoria vive — termina permanentemente atrás dele:
+       a página acaba e o texto nunca sai de baixo do controle. Os 3.5rem são a
+       altura medida do dock; o respiro extra o separa do fim do conteúdo. */
+    @media (max-width: 30rem) {
+      body {
+        padding-block-end: calc(3.5rem + var(--space-sm));
+      }
+    }
+
     /* O corte de canal.
        A página que sai perde sincronia horizontal, estoura em brilho e some;
        a que entra chega deslocada para o outro lado e se assenta. O `steps()`
