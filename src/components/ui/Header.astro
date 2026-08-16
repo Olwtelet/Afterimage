@@ -125,7 +125,13 @@ const isCurrent = (href: string): boolean =>
 
   .header__brand {
     display: inline-flex;
-    flex: none;
+    /* Ocupa a altura inteira do cabeçalho: o alvo passa de 20px para os 61px
+       da barra, sem deslocar um pixel do que se vê. */
+    align-items: center;
+    align-self: stretch;
+    /* Encolhe antes de empurrar a página: a marca cede espaço, a viewport não. */
+    flex: 0 1 auto;
+    min-inline-size: 0;
   }
 
   /* --- navegação de desktop ------------------------------------------------ */
@@ -224,7 +230,16 @@ const isCurrent = (href: string): boolean =>
   .menu-trigger {
     display: grid;
     gap: 5px;
-    padding: 0.75rem 0.5rem;
+    /* 44×44 é o alvo mínimo confortável para o polegar. O anterior tinha 36×33,
+       e este é o único controle de navegação que existe no celular: errar nele
+       custa uma navegação inteira. O tamanho vem do próprio botão, e não de
+       padding, para o alvo não depender do conteúdo. */
+    place-content: center;
+    inline-size: 2.75rem;
+    block-size: 2.75rem;
+    /* Devolve à marca o alinhamento óptico com a goteira: o alvo cresce para
+       dentro da margem sem que o ícone pareça deslocado da borda. */
+    margin-inline-end: -0.5rem;
   }
 
   .menu-trigger span {
@@ -281,6 +296,14 @@ const isCurrent = (href: string): boolean =>
 
   .menu__close {
     align-self: flex-end;
+    /* Dispensa de um diálogo em tela cheia, e tinha 20px de altura. O padding
+       negativo à direita mantém o rótulo alinhado com a goteira enquanto o
+       alvo cresce para dentro dela. */
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 2.75rem;
+    padding-inline: 0.75rem;
+    margin-inline-end: -0.75rem;
     font-size: var(--text-sm);
     font-weight: 600;
     letter-spacing: var(--track-label);

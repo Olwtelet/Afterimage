@@ -316,6 +316,18 @@ const contacts = [
     transition: color var(--dur-cut) var(--ease-signal);
   }
 
+  /* Empilhados, estes quatro são ações isoladas — não links no meio de uma
+     frase, que teriam razão para manter a altura do texto. A 16px eram os
+     alvos mais apertados da página. Só no layout de uma coluna: a partir de
+     30rem o valor volta a alinhar pela linha de base com o rótulo ao lado. */
+  @media (max-width: 29.99rem) {
+    .contact__row a {
+      display: inline-flex;
+      align-items: center;
+      min-block-size: 2.75rem;
+    }
+  }
+
   .contact__row a:hover {
     color: var(--ink);
   }

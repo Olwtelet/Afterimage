@@ -152,6 +152,10 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.4rem 0.75rem;
+    /* Este é o estado que a maioria das visitas vê — deslogado. Tinha 34px de
+       altura contra os 44px do gatilho ao lado, e os dois vivem lado a lado no
+       cabeçalho: além de apertado, ficava desalinhado. */
+    min-block-size: 2.75rem;
     border: 1px solid var(--line);
     font-size: var(--text-sm);
     font-weight: 600;
@@ -205,6 +209,9 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.25rem 0.5rem 0.25rem 0.25rem;
+    /* Entrar/conta é o segundo controle mais usado do cabeçalho no celular.
+       Tinha 34px de altura. */
+    min-block-size: 2.75rem;
     border: 1px solid var(--line);
     transition: border-color var(--dur-cut) var(--ease-signal);
   }

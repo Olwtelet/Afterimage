@@ -136,6 +136,22 @@ const resources = [
     transition: color var(--dur-cut) var(--ease-signal);
   }
 
+  /* No celular estes links tinham 14px de altura — a altura do texto e nada
+     mais, treze deles empilhados a 0.4rem de distância. Errar o alvo e cair no
+     link de baixo era o resultado provável. A partir de 56rem existe mouse e o
+     rodapé volta a ser compacto. */
+  @media (max-width: 55.99rem) {
+    .footer__cols ul {
+      gap: 0;
+    }
+
+    .footer__cols a {
+      display: flex;
+      align-items: center;
+      min-block-size: 2.75rem;
+    }
+  }
+
   .footer__cols a:hover {
     color: var(--accent-ink);
   }

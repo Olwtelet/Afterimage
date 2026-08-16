@@ -119,6 +119,11 @@
 
   .section__link {
     flex: none;
+    /* 18px de altura era só o texto. O respiro vertical vira alvo sem mexer no
+       desenho: o rótulo continua onde estava, a área de toque é que cresce. */
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 2.75rem;
     font-family: var(--font-mono);
     font-size: var(--text-xs);
     letter-spacing: var(--track-label);
@@ -229,7 +234,10 @@
     display: inline-flex;
     align-items: baseline;
     gap: 0.4rem;
-    padding: 0.3rem 0.6rem;
+    /* Sobe de 30px para 36px de altura. Não chega aos 44px do polegar porque
+       as etiquetas andam em bloco e esticá-las desmancharia a malha densa que
+       é o ponto delas — 36px já sai do aperto sem virar botão. */
+    padding: 0.5rem 0.7rem;
     border: 1px solid var(--line);
     font-size: var(--text-xs);
     color: var(--ink-dim);
