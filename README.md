@@ -90,8 +90,23 @@ O texto editorial, em Markdown.
 Sessão dupla: acrescente uma segunda entrada em `features`, cada uma com seu
 `time`.
 
-Nada mais precisa ser tocado. Data, duração, classificação, contagem regressiva,
-posição na grade, gêneros, busca, feed e JSON-LD saem daí.
+Nada mais precisa ser tocado no site. Data, duração, classificação, contagem
+regressiva, posição na grade, gêneros, busca, feed e JSON-LD saem daí.
+
+### O que o site não resolve sozinho
+
+A imagem entra em **dois** lugares: `src/assets/films/` — de onde a página a
+serve, otimizada — e `public/posters/`, que é o caminho gravado no banco e
+usado pelos cards de perfil e de biblioteca. Mesmo nome nos dois.
+
+Depois, `npm run assets:social` gera o cartão de compartilhamento da sessão em
+`public/og/`.
+
+E a **plataforma** referencia filme por linha no banco, não por ficha: sem ela a
+página aparece normal, mas a seção de anotações se esconde e os botões de
+favoritar, marcar e avaliar não têm onde gravar. Acrescente a sessão a uma
+migração no formato de `0006_novas_sessoes.sql` — as colunas saem todas do front
+matter, e `on conflict do nothing` deixa o arquivo seguro para rodar de novo.
 
 ### Duas noções de tempo
 
@@ -197,9 +212,10 @@ ficou apontando para o projeto antigo e derrubou o contador em silêncio.
 |---|---|
 | `0001_audience.sql` | Mural e contador de audiência |
 | `0002_plataforma.sql` | Perfis, catálogo, interações, ranking, RLS |
-| `0003_catalogo.sql` | As 14 sessões e suas exibições |
+| `0003_catalogo.sql` | As 14 primeiras sessões e suas exibições |
 | `0004_sem_cargos.sql` | Remove a coluna de cargos (opcional) |
 | `0005_ajustes.sql` | Limite de 500 nas anotações |
+| `0006_novas_sessoes.sql` | As sessões acrescentadas depois do catálogo inicial |
 
 Com a CLI configurada, `supabase db push` faz o mesmo.
 
