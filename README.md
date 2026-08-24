@@ -216,6 +216,7 @@ ficou apontando para o projeto antigo e derrubou o contador em silêncio.
 | `0004_sem_cargos.sql` | Remove a coluna de cargos (opcional) |
 | `0005_ajustes.sql` | Limite de 500 nas anotações |
 | `0006_novas_sessoes.sql` | As sessões acrescentadas depois do catálogo inicial |
+| `0007_uma_anotacao.sql` | Uma anotação por pessoa em cada filme |
 
 Com a CLI configurada, `supabase db push` faz o mesmo.
 

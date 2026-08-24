@@ -7,6 +7,11 @@
  * uma margem de caderno — quem assistiu escreve o que ficou, em ordem de
  * chegada, e pronto.
  *
+ * Daí também a regra de uma anotação por pessoa em cada filme: margem de caderno
+ * não vira thread. Quem já anotou não recebe o formulário de volta, recebe o
+ * caminho para editar o que escreveu. A constraint `comments_uma_por_filme`
+ * garante o mesmo no banco, para quem tentar por fora da interface.
+ *
  * A escrita, a edição e a exclusão são autorizadas pelo RLS. As políticas dizem
  * que se escreve apenas em nome próprio, que só o autor edita, e que apagar cabe
  * ao autor ou à moderação. Este arquivo não decide nada disso — se ele fosse
@@ -23,7 +28,7 @@ const { slug } = Astro.props;
   <div class="section__head">
     <div>
       <h2 class="section__title" data-channel="//" id="notes-title">Anotações</h2>
-      <p class="section__note">O que ficou, escrito por quem assistiu</p>
+      <p class="section__note">Uma por pessoa — o que ficou, escrito por quem assistiu</p>
     </div>
     <span class="section__link" data-notes-count hidden></span>
   </div>
@@ -50,6 +55,12 @@ const { slug } = Astro.props;
       </div>
     </div>
   </form>
+
+  {/* Substitui o formulário para quem já anotou — uma por pessoa em cada filme */}
+  <p class="notes__done" data-notes-done hidden>
+    <span class="u-label">Sua anotação já está no fio</span>
+    <button type="button" class="notes__edit" data-notes-edit>editar a minha</button>
+  </p>
 
   <a class="notes__enter" data-notes-enter href="/auth/entrar/" hidden>
     <span class="notes__mark" aria-hidden="true">
@@ -97,15 +108,22 @@ const { slug } = Astro.props;
     const list = root.querySelector<HTMLOListElement>('[data-notes-list]');
     const empty = root.querySelector<HTMLElement>('[data-notes-empty]');
     const counter = root.querySelector<HTMLElement>('[data-notes-count]');
+    const done = root.querySelector<HTMLElement>('[data-notes-done]');
+    const editMine = root.querySelector<HTMLButtonElement>('[data-notes-edit]');
     const slug = root.dataset.slug ?? '';
 
-    if (form && field && submit && cancel && remaining && enter && status && list && empty && counter) {
+    if (
+      form && field && submit && cancel && remaining && enter &&
+      status && list && empty && counter && done && editMine
+    ) {
       let db: Awaited<ReturnType<typeof loadDb>> | null = null;
       let userId: string | null = null;
       let isAdmin = false;
       let filmId: string | null = null;
       /** Id da anotação em edição, ou `null` quando se está escrevendo uma nova. */
       let editing: string | null = null;
+      /** A anotação de quem está lendo. Só pode haver uma por filme. */
+      let mine: NoteRow | null = null;
 
       const dateOf = (iso: string): string =>
         new Intl.DateTimeFormat('pt-BR', {
@@ -178,12 +196,12 @@ const { slug } = Astro.props;
 
         // Editar é do autor; apagar é do autor ou da moderação — espelhando
         // exatamente o que as políticas do banco permitem.
-        const mine = note.user_id === userId;
-        if (mine || isAdmin) {
+        const isAuthor = note.user_id === userId;
+        if (isAuthor || isAdmin) {
           const tools = document.createElement('div');
           tools.className = 'note__tools';
 
-          if (mine) {
+          if (isAuthor) {
             const edit = document.createElement('button');
             edit.type = 'button';
             edit.className = 'note__tool';
@@ -216,6 +234,24 @@ const { slug } = Astro.props;
         empty.hidden = total > 0;
       };
 
+      /**
+       * Decide entre o formulário e o aviso de "já anotou".
+       *
+       * Uma pessoa, uma anotação por filme: quem já tem a sua não recebe um
+       * campo em branco que o banco recusaria, recebe o caminho para editar.
+       * Enquanto a edição está aberta o formulário volta — é a anotação dela
+       * que está ali dentro.
+       *
+       * Sai calado antes do login: nesse momento nem formulário nem aviso são
+       * a resposta certa, e quem cuida disso é o convite para entrar.
+       */
+      const paintCompose = (): void => {
+        if (!userId) return;
+        const locked = mine !== null && editing === null;
+        form.hidden = locked;
+        done.hidden = !locked;
+      };
+
       const load = async (): Promise<void> => {
         if (!filmId) return;
 
@@ -226,8 +262,11 @@ const { slug } = Astro.props;
             `&film_id=eq.${filmId}&order=created_at.desc`,
         );
 
+        mine = userId ? (notes.find((note) => note.user_id === userId) ?? null) : null;
+
         list.replaceChildren(...notes.map(render));
         paintCount(notes.length);
+        paintCompose();
       };
 
       const startEdit = (note: NoteRow): void => {
@@ -235,6 +274,7 @@ const { slug } = Astro.props;
         field.value = note.body;
         cancel.hidden = false;
         submit.textContent = 'Salvar';
+        paintCompose();
         countRemaining();
         field.focus();
         form.scrollIntoView({ block: 'center', behavior: 'smooth' });
@@ -246,6 +286,7 @@ const { slug } = Astro.props;
         cancel.hidden = true;
         submit.textContent = 'Anotar';
         countRemaining();
+        paintCompose();
       };
 
       const destroy = async (id: string, node: HTMLElement): Promise<void> => {
@@ -260,10 +301,19 @@ const { slug } = Astro.props;
         }
         node.remove();
         paintCount(list.children.length);
+
+        // Apagar a própria devolve o formulário: a vaga daquele filme vagou.
+        if (mine?.id === id) mine = null;
+        if (editing === id) stopEdit();
+        else paintCompose();
+
         say('Anotação apagada');
       };
 
       cancel.addEventListener('click', stopEdit);
+      editMine.addEventListener('click', () => {
+        if (mine) startEdit(mine);
+      });
       field.addEventListener('input', countRemaining);
 
       form.addEventListener('submit', async (event) => {
@@ -282,13 +332,30 @@ const { slug } = Astro.props;
         submit.disabled = false;
 
         if (error) {
-          say('Não deu para salvar — tente de novo', 'erro');
+          /* 23505 é a `comments_uma_por_filme`. A interface já não oferecia o
+             formulário para quem tem anotação, então chegar aqui significa que
+             a página estava aberta em outro lugar e ficou desatualizada —
+             recarregar o fio é o que conserta. */
+          const duplicate = error.code === '23505';
+
+          say(
+            duplicate
+              ? 'Você já anotou esta sessão — edite a que está no fio'
+              : 'Não deu para salvar — tente de novo',
+            'erro',
+          );
+
+          if (duplicate) await load();
           return;
         }
 
         say(editing ? 'Anotação atualizada' : 'Anotada');
-        stopEdit();
+
+        // Zera antes de recarregar: é `editing` que decide se o formulário
+        // continua aberto, e ele já não está mais.
+        editing = null;
         await load();
+        stopEdit();
       });
 
       void (async () => {
@@ -330,10 +397,11 @@ const { slug } = Astro.props;
         const { data: admin } = await db.rpc('is_admin');
         isAdmin = admin === true;
 
-        form.hidden = false;
         countRemaining();
 
-        // Recarrega para que os botões de editar/apagar apareçam nas próprias.
+        // Recarrega para que os botões de editar/apagar apareçam nas próprias —
+        // e é esta leitura que descobre se já existe anotação desta pessoa aqui,
+        // decidindo entre mostrar o formulário e mostrar o aviso.
         await load();
       })();
     }
@@ -413,6 +481,47 @@ const { slug } = Astro.props;
 
   .compose__cancel[hidden] {
     display: none;
+  }
+
+  /* --- Já anotou ------------------------------------------------------------ */
+  .notes__done {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2xs) var(--space-sm);
+    max-inline-size: var(--measure);
+    margin-block-end: var(--space-lg);
+    padding: var(--space-xs);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-inline-start: 2px solid var(--accent-bar);
+    color: var(--ink-dim);
+  }
+
+  .notes__done[hidden] {
+    display: none;
+  }
+
+  /* Único caminho para trocar a própria anotação depois de escrita — as
+     ferramentas do fio só aparecem sob o ponteiro, que no celular não existe.
+     Por isso ele recebe os 44px do polegar, e a margem negativa devolve a
+     altura ao aviso para o alvo crescer sem engordar a caixa. */
+  .notes__edit {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 2.75rem;
+    margin-block: calc(var(--space-xs) * -1);
+    margin-inline-start: auto;
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--accent-ink);
+    transition: color var(--dur-cut) var(--ease-signal);
+  }
+
+  .notes__edit:hover {
+    color: var(--ink);
   }
 
   /* --- Convite -------------------------------------------------------------- */
