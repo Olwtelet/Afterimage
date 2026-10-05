@@ -217,6 +217,7 @@ ficou apontando para o projeto antigo e derrubou o contador em silêncio.
 | `0005_ajustes.sql` | Limite de 500 nas anotações |
 | `0006_novas_sessoes.sql` | As sessões acrescentadas depois do catálogo inicial |
 | `0007_uma_anotacao.sql` | Uma anotação por pessoa em cada filme |
+| `0008_sessoes_outubro.sql` | As três sessões de outubro |
 
 Com a CLI configurada, `supabase db push` faz o mesmo.
 
